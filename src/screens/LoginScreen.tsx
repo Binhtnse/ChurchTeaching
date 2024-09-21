@@ -1,14 +1,46 @@
 import React from 'react';
-import { Form, Input, Button, Typography } from 'antd';
+import { Form, Input, Button, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Image } from 'antd';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setAuth } from '../store/authSlice';
 
 const { Title } = Typography;
 
 const LoginScreen: React.FC = () => {
-  const onFinish = (values: unknown) => {
-    console.log('Received values:', values);
-    // Handle login logic here
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const onFinish = async (values: { account: string; password: string }) => {
+    try {
+      const response = await axios.post(
+        'https://sep490-backend-production.up.railway.app/api/v1/user/login',
+        {
+          account: values.account,
+          password: values.password,
+        }
+      );
+      console.log('Login successful:', response.data);
+      message.success('Đăng nhập thành công!');
+
+      const userLogin = response.data.userLogin || {};
+      localStorage.setItem('userLogin', JSON.stringify(response.data.userLogin));
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+
+      dispatch(setAuth({
+        isLoggedIn: true,
+        role: userLogin.roleName ? userLogin.roleName.toUpperCase() : '',
+        userName: userLogin.name || '',
+      }));
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Login failed:', error);
+      message.error('Đăng nhập thất bại. Vui lòng thử lại!');
+    }
   };
 
   return (
