@@ -1,17 +1,25 @@
 import React from "react";
-import { BookOutlined, HomeOutlined, CalendarOutlined, TeamOutlined, SettingOutlined, UnlockOutlined, LogoutOutlined, HistoryOutlined, FormOutlined} from "@ant-design/icons";
+import {
+  BookOutlined,
+  HomeOutlined,
+  CalendarOutlined,
+  TeamOutlined,
+  SettingOutlined,
+  UnlockOutlined,
+  LogoutOutlined,
+  HistoryOutlined,
+  FormOutlined,
+} from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu } from "antd";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from 'react-redux';
-import { logout } from '../store/authSlice';
 
 type MenuItem = Required<MenuProps>["items"][number];
 
 const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
   const commonItems: MenuItem[] = [
     {
-      key: "home",
+      key: "",
       label: "Trang chủ",
       icon: <HomeOutlined />,
     },
@@ -33,12 +41,25 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
         label: "Bài tập",
         icon: <BookOutlined />,
       },
+      {
+        key: "progress",
+        label: "Tiến độ học tập",
+        icon: <HistoryOutlined />,
+        children: [
+          { key: "study-grades", label: "Xem điểm" },
+          { key: "study-attendance", label: "Xem điểm danh" },
+        ],
+      },
     ],
     CATECHIST: [
       {
         key: "classes",
         label: "Lớp học",
         icon: <TeamOutlined />,
+        children: [
+          { key: "student-list", label: "Danh sách thiếu nhi" },
+          { key: "study-attendance", label: "Xem điểm danh" },
+        ],
       },
       {
         key: "grading",
@@ -56,6 +77,10 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
         key: "progress",
         label: "Tiến độ học tập",
         icon: <HistoryOutlined />,
+        children: [
+          { key: "study-grades", label: "Xem điểm" },
+          { key: "study-attendance", label: "Xem điểm danh" },
+        ],
       },
       {
         key: "enroll",
@@ -67,6 +92,11 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
       {
         key: "users",
         label: "Quản lý người dùng",
+        icon: <TeamOutlined />,
+      },
+      {
+        key: "enroll-list",
+        label: "Danh sách đăng ký học",
         icon: <TeamOutlined />,
       },
       {
@@ -83,30 +113,35 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
     icon: isLoggedIn ? <LogoutOutlined /> : <UnlockOutlined />,
   };
 
-  const validRoles = ['STUDENT', 'CATECHIST', 'PARENT', 'ADMIN'];
-  const safeRole = validRoles.includes(role.toUpperCase()) ? role.toUpperCase() : '';
+  const validRoles = ["STUDENT", "CATECHIST", "PARENT", "ADMIN"];
+  const safeRole = validRoles.includes(role.toUpperCase())
+    ? role.toUpperCase()
+    : "";
 
   return [
     ...commonItems,
-    ...(isLoggedIn && roleSpecificItems[safeRole] ? roleSpecificItems[safeRole] : []),
-    authItem
+    ...(isLoggedIn && roleSpecificItems[safeRole]
+      ? roleSpecificItems[safeRole]
+      : []),
+    authItem,
   ];
 };
 
-const Sidebar: React.FC<{ role: string; isLoggedIn: boolean }> = ({ role, isLoggedIn }) => {
-  const dispatch = useDispatch();
+const Sidebar: React.FC<{ role: string; isLoggedIn: boolean }> = ({
+  role,
+  isLoggedIn,
+}) => {
   const navigate = useNavigate();
 
   const onClick: MenuProps["onClick"] = (e) => {
     if (e.key === "login") {
-      navigate('/login');
+      navigate("/login");
     } else if (e.key === "logout") {
       // Clear user data from localStorage
-      localStorage.removeItem('userLogin');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      dispatch(logout());
-      navigate('/login');
+      localStorage.removeItem("userLogin");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      navigate("/login");
     } else {
       navigate(`/${e.key}`);
     }
@@ -115,14 +150,25 @@ const Sidebar: React.FC<{ role: string; isLoggedIn: boolean }> = ({ role, isLogg
   const items = getMenuItems(role, isLoggedIn);
 
   return (
-    <div style={{ height: '100vh', width: '256px', position: 'fixed', left: 0, top: 0, bottom: 0 }}>
-      <div style={{ backgroundColor: '#D60A0B', height: '100px', width: '100%' }}></div>
+    <div
+      style={{
+        height: "100vh",
+        width: "256px",
+        position: "fixed",
+        left: 0,
+        top: 0,
+        bottom: 0,
+      }}
+    >
+      <div
+        style={{ backgroundColor: "#D60A0B", height: "100px", width: "100%" }}
+      ></div>
       <Menu
         onClick={onClick}
         style={{
           backgroundColor: "#14238A",
           color: "white",
-          height: 'calc(100% - 50px)',
+          height: "calc(100% - 50px)",
           width: "100%",
         }}
         defaultSelectedKeys={["1"]}

@@ -4,14 +4,13 @@ import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { Image } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { setAuth } from "../store/authSlice";
+import { useAuthState } from "../hooks/useAuthState";
 
 const { Title } = Typography;
 
 const LoginScreen: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const { setIsLoggedIn, setRole, setUserName } = useAuthState();
 
   const onFinish = async (values: { account: string; password: string }) => {
     try {
@@ -25,22 +24,20 @@ const LoginScreen: React.FC = () => {
       console.log("Login successful:", response.data);
       message.success("Đăng nhập thành công!");
 
-      const userLogin = response.data.userLogin || {};
-      localStorage.setItem(
-        "userLogin",
-        JSON.stringify(response.data.userLogin)
-      );
-      localStorage.setItem("accessToken", response.data.accessToken);
-      localStorage.setItem("refreshToken", response.data.refreshToken);
+      if (response.data.data && response.data.data.userLogin) {
+        localStorage.setItem(
+          "userLogin",
+          JSON.stringify(response.data.data.userLogin)
+        );
+        localStorage.setItem("accessToken", response.data.data.accessToken);
+        localStorage.setItem("refreshToken", response.data.data.refreshToken);
+      } else {
+        console.error("Unexpected response structure:", response.data);
+      }
 
-      dispatch(
-        setAuth({
-          isLoggedIn: true,
-          role: userLogin.roleName ? userLogin.roleName.toUpperCase() : "",
-          userName: userLogin.name || "",
-        })
-      );
-
+      setIsLoggedIn(true);
+      setRole(response.data.data.userLogin.roleName?.toUpperCase() || "");
+      setUserName(response.data.data.userLogin.name || "");
       navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
