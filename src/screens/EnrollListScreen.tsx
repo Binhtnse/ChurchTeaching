@@ -129,12 +129,12 @@ const EnrollListScreen: React.FC = () => {
       title: "Hành động",
       key: "action",
       render: (_: unknown, record: DataType) => (
-        <Link to={`/enroll-detail/${record.key}`}>Xem chi tiết</Link>
+        <Link to={`/enroll-list/${record.key}`}>Xem chi tiết</Link>
       ),
     },
   ];
 
-  if (!isLoggedIn || role !== "CATECHIST") {
+  if (!isLoggedIn || role !== "ADMIN") {
     return <ForbiddenScreen />;
   }
 

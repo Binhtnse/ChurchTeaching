@@ -29,7 +29,9 @@ const EnrollDetailScreen: React.FC = () => {
   useEffect(() => {
     const fetchEnrollmentData = async () => {
       try {
+        console.log("Fetching data for id:", id);
         const response = await axios.get(`https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}`);
+        console.log("Received data:", response.data);
         setEnrollmentData(response.data.data);
       } catch (error) {
         console.error("Error fetching enrollment data:", error);
