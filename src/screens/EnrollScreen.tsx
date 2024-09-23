@@ -57,7 +57,7 @@ const formItemLayout = {
 };
 
 const EnrollScreen: React.FC = () => {
-  const { isLoggedIn } = useAuthState();
+  const { isLoggedIn, role } = useAuthState();
 
   const [form] = Form.useForm();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -70,15 +70,12 @@ const EnrollScreen: React.FC = () => {
   const [isSurveyLoading, setIsSurveyLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      console.log("User is not logged in");
-      return;
+    if (isLoggedIn || role === "GUEST") {
+      fetchSurveyData();
+      fetchMajors();
+      fetchGrades();
     }
-
-    fetchSurveyData();
-    fetchMajors();
-    fetchGrades();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, role]);
 
   const fetchSurveyData = async () => {
     setIsSurveyLoading(true);
@@ -112,14 +109,8 @@ const EnrollScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/grade?page=0&size=10"
       );
-      if (response.data && Array.isArray(response.data.content)) {
-        setGrades(response.data.content);
-      } else if (
-        response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data.content)
-      ) {
-        setGrades(response.data.data.content);
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        setGrades(response.data.data);
       } else {
         console.error("Unexpected response structure:", response.data);
         setGrades([]);

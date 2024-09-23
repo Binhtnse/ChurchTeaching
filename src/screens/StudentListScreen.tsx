@@ -3,7 +3,8 @@ import { Table, Input, Button, Space, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useAuthState } from '../hooks/useAuthState';
-import { useNavigate } from 'react-router-dom';
+import ForbiddenScreen from './ForbiddenScreen';
+import axios from 'axios';
 
 interface Student {
   key: string;
@@ -15,34 +16,35 @@ interface Student {
 }
 
 const StudentListScreen: React.FC = () => {
-  const { isLoggedIn, role } = useAuthState();
-  const navigate = useNavigate();
+  const { isLoggedIn, role, checkAuthState } = useAuthState();
+  const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      message.error('Bạn cần đăng nhập để xem danh sách học sinh');
-      navigate('/login');
-      return;
-    }
+    checkAuthState();
+  }, [checkAuthState]);
 
-    if (role !== 'TEACHER' && role !== 'ADMIN') {
-      message.error('Bạn không có quyền truy cập trang này');
-      navigate('/');
-      return;
+  useEffect(() => {
+    if (isLoggedIn && role === 'CATECHIST') {
+      fetchStudents();
     }
+  }, [isLoggedIn, role]);
 
-    // Fetch students data here
-    // For now, we'll use dummy data
-    const dummyData: Student[] = [
-      { key: '1', stt: 1, name: 'Nguyễn Văn A', phone: '0123456789', gender: 'Nam', email: 'nguyenvana@example.com' },
-      { key: '2', stt: 2, name: 'Trần Thị B', phone: '0987654321', gender: 'Nữ', email: 'tranthib@example.com' },
-      // Add more dummy data as needed
-    ];
-    setStudents(dummyData);
-  }, [isLoggedIn, role, navigate]);
+  const fetchStudents = async () => {
+    setLoading(true);
+    try {
+      // Replace with your actual API endpoint
+      const response = await axios.get('https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=1');
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      message.error('Failed to fetch students');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns: ColumnsType<Student> = [
     { title: 'STT', dataIndex: 'stt', key: 'stt' },
@@ -78,6 +80,10 @@ const StudentListScreen: React.FC = () => {
     console.log('Taking attendance');
   };
 
+  if (!isLoggedIn || role !== 'CATECHIST') {
+    return <ForbiddenScreen />;
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between mb-4">
@@ -92,7 +98,7 @@ const StudentListScreen: React.FC = () => {
           <Button type="primary" onClick={handleAttendance}>Điểm danh</Button>
         </Space>
       </div>
-      <Table columns={columns} dataSource={students} />
+      <Table columns={columns} dataSource={students} loading={loading} />
     </div>
   );
 };

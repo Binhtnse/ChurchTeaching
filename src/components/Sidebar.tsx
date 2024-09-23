@@ -13,6 +13,7 @@ import {
 import type { MenuProps } from "antd";
 import { Menu } from "antd";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 type MenuItem = Required<MenuProps>["items"][number];
 
@@ -105,6 +106,13 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
         icon: <SettingOutlined />,
       },
     ],
+    GUEST: [
+      {
+        key: "enroll",
+        label: "Đăng ký học",
+        icon: <FormOutlined />,
+      },
+    ],
   };
 
   const authItem: MenuItem = {
@@ -113,18 +121,12 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
     icon: isLoggedIn ? <LogoutOutlined /> : <UnlockOutlined />,
   };
 
-  const validRoles = ["STUDENT", "CATECHIST", "PARENT", "ADMIN"];
+  const validRoles = ["STUDENT", "CATECHIST", "PARENT", "ADMIN", "GUEST"];
   const safeRole = validRoles.includes(role.toUpperCase())
     ? role.toUpperCase()
-    : "";
+    : "GUEST";
 
-  return [
-    ...commonItems,
-    ...(isLoggedIn && roleSpecificItems[safeRole]
-      ? roleSpecificItems[safeRole]
-      : []),
-    authItem,
-  ];
+  return [...commonItems, ...(roleSpecificItems[safeRole] || []), authItem];
 };
 
 const Sidebar: React.FC<{ role: string; isLoggedIn: boolean }> = ({
@@ -133,20 +135,27 @@ const Sidebar: React.FC<{ role: string; isLoggedIn: boolean }> = ({
 }) => {
   const navigate = useNavigate();
 
-  const onClick: MenuProps["onClick"] = (e) => {
+  const onClick: MenuProps["onClick"] = async (e) => {
     if (e.key === "login") {
       navigate("/login");
     } else if (e.key === "logout") {
-      // Clear user data from localStorage
-      localStorage.removeItem("userLogin");
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      navigate("/login");
+      try {
+        await axios.post(
+          "https://sep490-backend-production.up.railway.app/api/v1/user/logout"
+        );
+        // Clear user data from localStorage
+        localStorage.removeItem("userLogin");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        navigate("/login");
+      } catch (error) {
+        console.error("Logout failed:", error);
+        // You might want to show an error message to the user here
+      }
     } else {
       navigate(`/${e.key}`);
     }
   };
-
   const items = getMenuItems(role, isLoggedIn);
 
   return (

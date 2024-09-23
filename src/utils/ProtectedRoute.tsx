@@ -13,14 +13,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children 
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!isLoggedInRef.current) {
+      if (!isLoggedInRef.current && !allowedRoles?.includes("GUEST")) {
         navigate("/login", { replace: true });
       }
     }, 100);
     return () => clearTimeout(timer);
-  }, [isLoggedInRef, navigate]);
+  }, [isLoggedInRef, navigate, allowedRoles]);
 
-  if (!isLoggedInRef.current) {
+  if (!isLoggedInRef.current && !allowedRoles?.includes("GUEST")) {
     return null; // Return null to prevent flash of content
   }
 

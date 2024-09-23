@@ -4,7 +4,7 @@ import React from 'react';
 export default function MyContent({ children }: { children: React.ReactNode }) {
   return (
     <Content className='px-3 py-20 ml-64'>
-      <main className='h-full bg-white'>{children}</main>
+      <main className='h-full'>{children}</main>
     </Content>
   );
 }

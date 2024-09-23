@@ -18,11 +18,26 @@ export const AppRoutes = createBrowserRouter([
     element: (
       <Layout>
         <Routes>
-          <Route path="/" element={<HomeScreen />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute
+                allowedRoles={[
+                  "GUEST",
+                  "PARENT",
+                  "ADMIN",
+                  "STUDENT",
+                  "CATECHIST",
+                ]}
+              >
+                <HomeScreen />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/enroll"
             element={
-              <ProtectedRoute allowedRoles={["PARENT"]}>
+              <ProtectedRoute allowedRoles={["PARENT", "GUEST"]}>
                 <EnrollScreen />
               </ProtectedRoute>
             }
@@ -72,9 +87,7 @@ export const AppRoutes = createBrowserRouter([
     ),
   },
   {
-    path: '/login',
-    element: (
-      <LoginScreen/>
-    )
-  }
+    path: "/login",
+    element: <LoginScreen />,
+  },
 ]);

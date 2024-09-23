@@ -38,11 +38,11 @@ export const useAuthState = () => {
 
   const resetAuthState = () => {
     setIsLoggedIn(false);
-    setRole("");
+    setRole("GUEST");
     setUserName("");
 
     isLoggedInRef.current = false;
-    roleRef.current = "";
+    roleRef.current = "GUEST";
     userNameRef.current = "";
   };
 
