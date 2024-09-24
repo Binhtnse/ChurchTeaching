@@ -85,7 +85,7 @@ const EnrollDetailScreen: React.FC = () => {
         />
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
           <Flex gap="small" wrap justify="center">
-            <Button type="primary" onClick={() => handleButtonClick("approve")}>Đồng ý</Button>
+            <Button type="primary" onClick={() => handleButtonClick("approve")} loading={loading}>Đồng ý</Button>
             <Button danger onClick={() => handleButtonClick("reject")}>Từ chối</Button>
           </Flex>
         </div>

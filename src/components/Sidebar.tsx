@@ -9,7 +9,8 @@ import {
   LogoutOutlined,
   HistoryOutlined,
   FormOutlined,
-  UserOutlined
+  UserOutlined,
+  SolutionOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu } from "antd";
@@ -54,7 +55,7 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
       },
       {
         key: "account",
-        label: "Account Details",
+        label: "Tài khoản",
         icon: <UserOutlined />,
       },
     ],
@@ -65,7 +66,7 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
         icon: <TeamOutlined />,
         children: [
           { key: "student-list", label: "Danh sách thiếu nhi" },
-          { key: "study-attendance", label: "Xem điểm danh" },
+          { key: "catechist-attendance", label: "Xem điểm danh" },
         ],
       },
       {
@@ -75,7 +76,7 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
       },
       {
         key: "account",
-        label: "Account Details",
+        label: "Tài khoản",
         icon: <UserOutlined />,
       },
     ],
@@ -101,20 +102,30 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
       },
       {
         key: "account",
-        label: "Account Details",
+        label: "Tài khoản",
         icon: <UserOutlined />,
       },
     ],
     ADMIN: [
       {
         key: "users",
-        label: "Quản lý người dùng",
+        label: "Quản lý tài khoản",
         icon: <TeamOutlined />,
+        children: [
+          { key: "account-student", label: "Thiếu nhi thánh thể" },
+          { key: "account-parent", label: "Phụ huynh" },
+          { key: "account-catechist", label: "Giáo lý viên" },
+        ],
       },
       {
         key: "enroll-list",
         label: "Danh sách đăng ký học",
         icon: <TeamOutlined />,
+      },
+      {
+        key: "class-list",
+        label: "Quản lý lớp học",
+        icon: <SolutionOutlined />,
       },
       {
         key: "settings",

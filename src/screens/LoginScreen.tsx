@@ -1,5 +1,5 @@
-import React from "react";
-import { Form, Input, Button, Typography, message } from "antd";
+import React, { useState } from "react";
+import { Form, Input, Button, Typography, message, Modal } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { Image } from "antd";
 import axios from "axios";
@@ -11,6 +11,56 @@ const { Title } = Typography;
 const LoginScreen: React.FC = () => {
   const navigate = useNavigate();
   const { setIsLoggedIn, setRole, setUserName } = useAuthState();
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetFormVisible, setIsResetFormVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [resetForm] = Form.useForm();
+
+  const handlePasswordReset = async () => {
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/user/password/request-reset?email=${encodeURIComponent(
+          resetEmail
+        )}`
+      );
+      message.success(
+        "Mã đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn."
+      );
+      console.log(response)
+      setIsResetFormVisible(true);
+    } catch (error) {
+      console.error("Password reset request failed:", error);
+      message.error(
+        "Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại!"
+      );
+    }
+  };
+
+  const handleResetSubmit = async (values: {
+    email: string;
+    resetTokenCode: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
+    try {
+      const response = await axios.put(
+        "https://sep490-backend-production.up.railway.app/api/v1/user/password/reset",
+        {
+          email: values.email,
+          resetTokenCode: values.resetTokenCode,
+          newPassword: values.newPassword,
+          confirmPassword: values.confirmPassword,
+        }
+      );
+      message.success("Mật khẩu đã được đặt lại thành công!");
+      console.log(response);
+      setIsModalVisible(false);
+      setIsResetFormVisible(false);
+    } catch (error) {
+      console.error("Password reset failed:", error);
+      message.error("Không thể đặt lại mật khẩu. Vui lòng thử lại!");
+    }
+  };
 
   const onFinish = async (values: { account: string; password: string }) => {
     try {
@@ -76,12 +126,16 @@ const LoginScreen: React.FC = () => {
             <Form.Item
               name="password"
               rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
+              className="mb-1"
             >
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder="Mật khẩu"
               />
             </Form.Item>
+            <div className="text-right mb-6">
+              <a onClick={() => setIsModalVisible(true)}>Quên mật khẩu?</a>
+            </div>
             <Form.Item>
               <Button type="primary" htmlType="submit" className="w-full">
                 Đăng nhập
@@ -89,6 +143,83 @@ const LoginScreen: React.FC = () => {
             </Form.Item>
           </Form>
         </div>
+        <Modal
+          title="Đặt lại mật khẩu"
+          visible={isModalVisible}
+          onOk={() =>
+            isResetFormVisible ? resetForm.submit() : handlePasswordReset()
+          }
+          onCancel={() => {
+            setIsModalVisible(false);
+            setIsResetFormVisible(false);
+            resetForm.resetFields();
+          }}
+        >
+          {!isResetFormVisible ? (
+            <Input
+              placeholder="Nhập email của bạn"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+            />
+          ) : (
+            <Form
+              form={resetForm}
+              onFinish={handleResetSubmit}
+              layout="vertical"
+            >
+              <Form.Item
+                name="email"
+                label="Email"
+                rules={[{ required: true, message: "Vui lòng nhập email!" }]}
+              >
+                <Input />
+              </Form.Item>
+              <Form.Item
+                name="resetTokenCode"
+                label="Mã đặt lại mật khẩu"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập mã đặt lại mật khẩu!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+              <Form.Item
+                name="newPassword"
+                label="Mật khẩu mới"
+                rules={[
+                  { required: true, message: "Vui lòng nhập mật khẩu mới!" },
+                ]}
+              >
+                <Input.Password />
+              </Form.Item>
+              <Form.Item
+                name="confirmPassword"
+                label="Xác nhận mật khẩu mới"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng xác nhận mật khẩu mới!",
+                  },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue("newPassword") === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error("Mật khẩu xác nhận không khớp!")
+                      );
+                    },
+                  }),
+                ]}
+              >
+                <Input.Password />
+              </Form.Item>
+            </Form>
+          )}
+        </Modal>
       </div>
     </div>
   );

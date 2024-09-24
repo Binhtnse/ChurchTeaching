@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Descriptions, Spin, message } from 'antd';
+import { Card, Descriptions, Spin, message, Button, Modal, Form, Input } from 'antd';
 import axios from 'axios';
 import { useAuthState } from '../hooks/useAuthState';
 
@@ -11,15 +11,14 @@ interface UserData {
   address: string;
   gender: string;
   phoneNumber: string;
-  role: string;
-  status: string;
-  account: string;
 }
 
 const AccountDetailScreen: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { isLoggedIn} = useAuthState();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { isLoggedIn } = useAuthState();
+  const [form] = Form.useForm();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -50,6 +49,40 @@ const AccountDetailScreen: React.FC = () => {
     fetchUserData();
   }, [isLoggedIn]);
 
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+  };
+
+  const handleChangePassword = async (values: { oldPassword: string; newPassword: string }) => {
+    try {
+      const token = localStorage.getItem('token'); // Assuming the token is stored in localStorage
+      const response = await axios.post(
+        'https://sep490-backend-production.up.railway.app/api/v1/user/change-password',
+        {
+          oldPassword: values.oldPassword,
+          newPassword: values.newPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      message.success('Password changed successfully');
+      console.log(response);
+      setIsModalVisible(false);
+      form.resetFields();
+    } catch (error) {
+      console.error('Error changing password:', error);
+      message.error('Failed to change password');
+    }
+  };
+
   if (loading) {
     return <Spin size="large" className="flex justify-center items-center h-screen" />;
   }
@@ -72,11 +105,58 @@ const AccountDetailScreen: React.FC = () => {
           <Descriptions.Item label="Address">{userData.address}</Descriptions.Item>
           <Descriptions.Item label="Gender">{userData.gender}</Descriptions.Item>
           <Descriptions.Item label="Phone Number">{userData.phoneNumber}</Descriptions.Item>
-          <Descriptions.Item label="Role">{userData.role}</Descriptions.Item>
-          <Descriptions.Item label="Status">{userData.status}</Descriptions.Item>
-          <Descriptions.Item label="Account">{userData.account}</Descriptions.Item>
         </Descriptions>
+        <Button type="primary" onClick={showModal} className="mt-4">
+          Change Password
+        </Button>
       </Card>
+
+      <Modal
+        title="Change Password"
+        visible={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+      >
+        <Form form={form} onFinish={handleChangePassword} layout="vertical">
+          <Form.Item
+            name="oldPassword"
+            label="Old Password"
+            rules={[{ required: true, message: 'Please input your old password!' }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="newPassword"
+            label="New Password"
+            rules={[{ required: true, message: 'Please input your new password!' }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="Confirm New Password"
+            dependencies={['newPassword']}
+            rules={[
+              { required: true, message: 'Please confirm your new password!' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('newPassword') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('The two passwords do not match!'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Change Password
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
