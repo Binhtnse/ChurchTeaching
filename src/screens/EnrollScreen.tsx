@@ -68,6 +68,169 @@ const EnrollScreen: React.FC = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isSurveyLoading, setIsSurveyLoading] = useState(true);
+  const [currentGroup, setCurrentGroup] = useState(0);
+
+  const questionGroups = [
+    { title: "Thông tin phụ huynh", questions: [1, 2, 3, 4, 5, 6] },
+    {
+      title: "Thông tin thiếu nhi",
+      fields: ["major", "grade"],
+      questions: [7, 8, 9, 11, 12, 19],
+    },
+    {
+      title: "Thông tin liên quan khác",
+      fields: ["image"],
+      questions: [10, 13, 14, 15, 16, 17, 18],
+    },
+  ];
+
+  const renderQuestionGroup = (groupIndex: number) => {
+    const group = questionGroups[groupIndex];
+    return (
+      <>
+        <h3 className="text-xl font-semibold text-blue-600 mb-4 pb-2 border-b border-blue-300">
+          {group.title}
+        </h3>
+        {group.fields?.includes("major") && (
+          <Form.Item
+            name="major"
+            label="Ngành thiếu nhi muốn đăng ký"
+            rules={[{ required: true, message: "Vui lòng chọn ngành" }]}
+          >
+            <Select onChange={handleMajorChange}>
+              {majors.map((major) => (
+                <Option key={major.id} value={major.id}>
+                  {major.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+        {group.fields?.includes("grade") && (
+          <Form.Item
+            name="grade"
+            label="Khối thiếu nhi muốn đăng ký"
+            rules={[{ required: true, message: "Vui lòng chọn khối" }]}
+          >
+            <Select onChange={handleGradeChange}>
+              {grades.map((grade) => (
+                <Option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+        {group.questions.map((questionId) => {
+          const question = surveyData?.questions.find(
+            (q) => q.questionId === questionId
+          );
+          if (!question) return null;
+          return (
+            <Form.Item
+              key={question.questionId}
+              name={question.questionId}
+              label={question.questionText}
+              rules={[
+                { required: true, message: `Vui lòng trả lời câu hỏi này!` },
+              ]}
+            >
+              {/* Render input based on question type */}
+              {question.questionType === "text" ? (
+                <Input />
+              ) : (
+                <Select placeholder="Chọn một lựa chọn">
+                  {question.options?.map((option) => (
+                    <Option key={option.optionId} value={option.optionId}>
+                      {option.optionText}
+                    </Option>
+                  ))}
+                </Select>
+              )}
+            </Form.Item>
+          );
+        })}
+        {group.fields?.includes("image") && (
+          <Form.Item
+            name="image"
+            label="Hình ảnh bằng chứng"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => {
+              if (Array.isArray(e)) {
+                return e;
+              }
+              return e && e.fileList;
+            }}
+          >
+            <Upload
+              name="image"
+              listType="picture-card"
+              className="avatar-uploader"
+              showUploadList={false}
+              beforeUpload={(file) => {
+                const isJpgOrPng =
+                  file.type === "image/jpeg" || file.type === "image/png";
+                if (!isJpgOrPng) {
+                  message.error("You can only upload JPG/PNG file!");
+                }
+                const isLt2M = file.size / 1024 / 1024 < 2;
+                if (!isLt2M) {
+                  message.error("Image must smaller than 2MB!");
+                }
+                return isJpgOrPng && isLt2M;
+              }}
+              customRequest={async ({ file, onSuccess }) => {
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("upload_preset", "ml_default");
+
+                try {
+                  const response = await axios.post(
+                    `https://api.cloudinary.com/v1_1/dlhd1ztab/image/upload`,
+                    formData
+                  );
+                  if (onSuccess) {
+                    onSuccess(response.data.public_id);
+                  }
+                  setImageUrl(response.data.public_id);
+                } catch (error) {
+                  console.error("Upload failed:", error);
+                }
+              }}
+            >
+              {imageUrl ? (
+                <AdvancedImage
+                  cldImg={cld
+                    .image(imageUrl)
+                    .resize(fill().width(100).height(100))}
+                />
+              ) : (
+                <div>
+                  <PlusOutlined />
+                  <div style={{ marginTop: 8 }}>Upload</div>
+                </div>
+              )}
+            </Upload>
+          </Form.Item>
+        )}
+      </>
+    );
+  };
+
+  const nextGroup = () => {
+    form
+      .validateFields(questionGroups[currentGroup].questions)
+      .then(() => {
+        setCurrentGroup(currentGroup + 1);
+      })
+      .catch((error) => {
+        console.error("Validation failed:", error);
+      });
+  };
+
+  const prevGroup = () => {
+    setCurrentGroup(currentGroup - 1);
+  };
 
   useEffect(() => {
     if (isLoggedIn || role === "GUEST") {
@@ -109,7 +272,11 @@ const EnrollScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/grade?page=0&size=10"
       );
-      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
         setGrades(response.data.data);
       } else {
         console.error("Unexpected response structure:", response.data);
@@ -196,120 +363,20 @@ const EnrollScreen: React.FC = () => {
           style={{ maxWidth: 600 }}
           scrollToFirstError
         >
-          <h2>{surveyData.surveyTitle}</h2>
-          <Form.Item
-            name="major"
-            label="Ngành bạn muốn đăng ký"
-            rules={[{ required: true, message: "Please select a major" }]}
-          >
-            <Select onChange={handleMajorChange}>
-              {majors.map((major) => (
-                <Option key={major.id} value={major.id}>
-                  {major.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="grade"
-            label="Khối bạn muốn đăng ký"
-            rules={[{ required: true, message: "Please select a grade" }]}
-          >
-            <Select onChange={handleGradeChange}>
-              {grades.map((grade) => (
-                <Option key={grade.id} value={grade.id}>
-                  {grade.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          {surveyData.questions.map((question) => (
-            <Form.Item
-              key={question.questionId}
-              name={question.questionId}
-              label={question.questionText}
-              rules={[
-                { required: true, message: `Vui lòng trả lời câu hỏi này!` },
-              ]}
-            >
-              {question.questionType === "text" ? (
-                <Input />
-              ) : (
-                <Select placeholder="Chọn một lựa chọn">
-                  {question.options?.map((option) => (
-                    <Option key={option.optionId} value={option.optionId}>
-                      {option.optionText}
-                    </Option>
-                  ))}
-                </Select>
-              )}
-            </Form.Item>
-          ))}
-          <Form.Item
-            name="image"
-            label="Upload Image"
-            valuePropName="fileList"
-            getValueFromEvent={(e) => {
-              if (Array.isArray(e)) {
-                return e;
-              }
-              return e && e.fileList;
-            }}
-          >
-            <Upload
-              name="image"
-              listType="picture-card"
-              className="avatar-uploader"
-              showUploadList={false}
-              beforeUpload={(file) => {
-                const isJpgOrPng =
-                  file.type === "image/jpeg" || file.type === "image/png";
-                if (!isJpgOrPng) {
-                  message.error("You can only upload JPG/PNG file!");
-                }
-                const isLt2M = file.size / 1024 / 1024 < 2;
-                if (!isLt2M) {
-                  message.error("Image must smaller than 2MB!");
-                }
-                return isJpgOrPng && isLt2M;
-              }}
-              customRequest={async ({ file, onSuccess }) => {
-                const formData = new FormData();
-                formData.append("file", file);
-                formData.append("upload_preset", "ml_default");
-
-                try {
-                  const response = await axios.post(
-                    `https://api.cloudinary.com/v1_1/dlhd1ztab/image/upload`,
-                    formData
-                  );
-                  if (onSuccess) {
-                    onSuccess(response.data.public_id);
-                  }
-                  setImageUrl(response.data.public_id);
-                } catch (error) {
-                  console.error("Upload failed:", error);
-                }
-              }}
-            >
-              {imageUrl ? (
-                <AdvancedImage
-                  cldImg={cld
-                    .image(imageUrl)
-                    .resize(fill().width(100).height(100))}
-                />
-              ) : (
-                <div>
-                  <PlusOutlined />
-                  <div style={{ marginTop: 8 }}>Upload</div>
-                </div>
-              )}
-            </Upload>
-          </Form.Item>
+          <h1 className="text-3xl font-bold text-blue-500 text-center mb-6 pb-3 border-b-2 border-blue-500">
+            {surveyData.surveyTitle}
+          </h1>
+          {renderQuestionGroup(currentGroup)}
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading}>
-              Đăng ký
-            </Button>
+            {currentGroup > 0 && <Button onClick={prevGroup}>Quay lại</Button>}
+            {currentGroup < questionGroups.length - 1 && (
+              <Button onClick={nextGroup}>Tiếp theo</Button>
+            )}
+            {currentGroup === questionGroups.length - 1 && (
+              <Button type="primary" htmlType="submit" loading={loading}>
+                Đăng ký
+              </Button>
+            )}
           </Form.Item>
         </Form>
       </div>
