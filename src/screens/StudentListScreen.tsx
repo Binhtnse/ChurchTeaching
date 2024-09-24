@@ -35,9 +35,12 @@ const StudentListScreen: React.FC = () => {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
       const response = await axios.get('https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=1');
-      setStudents(response.data);
+      if (response.data && response.data.data && Array.isArray(response.data.data.students)) {
+        setStudents(response.data.data.students);
+      } else {
+        setStudents([]);
+      }
     } catch (error) {
       console.error('Error fetching students:', error);
       message.error('Failed to fetch students');

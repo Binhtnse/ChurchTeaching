@@ -86,7 +86,7 @@ const EnrollListScreen: React.FC = () => {
       render: (_: unknown, __: unknown, index: number) => index + 1,
     },
     {
-      title: "Tên phụ huynh đăng ký",
+      title: "Người làm đơn đăng ký",
       dataIndex: "name",
       key: "name",
     },

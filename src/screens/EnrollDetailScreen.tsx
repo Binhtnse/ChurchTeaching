@@ -44,10 +44,21 @@ const EnrollDetailScreen: React.FC = () => {
     fetchEnrollmentData();
   }, [id]);
 
-  const handleButtonClick = (action: string) => {
-    // Implement approval/rejection logic here
-    console.log(`${action} clicked for enrollment ${id}`);
-    navigate("/enroll-list");
+  const handleButtonClick = async (action: string) => {
+    try {
+      if (action === "approve") {
+        const response = await axios.get(`https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/approve`);
+        console.log("Approval response:", response.data);
+        message.success("Enrollment approved successfully");
+      } else {
+        // Existing rejection logic (if any)
+        console.log(`Rejection clicked for enrollment ${id}`);
+      }
+      navigate("/enroll-list");
+    } catch (error) {
+      console.error(`Error ${action === "approve" ? "approving" : "rejecting"} enrollment:`, error);
+      message.error(`Failed to ${action} enrollment`);
+    }
   };
 
   if (loading) {

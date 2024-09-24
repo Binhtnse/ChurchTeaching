@@ -199,7 +199,7 @@ const EnrollScreen: React.FC = () => {
           <h2>{surveyData.surveyTitle}</h2>
           <Form.Item
             name="major"
-            label="Major"
+            label="Ngành bạn muốn đăng ký"
             rules={[{ required: true, message: "Please select a major" }]}
           >
             <Select onChange={handleMajorChange}>
@@ -212,7 +212,7 @@ const EnrollScreen: React.FC = () => {
           </Form.Item>
           <Form.Item
             name="grade"
-            label="Grade"
+            label="Khối bạn muốn đăng ký"
             rules={[{ required: true, message: "Please select a grade" }]}
           >
             <Select onChange={handleGradeChange}>
