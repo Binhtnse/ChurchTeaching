@@ -19,8 +19,6 @@ const StudentListScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     checkAuthState();
@@ -58,20 +56,14 @@ const StudentListScreen: React.FC = () => {
     {
       title: 'Hành động',
       key: 'action',
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      render: (_, record) => (
+      render: () => (
         <Space size="middle">
           <Button type="link">Sửa</Button>
           <Button type="link" danger>Xóa</Button>
         </Space>
-      ),
-    },
+      ),    },
   ];
 
-  const handleSearch = (value: string) => {
-    setSearchText(value);
-    // Implement search logic here
-  };
 
   const handleViewClassGrades = () => {
     // Implement view class grades logic
@@ -93,7 +85,7 @@ const StudentListScreen: React.FC = () => {
         <Input
           placeholder="Tìm kiếm thiếu nhi"
           prefix={<SearchOutlined />}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => console.log(e.target.value)}
           className="w-64"
         />
         <Space>
