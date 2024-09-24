@@ -1,14 +1,23 @@
 import React, { useState, useEffect, startTransition } from "react";
-import { Button, Form, Input, Select, Upload, message } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  Select,
+  Upload,
+  UploadFile,
+  message,
+  DatePicker,
+} from "antd";
 import axios from "axios";
-import { PlusOutlined } from "@ant-design/icons";
+import { UploadOutlined } from "@ant-design/icons";
 import EnrollResultScreen from "./EnrollResultScreen";
 import { useAuthState } from "../hooks/useAuthState";
-import { AdvancedImage } from "@cloudinary/react";
-import { fill } from "@cloudinary/url-gen/actions/resize";
-import cld from "../utils/Cloudinary";
+import dayjs, { Dayjs } from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
 const { Option } = Select;
+dayjs.extend(customParseFormat);
 
 interface Question {
   questionId: number;
@@ -66,15 +75,17 @@ const EnrollScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [majors, setMajors] = useState<Major[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isSurveyLoading, setIsSurveyLoading] = useState(true);
   const [currentGroup, setCurrentGroup] = useState(0);
+  const [fileList, setFileList] = useState<unknown[]>([]);
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const [groupData, setGroupData] = useState<{ [key: string]: unknown }>({});
 
   const questionGroups = [
     { title: "Thông tin phụ huynh", questions: [1, 2, 3, 4, 5, 6] },
     {
       title: "Thông tin thiếu nhi",
-      fields: ["major", "grade"],
+      fields: ["major", "gradeId"],
       questions: [7, 8, 9, 11, 12, 19],
     },
     {
@@ -83,6 +94,34 @@ const EnrollScreen: React.FC = () => {
       questions: [10, 13, 14, 15, 16, 17, 18],
     },
   ];
+
+  const uploadToCloudinary = async (file: File) => {
+    const CLOUD_NAME = "dlhd1ztab";
+    const PRESET_NAME = "qtsuml94";
+    const FOLDER_NAME = "do an";
+    const api = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", PRESET_NAME);
+    formData.append("folder", FOLDER_NAME);
+
+    try {
+      const response = await axios.post(api, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data.secure_url;
+    } catch (error) {
+      console.error("Upload failed:", error);
+      throw error;
+    }
+  };
+
+  const handleChange = ({ fileList: newFileList }: { fileList: unknown[] }) => {
+    setFileList(newFileList);
+  };
 
   const renderQuestionGroup = (groupIndex: number) => {
     const group = questionGroups[groupIndex];
@@ -106,9 +145,9 @@ const EnrollScreen: React.FC = () => {
             </Select>
           </Form.Item>
         )}
-        {group.fields?.includes("grade") && (
+        {group.fields?.includes("gradeId") && (
           <Form.Item
-            name="grade"
+            name="gradeId"
             label="Khối thiếu nhi muốn đăng ký"
             rules={[{ required: true, message: "Vui lòng chọn khối" }]}
           >
@@ -132,11 +171,29 @@ const EnrollScreen: React.FC = () => {
               name={question.questionId}
               label={question.questionText}
               rules={[
-                { required: true, message: `Vui lòng trả lời câu hỏi này!` },
+                // Remove required rule for the "Thông tin liên quan khác" group
+                ...(groupIndex !== 2
+                  ? [
+                      {
+                        required: true,
+                        message: `Vui lòng trả lời câu hỏi này!`,
+                      },
+                    ]
+                  : []),
               ]}
             >
-              {/* Render input based on question type */}
-              {question.questionType === "text" ? (
+              {question.questionId === 4 ||
+              question.questionId === 13 ||
+              question.questionId === 8 ? (
+                <DatePicker
+                  format="DD-MM-YYYY"
+                  onChange={(date) => {
+                    form.setFieldsValue({
+                      [question.questionId]: date,
+                    });
+                  }}
+                />
+              ) : question.questionType === "text" ? (
                 <Input />
               ) : (
                 <Select placeholder="Chọn một lựa chọn">
@@ -164,9 +221,10 @@ const EnrollScreen: React.FC = () => {
           >
             <Upload
               name="image"
-              listType="picture-card"
-              className="avatar-uploader"
-              showUploadList={false}
+              listType="text"
+              multiple={true}
+              fileList={fileList as UploadFile[]}
+              onChange={handleChange}
               beforeUpload={(file) => {
                 const isJpgOrPng =
                   file.type === "image/jpeg" || file.type === "image/png";
@@ -180,36 +238,18 @@ const EnrollScreen: React.FC = () => {
                 return isJpgOrPng && isLt2M;
               }}
               customRequest={async ({ file, onSuccess }) => {
-                const formData = new FormData();
-                formData.append("file", file);
-                formData.append("upload_preset", "ml_default");
-
                 try {
-                  const response = await axios.post(
-                    `https://api.cloudinary.com/v1_1/dlhd1ztab/image/upload`,
-                    formData
-                  );
+                  const secureUrl = await uploadToCloudinary(file as File);
                   if (onSuccess) {
-                    onSuccess(response.data.public_id);
+                    onSuccess(secureUrl);
                   }
-                  setImageUrl(response.data.public_id);
+                  setUploadedUrls((prevUrls) => [...prevUrls, secureUrl]);
                 } catch (error) {
                   console.error("Upload failed:", error);
                 }
               }}
             >
-              {imageUrl ? (
-                <AdvancedImage
-                  cldImg={cld
-                    .image(imageUrl)
-                    .resize(fill().width(100).height(100))}
-                />
-              ) : (
-                <div>
-                  <PlusOutlined />
-                  <div style={{ marginTop: 8 }}>Upload</div>
-                </div>
-              )}
+              <Button icon={<UploadOutlined />}>Upload Images</Button>
             </Upload>
           </Form.Item>
         )}
@@ -218,9 +258,9 @@ const EnrollScreen: React.FC = () => {
   };
 
   const nextGroup = () => {
-    form
-      .validateFields(questionGroups[currentGroup].questions)
-      .then(() => {
+    form.validateFields()
+      .then((values) => {
+        setGroupData(prevData => ({ ...prevData, ...values }));
         setCurrentGroup(currentGroup + 1);
       })
       .catch((error) => {
@@ -229,8 +269,14 @@ const EnrollScreen: React.FC = () => {
   };
 
   const prevGroup = () => {
+    const currentValues = form.getFieldsValue();
+    setGroupData(prevData => ({ ...prevData, ...currentValues }));
     setCurrentGroup(currentGroup - 1);
   };
+
+  useEffect(() => {
+    form.setFieldsValue(groupData);
+  }, [currentGroup, form, groupData]);
 
   useEffect(() => {
     if (isLoggedIn || role === "GUEST") {
@@ -294,31 +340,34 @@ const EnrollScreen: React.FC = () => {
 
   const handleGradeChange = (value: number) => {
     console.log(`Selected grade ID: ${value}`);
+    form.setFieldsValue({ gradeId: value });
   };
 
   const onFinish = async (values: { [key: string]: unknown }) => {
     setLoading(true);
-    console.log("Received values of form: ", values);
+    console.log("Form values before processing: ", values);
+    const allData = { ...groupData, ...values };
+    console.log("All form data:", allData);
 
     const requestBody = {
       surveyId: 1,
-      note: values.note || "Đây là thông tin thêm cho khảo sát này.",
-      gradeId: values.grade,
-      answers: surveyData?.questions.map((question) => ({
-        questionId: question.questionId,
-        answerType: question.questionType,
-        answerText:
-          question.questionType === "text" ? values[question.questionId] : null,
-        status: "ACTIVE", // You may want to adjust this based on your requirements
-        selectedOptions:
-          question.questionType === "choice"
-            ? [values[question.questionId]]
-            : [],
-      })),
-      links:
-        values.image && Array.isArray(values.image) && values.image.length > 0
-          ? [values.image[0]]
-          : [],
+      note: allData.note || "Đây là thông tin thêm cho khảo sát này.",
+      gradeId: allData.gradeId as number,
+      answers: surveyData?.questions.map((question) => {
+        const answer = allData[question.questionId];
+        let formattedAnswer = answer;
+        if (question.questionId === 4 || question.questionId === 8 || question.questionId === 13) {
+          formattedAnswer = answer ? dayjs(answer as Dayjs).format('DD-MM-YYYY') : null;
+        }
+        return {
+          questionId: question.questionId,
+          answerType: question.questionType,
+          answerText: formattedAnswer !== undefined ? String(formattedAnswer) : null,
+          status: "ACTIVE",
+          selectedOptions: question.questionType === "choice" ? [formattedAnswer] : [],
+        };
+      }),
+      links: uploadedUrls,
     };
 
     console.log("Request body:", JSON.stringify(requestBody, null, 2));
@@ -337,6 +386,16 @@ const EnrollScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = () => {
+    form.validateFields()
+      .then((values) => {
+        onFinish({ ...groupData, ...values });
+      })
+      .catch((error) => {
+        console.error("Validation failed:", error);
+      });
   };
 
   if (isSubmitted) {
@@ -359,6 +418,7 @@ const EnrollScreen: React.FC = () => {
           form={form}
           name="register"
           labelWrap
+          labelAlign="left"
           onFinish={onFinish}
           style={{ maxWidth: 600 }}
           scrollToFirstError
@@ -373,7 +433,7 @@ const EnrollScreen: React.FC = () => {
               <Button onClick={nextGroup}>Tiếp theo</Button>
             )}
             {currentGroup === questionGroups.length - 1 && (
-              <Button type="primary" htmlType="submit" loading={loading}>
+              <Button type="primary" onClick={handleSubmit} loading={loading}>
                 Đăng ký
               </Button>
             )}

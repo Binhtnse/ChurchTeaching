@@ -8,6 +8,7 @@ import StudyGradesScreen from "../screens/StudyGradesScreen";
 import EnrollDetailScreen from "../screens/EnrollDetailScreen";
 import StudyAttendanceScreen from "../screens/StudyAttendanceScreen";
 import StudentListScreen from "../screens/StudentListScreen";
+import AccountDetailScreen from "../screens/AccountDetailScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -79,6 +80,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <EnrollDetailScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT", "STUDENT", "CATECHIST"]}>
+                <AccountDetailScreen />
               </ProtectedRoute>
             }
           />

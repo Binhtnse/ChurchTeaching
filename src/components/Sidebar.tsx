@@ -9,6 +9,7 @@ import {
   LogoutOutlined,
   HistoryOutlined,
   FormOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu } from "antd";
@@ -51,6 +52,11 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
           { key: "study-attendance", label: "Xem điểm danh" },
         ],
       },
+      {
+        key: "account",
+        label: "Account Details",
+        icon: <UserOutlined />,
+      },
     ],
     CATECHIST: [
       {
@@ -66,6 +72,11 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
         key: "grading",
         label: "Chấm điểm",
         icon: <BookOutlined />,
+      },
+      {
+        key: "account",
+        label: "Account Details",
+        icon: <UserOutlined />,
       },
     ],
     PARENT: [
@@ -87,6 +98,11 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
         key: "enroll",
         label: "Đăng ký học",
         icon: <FormOutlined />,
+      },
+      {
+        key: "account",
+        label: "Account Details",
+        icon: <UserOutlined />,
       },
     ],
     ADMIN: [

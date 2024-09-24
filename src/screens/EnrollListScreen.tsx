@@ -72,6 +72,7 @@ const EnrollListScreen: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, role]);
 
   const handlePaginationChange = (page: number, pageSize: number) => {
