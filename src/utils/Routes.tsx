@@ -9,7 +9,7 @@ import EnrollDetailScreen from "../screens/EnrollDetailScreen";
 import StudyAttendanceScreen from "../screens/StudyAttendanceScreen";
 import StudentListScreen from "../screens/StudentListScreen";
 import AccountDetailScreen from "../screens/AccountDetailScreen";
-import AdminStudentListScreen from "../screens/AdminStudentListScreen";
+import AdminUserListScreen from "../screens/AdminUserListScreen";
 import AdminClassListScreen from "../screens/AdminClassListScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
@@ -94,10 +94,10 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/account-student"
+            path="/user-list"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
-                <AdminStudentListScreen />
+                <AdminUserListScreen />
               </ProtectedRoute>
             }
           />

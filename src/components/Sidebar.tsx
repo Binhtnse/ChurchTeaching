@@ -108,14 +108,9 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
     ],
     ADMIN: [
       {
-        key: "users",
+        key: "user-list",
         label: "Quản lý tài khoản",
         icon: <TeamOutlined />,
-        children: [
-          { key: "account-student", label: "Thiếu nhi thánh thể" },
-          { key: "account-parent", label: "Phụ huynh" },
-          { key: "account-catechist", label: "Giáo lý viên" },
-        ],
       },
       {
         key: "enroll-list",
