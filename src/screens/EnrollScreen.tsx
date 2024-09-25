@@ -46,7 +46,6 @@ interface Grade {
     id: number;
     name: string;
     description: string | null;
-    status: string;
   };
   createdBy: string | null;
   createdDate: string | null;
@@ -86,12 +85,12 @@ const EnrollScreen: React.FC = () => {
     {
       title: "Thông tin thiếu nhi",
       fields: ["major", "gradeId"],
-      questions: [7, 8, 9, 11, 12, 19],
+      questions: [7, 8, 9, 10],
     },
     {
       title: "Thông tin liên quan khác",
       fields: ["image"],
-      questions: [10, 13, 14, 15, 16, 17, 18],
+      questions: [11, 12, 13, 14, 15, 16],
     },
   ];
 
@@ -182,9 +181,10 @@ const EnrollScreen: React.FC = () => {
                   : []),
               ]}
             >
-              {question.questionId === 4 ||
+              {question.questionId === 9 ||
+              question.questionId === 11 ||
               question.questionId === 13 ||
-              question.questionId === 8 ? (
+              question.questionId === 15 ? (
                 <DatePicker
                   format="DD-MM-YYYY"
                   onChange={(date) => {
@@ -282,7 +282,6 @@ const EnrollScreen: React.FC = () => {
     if (isLoggedIn || role === "GUEST") {
       fetchSurveyData();
       fetchMajors();
-      fetchGrades();
     }
   }, [isLoggedIn, role]);
 
@@ -313,17 +312,13 @@ const EnrollScreen: React.FC = () => {
     }
   };
 
-  const fetchGrades = async () => {
+  const fetchGrades = async (majorId: number) => {
     try {
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/grade?page=0&size=10"
+        `https://sep490-backend-production.up.railway.app/api/v1/major/${majorId}`
       );
-      if (
-        response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data)
-      ) {
-        setGrades(response.data.data);
+      if (response.data && response.data.data && Array.isArray(response.data.data.grades)) {
+        setGrades(response.data.data.grades);
       } else {
         console.error("Unexpected response structure:", response.data);
         setGrades([]);
@@ -336,6 +331,7 @@ const EnrollScreen: React.FC = () => {
 
   const handleMajorChange = (value: number) => {
     console.log(`Selected major ID: ${value}`);
+    fetchGrades(value);
   };
 
   const handleGradeChange = (value: number) => {
@@ -356,7 +352,7 @@ const EnrollScreen: React.FC = () => {
       answers: surveyData?.questions.map((question) => {
         const answer = allData[question.questionId];
         let formattedAnswer = answer;
-        if (question.questionId === 4 || question.questionId === 8 || question.questionId === 13) {
+        if (question.questionId === 9 || question.questionId === 11 || question.questionId === 13 || question.questionId === 15) {
           formattedAnswer = answer ? dayjs(answer as Dayjs).format('DD-MM-YYYY') : null;
         }
         return {
