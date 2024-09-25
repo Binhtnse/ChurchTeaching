@@ -97,11 +97,12 @@ const LoginScreen: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
-      <div className="w-full md:w-1/2 h-screen md:h-full">
+      <div className="w-full md:w-1/2">
         <Image
           src="https://img.texasmonthly.com/2023/07/texas-painted-churches-1.jpg?auto=compress&crop=faces&fit=fit&fm=jpg&h=0&ixlib=php-3.3.1&q=45&w=1250"
           alt="Church"
-          className="object-cover w-full h-screen"
+          className="object-cover w-full"
+          style={{ height: '100vh' }}
         />
       </div>
       <div className="w-full md:w-1/2 flex items-center justify-center bg-white p-4">
