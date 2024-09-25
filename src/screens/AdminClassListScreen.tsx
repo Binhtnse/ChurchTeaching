@@ -3,6 +3,7 @@ import { Table, Space, Button, message } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 interface ClassData {
   id: number;
@@ -88,10 +89,8 @@ const AdminClassListScreen: React.FC = () => {
       key: "action",
       render: () => (
         <Space size="middle">
-          <Button type="link">Edit</Button>
-          <Button type="link" danger>
-            Delete
-          </Button>
+          <Button type="primary" size="small" icon={<EditOutlined />}>Edit</Button>
+          <Button danger size="small" icon={<DeleteOutlined />}>Delete</Button>
         </Space>
       ),    },
   ];
@@ -101,20 +100,26 @@ const AdminClassListScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Danh sách lớp giáo lý</h1>
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold text-blue-600">Danh sách lớp giáo lý</h1>
       </div>
       <Table
         columns={columns}
         dataSource={classes}
-        rowKey="id"
+        onRow={() => {
+          return {
+            className: 'hover:bg-gray-100 transition-colors duration-200',
+          };
+        }}
+        rowKey="id"        
         loading={loading}
-        className="shadow-lg"
+        className="bg-white rounded-lg shadow-lg"
         pagination={{
           pageSize: 10,
           total: classes.length,
           showSizeChanger: false,
+          className: "bg-white p-4",
         }}
       />
     </div>

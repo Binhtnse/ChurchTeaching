@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { DatePicker, Table, Typography, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useAuthState } from "../hooks/useAuthState";
@@ -54,17 +54,7 @@ const StudyGradesScreen: React.FC = () => {
   const [averageScore, setAverageScore] = useState(0);
   const [data, setData] = useState<GradeData[]>([]);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchGradesData();
-    }
-  }, [isLoggedIn]);
-
-  if (!isLoggedIn || (role !== "PARENT" && role !== "STUDENT")) {
-    return <div>You do not have permission to view this page.</div>;
-  }
-
-  const fetchGradesData = async () => {
+  const fetchGradesData = useCallback(async () => {
     // Implement API call to fetch grades data
     // For now, we'll use mock data
     const mockData: GradeData[] = [
@@ -106,7 +96,17 @@ const StudyGradesScreen: React.FC = () => {
     ];
     setData(mockData);
     calculateAverageScore(mockData);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchGradesData();
+    }
+  }, [isLoggedIn, fetchGradesData]);
+
+  if (!isLoggedIn || (role !== "PARENT" && role !== "STUDENT")) {
+    return <div>You do not have permission to view this page.</div>;
+  }
 
   const calculateAverageScore = (grades: GradeData[]) => {
     const total = grades.reduce(
@@ -157,5 +157,4 @@ const StudyGradesScreen: React.FC = () => {
     </div>
   );
 };
-
 export default StudyGradesScreen;

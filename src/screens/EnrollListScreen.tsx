@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Tag, Pagination } from "antd";
+import { Table, Tag, Pagination, Input, Select } from "antd";
 import { Link } from "react-router-dom";
 import {
   CheckCircleOutlined,
@@ -17,10 +17,15 @@ interface DataType {
   major: string;
 }
 
+const { Search } = Input;
+const { Option } = Select;
+
 const EnrollListScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [dataSource, setDataSource] = useState<DataType[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -36,7 +41,7 @@ const EnrollListScreen: React.FC = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}`
+          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}&name=${searchText}&status=${statusFilter || ''}`
         );
         const { content, totalElements } = response.data.data;
         const formattedData = content.map(
@@ -73,10 +78,20 @@ const EnrollListScreen: React.FC = () => {
   useEffect(() => {
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, role]);
+  }, [isLoggedIn, role, searchText, statusFilter]);
 
   const handlePaginationChange = (page: number, pageSize: number) => {
     fetchData(page - 1, pageSize);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchText(value);
+    fetchData(0, pagination.pageSize);
+  };
+  
+  const handleStatusFilter = (value: string | null) => {
+    setStatusFilter(value);
+    fetchData(0, pagination.pageSize);
   };
 
   const columns = [
@@ -141,6 +156,23 @@ const EnrollListScreen: React.FC = () => {
 
   return (
     <div>
+      <div style={{ marginBottom: 16 }}>
+      <Search
+        placeholder="Search by name"
+        onSearch={handleSearch}
+        style={{ width: 200, marginRight: 16 }}
+      />
+      <Select
+        style={{ width: 120 }}
+        placeholder="Filter by status"
+        onChange={handleStatusFilter}
+        allowClear
+      >
+        <Option value="APPROVE">Đồng ý</Option>
+        <Option value="PENDING">Đang chờ</Option>
+        <Option value="REJECT">Từ chối</Option>
+      </Select>
+    </div>
       <Table
         dataSource={dataSource}
         columns={columns}

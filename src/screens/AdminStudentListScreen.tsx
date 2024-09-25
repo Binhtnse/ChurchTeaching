@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Table, message } from "antd";
+import { Table, message, Input } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
+import { SearchOutlined } from "@ant-design/icons";
 
 interface Student {
   id: number;
@@ -16,6 +17,7 @@ interface Student {
 const AdminStudentListScreen: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
   const { isLoggedIn, role, checkAuthState } = useAuthState();
 
   useEffect(() => {
@@ -23,33 +25,37 @@ const AdminStudentListScreen: React.FC = () => {
   }, [checkAuthState]);
 
   useEffect(() => {
-    if (isLoggedIn && role === "ADMIN") {
-      fetchStudents();
-    }
-  }, [isLoggedIn, role]);
-
-  const fetchStudents = async () => {
-    setLoading(true);
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/user/list?page=1&size=10",
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+    const fetchStudents = async () => {
+      if (isLoggedIn && role === "ADMIN") {
+        setLoading(true);
+        try {
+          const accessToken = localStorage.getItem("accessToken");
+          const response = await axios.get(
+            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=1&size=10&search=${searchText}`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+          const studentData = response.data.data.filter(
+            (user: { role: string }) => user.role === "STUDENT"
+          );
+          setStudents(studentData);
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching students:", error);
+          message.error("Failed to load student data");
+          setLoading(false);
         }
-      );
-      const studentData = response.data.data.filter(
-        (user: { role: string }) => user.role === "STUDENT"
-      );
-      setStudents(studentData);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching students:", error);
-      message.error("Failed to load student data");
-      setLoading(false);
-    }
+      }
+    };
+
+    fetchStudents();
+  }, [isLoggedIn, role, searchText]);
+
+  const handleSearch = (value: string) => {
+    setSearchText(value);
   };
 
   const columns = [
@@ -101,7 +107,13 @@ const AdminStudentListScreen: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Danh sách học sinh</h1>
+      <h1 className="text-2xl font-bold mb-4">Danh sách thiếu nhi thánh thể</h1>
+      <Input
+      placeholder="Tìm kiếm theo tên"
+      prefix={<SearchOutlined />}
+      onChange={(e) => handleSearch(e.target.value)}
+      style={{ width: 200, marginBottom: 16 }}
+    />
       <Table
         columns={columns}
         dataSource={students}
@@ -116,6 +128,4 @@ const AdminStudentListScreen: React.FC = () => {
       />
     </div>
   );
-};
-
-export default AdminStudentListScreen;
+};export default AdminStudentListScreen;
