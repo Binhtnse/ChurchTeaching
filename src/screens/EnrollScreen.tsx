@@ -15,6 +15,7 @@ import EnrollResultScreen from "./EnrollResultScreen";
 import { useAuthState } from "../hooks/useAuthState";
 import dayjs, { Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import usePageTitle from "../hooks/usePageTitle";
 
 const { Option } = Select;
 dayjs.extend(customParseFormat);
@@ -66,7 +67,6 @@ const formItemLayout = {
 
 const EnrollScreen: React.FC = () => {
   const { isLoggedIn, role } = useAuthState();
-
   const [form] = Form.useForm();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedChildName, setSubmittedChildName] = useState("");
@@ -79,6 +79,11 @@ const EnrollScreen: React.FC = () => {
   const [fileList, setFileList] = useState<unknown[]>([]);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [groupData, setGroupData] = useState<{ [key: string]: unknown }>({});
+  const { setPageTitle } = usePageTitle();
+
+  useEffect(() => {
+    setPageTitle('Đơn đăng ký học', '#4154f1');
+  }, [setPageTitle]);
 
   const questionGroups = [
     { title: "Thông tin phụ huynh", questions: [1, 2, 3, 4, 5, 6] },

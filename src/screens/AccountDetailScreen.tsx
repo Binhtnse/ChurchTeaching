@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Descriptions, Spin, message, Button, Modal, Form, Input } from 'antd';
 import axios from 'axios';
 import { useAuthState } from '../hooks/useAuthState';
+import usePageTitle from "../hooks/usePageTitle";
 
 interface UserData {
   id: number;
@@ -19,6 +20,11 @@ const AccountDetailScreen: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { isLoggedIn } = useAuthState();
   const [form] = Form.useForm();
+  const { setPageTitle } = usePageTitle();
+
+  useEffect(() => {
+    setPageTitle('Thông tin tài khoản', '#4154f1');
+  }, [setPageTitle]);
 
   useEffect(() => {
     const fetchUserData = async () => {

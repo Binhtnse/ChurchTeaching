@@ -39,7 +39,7 @@ const EnrollListScreen: React.FC = () => {
   }, [checkAuthState]);
 
   useEffect(() => {
-    setPageTitle('Danh sách đăng ký học');
+    setPageTitle('Danh sách đăng ký học', '#4154f1');
   }, [setPageTitle]);
 
 

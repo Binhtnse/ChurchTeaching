@@ -9,6 +9,7 @@ import type { ColumnsType } from "antd/es/table";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
+import usePageTitle from "../hooks/usePageTitle";
 
 const { Title } = Typography;
 
@@ -25,6 +26,11 @@ const StudentListScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
+  const { setPageTitle } = usePageTitle();
+
+  useEffect(() => {
+    setPageTitle('Danh sách thiếu nhi', '#4154f1');
+  }, [setPageTitle]);
 
   useEffect(() => {
     checkAuthState();

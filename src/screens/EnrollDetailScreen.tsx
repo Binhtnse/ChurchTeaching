@@ -32,7 +32,7 @@ const EnrollDetailScreen: React.FC = () => {
   const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
-    setPageTitle('Thông tin đăng ký học');
+    setPageTitle('Thông tin đăng ký học', '#4154f1');
   }, [setPageTitle]);
 
   useEffect(() => {

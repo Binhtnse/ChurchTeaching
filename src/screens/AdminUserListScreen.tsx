@@ -23,7 +23,7 @@ const AdminUserListScreen: React.FC = () => {
   const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
-    setPageTitle('Danh sách tài khoản');
+    setPageTitle('Danh sách tài khoản', '#4154f1');
   }, [setPageTitle]);
 
   useEffect(() => {

@@ -27,7 +27,7 @@ const AdminClassListScreen: React.FC = () => {
   }, [checkAuthState]);
 
   useEffect(() => {
-    setPageTitle('Danh sách lớp học');
+    setPageTitle('Danh sách lớp học', '#4154f1');
   }, [setPageTitle]);
 
   useEffect(() => {

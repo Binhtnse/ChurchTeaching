@@ -1,6 +1,13 @@
-import React from 'react';
+import React, {useEffect} from 'react';
+import usePageTitle from "../hooks/usePageTitle";
 
 const HomeScreen: React.FC = () => {
+    const { setPageTitle } = usePageTitle();
+
+    useEffect(() => {
+        setPageTitle('Trang chủ', '#4154f1');
+      }, [setPageTitle]);
+    
 
     return (
         <div>
