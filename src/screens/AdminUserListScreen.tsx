@@ -1,24 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Table, message, Input, Dropdown, Button, Menu } from "antd";
+import { Table, message, Input, Dropdown, Button, Menu, Tag } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import { SearchOutlined, DownOutlined } from "@ant-design/icons";
+import usePageTitle from "../hooks/usePageTitle";
 
 interface User {
   id: number;
   fullName: string;
-  gender: string;
-  address: string;
-  dob: string;
-  phoneNumber: string;
+  email: string;
+  role: string;
+  status: string;
 }
 
 const AdminUserListScreen: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const { isLoggedIn, role, checkAuthState } = useAuthState();
+  const { setPageTitle } = usePageTitle();
+
+  useEffect(() => {
+    setPageTitle('Danh sách tài khoản');
+  }, [setPageTitle]);
 
   useEffect(() => {
     checkAuthState();
@@ -31,14 +37,23 @@ const AdminUserListScreen: React.FC = () => {
         try {
           const accessToken = localStorage.getItem("accessToken");
           const response = await axios.get(
-            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=1&size=10&search=${searchText}`,
+            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=1&size=10&search=${searchText}&role=${
+              roleFilter || ""
+            }`,
             {
               headers: {
                 Authorization: `Bearer ${accessToken}`,
               },
             }
           );
-          setUsers(response.data.data);
+          const sortedUsers = response.data.data.sort((a: User, b: User) => {
+            const roleOrder = { ADMIN: 0, CATECHIST: 1, PARENT: 2, STUDENT: 3 };
+            return (
+              roleOrder[a.role as keyof typeof roleOrder] -
+              roleOrder[b.role as keyof typeof roleOrder]
+            );
+          });
+          setUsers(sortedUsers);
           setLoading(false);
         } catch (error) {
           console.error("Error fetching users:", error);
@@ -49,7 +64,17 @@ const AdminUserListScreen: React.FC = () => {
     };
 
     fetchUsers();
-  }, [isLoggedIn, role, searchText]);
+  }, [isLoggedIn, role, searchText, roleFilter]);
+
+  const roleFilterMenu = (
+    <Menu onClick={({ key }) => setRoleFilter(key as string)}>
+      <Menu.Item key={null}>Tất cả vai trò</Menu.Item>
+      <Menu.Item key="ADMIN">ADMIN</Menu.Item>
+      <Menu.Item key="CATECHIST">Giáo lý vien</Menu.Item>
+      <Menu.Item key="PARENT">Phụ huynh</Menu.Item>
+      <Menu.Item key="STUDENT">Thiếu nhi thánh thể</Menu.Item>
+    </Menu>
+  );
 
   const handleDownloadTemplate = async () => {
     try {
@@ -115,39 +140,53 @@ const AdminUserListScreen: React.FC = () => {
       render: (_: unknown, __: unknown, index: number) => index + 1,
     },
     {
-      title: "Tên",
+      title: "Họ tên",
       dataIndex: "fullName",
       key: "fullName",
     },
     {
-      title: "Giới tính",
-      dataIndex: "gender",
-      key: "gender",
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
     },
     {
-      title: "Lớp",
-      key: "class",
-      render: () => "N/A",
+      title: "Vai trò",
+      dataIndex: "role",
+      key: "role",
+      render: (role: string) => {
+        let color = "default";
+        switch (role) {
+          case "ADMIN":
+            color = "red";
+            break;
+          case "CATECHIST":
+            color = "green";
+            break;
+          case "PARENT":
+            color = "blue";
+            break;
+          case "STUDENT":
+            color = "orange";
+            break;
+        }
+        return <Tag color={color}>{role}</Tag>;
+      },
+      sorter: (a: User, b: User) => {
+        const roleOrder = { ADMIN: 0, CATECHIST: 1, PARENT: 2, STUDENT: 3 };
+        return (
+          roleOrder[a.role as keyof typeof roleOrder] -
+          roleOrder[b.role as keyof typeof roleOrder]
+        );
+      },
     },
     {
-      title: "Phụ huynh",
-      key: "parent",
-      render: () => "N/A",
-    },
-    {
-      title: "Địa chỉ",
-      dataIndex: "address",
-      key: "address",
-    },
-    {
-      title: "Ngày sinh",
-      dataIndex: "dob",
-      key: "dob",
-    },
-    {
-      title: "Số điện thoại",
-      dataIndex: "phoneNumber",
-      key: "phoneNumber",
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status: string) => {
+        const color = status === "ACTIVE" ? "green" : "red";
+        return <Tag color={color}>{status}</Tag>;
+      },
     },
   ];
 
@@ -158,42 +197,51 @@ const AdminUserListScreen: React.FC = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Danh sách tai khoan</h1>
-      <Dropdown
-        overlay={
-          <Menu>
-            <Menu.Item key="1" onClick={handleDownloadTemplate}>
-              Tải template người dùng
-            </Menu.Item>
-            <Menu.Item key="2">
-              <label htmlFor="upload-template">
-                Tải template người dùng lên
-              </label>
-              <input
-                id="upload-template"
-                type="file"
-                accept=".xlsx,.xls"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    handleUploadTemplate(file);
-                  }
-                }}
-              />
-            </Menu.Item>
-          </Menu>
-        }
-      >
-        <Button>
-          Tùy chọn <DownOutlined />
-        </Button>
-      </Dropdown>
-      <Input
-        placeholder="Tìm kiếm theo tên"
-        prefix={<SearchOutlined />}
-        onChange={(e) => handleSearch(e.target.value)}
-        style={{ width: 200, marginBottom: 16 }}
-      />
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex space-x-4">
+          <Input
+            placeholder="Tìm kiếm theo tên"
+            prefix={<SearchOutlined />}
+            onChange={(e) => handleSearch(e.target.value)}
+            style={{ width: 200 }}
+          />
+          <Dropdown overlay={roleFilterMenu}>
+            <Button>
+              Filter by Role <DownOutlined />
+            </Button>
+          </Dropdown>
+        </div>
+        <Dropdown
+          overlay={
+            <Menu>
+              <Menu.Item key="1" onClick={handleDownloadTemplate}>
+                Tải template người dùng
+              </Menu.Item>
+              <Menu.Item key="2">
+                <label htmlFor="upload-template">
+                  Tải template người dùng lên
+                </label>
+                <input
+                  id="upload-template"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleUploadTemplate(file);
+                    }
+                  }}
+                />
+              </Menu.Item>
+            </Menu>
+          }
+        >
+          <Button>
+            Tùy chọn <DownOutlined />
+          </Button>
+        </Dropdown>
+      </div>
       <Table
         columns={columns}
         dataSource={users}

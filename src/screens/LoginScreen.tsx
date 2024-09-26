@@ -26,7 +26,7 @@ const LoginScreen: React.FC = () => {
       message.success(
         "Mã đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn."
       );
-      console.log(response)
+      console.log(response);
       setIsResetFormVisible(true);
     } catch (error) {
       console.error("Password reset request failed:", error);
@@ -37,7 +37,6 @@ const LoginScreen: React.FC = () => {
   };
 
   const handleResetSubmit = async (values: {
-    email: string;
     resetTokenCode: string;
     newPassword: string;
     confirmPassword: string;
@@ -46,7 +45,7 @@ const LoginScreen: React.FC = () => {
       const response = await axios.put(
         "https://sep490-backend-production.up.railway.app/api/v1/user/password/reset",
         {
-          email: values.email,
+          email: resetEmail,
           resetTokenCode: values.resetTokenCode,
           newPassword: values.newPassword,
           confirmPassword: values.confirmPassword,
@@ -102,7 +101,7 @@ const LoginScreen: React.FC = () => {
           src="https://img.texasmonthly.com/2023/07/texas-painted-churches-1.jpg?auto=compress&crop=faces&fit=fit&fm=jpg&h=0&ixlib=php-3.3.1&q=45&w=1250"
           alt="Church"
           className="object-cover w-full"
-          style={{ height: '100vh' }}
+          style={{ height: "100vh" }}
         />
       </div>
       <div className="w-full md:w-1/2 flex items-center justify-center bg-white p-4">
@@ -168,13 +167,6 @@ const LoginScreen: React.FC = () => {
               onFinish={handleResetSubmit}
               layout="vertical"
             >
-              <Form.Item
-                name="email"
-                label="Email"
-                rules={[{ required: true, message: "Vui lòng nhập email!" }]}
-              >
-                <Input />
-              </Form.Item>
               <Form.Item
                 name="resetTokenCode"
                 label="Mã đặt lại mật khẩu"

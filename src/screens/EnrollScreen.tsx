@@ -258,9 +258,10 @@ const EnrollScreen: React.FC = () => {
   };
 
   const nextGroup = () => {
-    form.validateFields()
+    form
+      .validateFields()
       .then((values) => {
-        setGroupData(prevData => ({ ...prevData, ...values }));
+        setGroupData((prevData) => ({ ...prevData, ...values }));
         setCurrentGroup(currentGroup + 1);
       })
       .catch((error) => {
@@ -270,7 +271,7 @@ const EnrollScreen: React.FC = () => {
 
   const prevGroup = () => {
     const currentValues = form.getFieldsValue();
-    setGroupData(prevData => ({ ...prevData, ...currentValues }));
+    setGroupData((prevData) => ({ ...prevData, ...currentValues }));
     setCurrentGroup(currentGroup - 1);
   };
 
@@ -317,7 +318,11 @@ const EnrollScreen: React.FC = () => {
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/major/${majorId}`
       );
-      if (response.data && response.data.data && Array.isArray(response.data.data.grades)) {
+      if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data.grades)
+      ) {
         setGrades(response.data.data.grades);
       } else {
         console.error("Unexpected response structure:", response.data);
@@ -352,15 +357,24 @@ const EnrollScreen: React.FC = () => {
       answers: surveyData?.questions.map((question) => {
         const answer = allData[question.questionId];
         let formattedAnswer = answer;
-        if (question.questionId === 9 || question.questionId === 11 || question.questionId === 13 || question.questionId === 15) {
-          formattedAnswer = answer ? dayjs(answer as Dayjs).format('DD-MM-YYYY') : null;
+        if (
+          question.questionId === 9 ||
+          question.questionId === 11 ||
+          question.questionId === 13 ||
+          question.questionId === 15
+        ) {
+          formattedAnswer = answer
+            ? dayjs(answer as Dayjs).format("DD-MM-YYYY")
+            : null;
         }
         return {
           questionId: question.questionId,
           answerType: question.questionType,
-          answerText: formattedAnswer !== undefined ? String(formattedAnswer) : null,
+          answerText:
+            formattedAnswer !== undefined ? String(formattedAnswer) : null,
           status: "ACTIVE",
-          selectedOptions: question.questionType === "choice" ? [formattedAnswer] : [],
+          selectedOptions:
+            question.questionType === "choice" ? [formattedAnswer] : [],
         };
       }),
       links: uploadedUrls,
@@ -385,7 +399,8 @@ const EnrollScreen: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    form.validateFields()
+    form
+      .validateFields()
       .then((values) => {
         onFinish({ ...groupData, ...values });
       })
@@ -408,7 +423,7 @@ const EnrollScreen: React.FC = () => {
 
   return (
     <div>
-      <div style={{ marginLeft: "256px", padding: "20px" }}>
+      <div style={{ marginLeft: "256px", padding: "20px" }}>    
         <Form
           {...formItemLayout}
           form={form}
@@ -420,7 +435,7 @@ const EnrollScreen: React.FC = () => {
           scrollToFirstError
         >
           <h1 className="text-3xl font-bold text-blue-500 text-center mb-6 pb-3 border-b-2 border-blue-500">
-            {surveyData.surveyTitle}
+          Bảng điền thông tin phụ huynh và thiếu nhi 
           </h1>
           {renderQuestionGroup(currentGroup)}
           <Form.Item>

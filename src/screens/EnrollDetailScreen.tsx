@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Flex, message } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import usePageTitle from "../hooks/usePageTitle";
 
 interface Answer {
   questionId: number;
@@ -28,6 +29,11 @@ const EnrollDetailScreen: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [approvalLoading, setApprovalLoading] = useState(false);
+  const { setPageTitle } = usePageTitle();
+
+  useEffect(() => {
+    setPageTitle('Thông tin đăng ký học');
+  }, [setPageTitle]);
 
   useEffect(() => {
     const fetchEnrollmentData = async () => {

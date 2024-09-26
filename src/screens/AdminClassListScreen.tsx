@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import usePageTitle from "../hooks/usePageTitle";
 
 interface ClassData {
   id: number;
@@ -19,10 +20,15 @@ const AdminClassListScreen: React.FC = () => {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
   const { isLoggedIn, role, checkAuthState } = useAuthState();
+  const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
     checkAuthState();
   }, [checkAuthState]);
+
+  useEffect(() => {
+    setPageTitle('Danh sách lớp học');
+  }, [setPageTitle]);
 
   useEffect(() => {
     if (isLoggedIn && role === "ADMIN") {

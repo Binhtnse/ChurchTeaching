@@ -9,6 +9,7 @@ import {
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
+import usePageTitle from "../hooks/usePageTitle";
 
 interface DataType {
   key: React.Key;
@@ -31,10 +32,16 @@ const EnrollListScreen: React.FC = () => {
     pageSize: 10,
     total: 0,
   });
+  const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
     checkAuthState();
   }, [checkAuthState]);
+
+  useEffect(() => {
+    setPageTitle('Danh sách đăng ký học');
+  }, [setPageTitle]);
+
 
   const fetchData = async (page: number = 0, pageSize: number = 10) => {
     if (isLoggedIn && role === "ADMIN") {
