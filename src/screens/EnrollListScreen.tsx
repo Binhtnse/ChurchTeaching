@@ -25,8 +25,8 @@ const EnrollListScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [dataSource, setDataSource] = useState<DataType[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [allData, setAllData] = useState<DataType[]>([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -39,16 +39,15 @@ const EnrollListScreen: React.FC = () => {
   }, [checkAuthState]);
 
   useEffect(() => {
-    setPageTitle('Danh sách đăng ký học', '#4154f1');
+    setPageTitle("Danh sách đăng ký học", "#4154f1");
   }, [setPageTitle]);
-
 
   const fetchData = async (page: number = 0, pageSize: number = 10) => {
     if (isLoggedIn && role === "ADMIN") {
       setLoading(true);
       try {
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}&name=${searchText}&status=${statusFilter || ''}`
+          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}`
         );
         const { content, totalElements } = response.data.data;
         const formattedData = content.map(
@@ -68,6 +67,7 @@ const EnrollListScreen: React.FC = () => {
             major: item.grade.major.name,
           })
         );
+        setAllData(formattedData);
         setDataSource(formattedData);
         setPagination({
           ...pagination,
@@ -84,23 +84,33 @@ const EnrollListScreen: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, role, searchText, statusFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, role]);
 
   const handlePaginationChange = (page: number, pageSize: number) => {
     fetchData(page - 1, pageSize);
   };
 
+  const filterData = (searchValue: string, statusValue: string | null) => {
+    return allData.filter(item => 
+      item.name.toLowerCase().includes(searchValue.toLowerCase()) &&
+      (!statusValue || item.status === statusValue)
+    );
+  };
+  
   const handleSearch = (value: string) => {
-    setSearchText(value);
-    fetchData(0, pagination.pageSize);
+    const filteredData = filterData(value, statusFilter);
+    setDataSource(filteredData);
   };
   
   const handleStatusFilter = (value: string | null) => {
     setStatusFilter(value);
-    fetchData(0, pagination.pageSize);
+    const searchInput = document.querySelector<HTMLInputElement>('.ant-input-search input');
+    const searchValue = searchInput ? searchInput.value : '';
+    const filteredData = filterData(searchValue, value);
+    setDataSource(filteredData);
   };
-
+  
   const columns = [
     {
       title: "STT",
@@ -164,22 +174,23 @@ const EnrollListScreen: React.FC = () => {
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
-      <Search
-        placeholder="Search by name"
-        onSearch={handleSearch}
-        style={{ width: 200, marginRight: 16 }}
-      />
-      <Select
-        style={{ width: 120 }}
-        placeholder="Filter by status"
-        onChange={handleStatusFilter}
-        allowClear
-      >
-        <Option value="APPROVE">Đồng ý</Option>
-        <Option value="PENDING">Đang chờ</Option>
-        <Option value="REJECT">Từ chối</Option>
-      </Select>
-    </div>
+        <Search
+          placeholder="Search by name"
+          onSearch={handleSearch}
+          style={{ width: 200, marginRight: 16 }}
+          onChange={(e) => handleSearch(e.target.value)}
+        />
+        <Select
+          style={{ width: 120 }}
+          placeholder="Filter by status"
+          onChange={handleStatusFilter}
+          allowClear
+        >
+          <Option value="APPROVE">Đồng ý</Option>
+          <Option value="PENDING">Đang chờ</Option>
+          <Option value="REJECT">Từ chối</Option>
+        </Select>
+      </div>
       <Table
         dataSource={dataSource}
         columns={columns}

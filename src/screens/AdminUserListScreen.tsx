@@ -17,13 +17,13 @@ interface User {
 const AdminUserListScreen: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState("");
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
-    setPageTitle('Danh sách tài khoản', '#4154f1');
+    setPageTitle("Danh sách tài khoản", "#4154f1");
   }, [setPageTitle]);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ const AdminUserListScreen: React.FC = () => {
         try {
           const accessToken = localStorage.getItem("accessToken");
           const response = await axios.get(
-            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=1&size=10&search=${searchText}&role=${
+            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=1&size=10&role=${
               roleFilter || ""
             }`,
             {
@@ -53,6 +53,7 @@ const AdminUserListScreen: React.FC = () => {
               roleOrder[b.role as keyof typeof roleOrder]
             );
           });
+          setAllUsers(sortedUsers);
           setUsers(sortedUsers);
           setLoading(false);
         } catch (error) {
@@ -64,7 +65,7 @@ const AdminUserListScreen: React.FC = () => {
     };
 
     fetchUsers();
-  }, [isLoggedIn, role, searchText, roleFilter]);
+  }, [isLoggedIn, role, roleFilter]);
 
   const roleFilterMenu = (
     <Menu onClick={({ key }) => setRoleFilter(key as string)}>
@@ -130,7 +131,10 @@ const AdminUserListScreen: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
-    setSearchText(value);
+    const filteredUsers = allUsers.filter((user) =>
+      user.fullName.toLowerCase().includes(value.toLowerCase())
+    );
+    setUsers(filteredUsers);
   };
 
   const columns = [
