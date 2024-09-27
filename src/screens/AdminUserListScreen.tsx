@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Table, message, Input, Dropdown, Button, Menu, Tag } from "antd";
+import React, { useState, useEffect, useCallback } from "react";
+import { Table, message, Input, Dropdown, Button, Menu, Tag, Pagination } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -20,6 +20,11 @@ const AdminUserListScreen: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const { isLoggedIn, role, checkAuthState } = useAuthState();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
@@ -30,42 +35,53 @@ const AdminUserListScreen: React.FC = () => {
     checkAuthState();
   }, [checkAuthState]);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (isLoggedIn && role === "ADMIN") {
-        setLoading(true);
-        try {
-          const accessToken = localStorage.getItem("accessToken");
-          const response = await axios.get(
-            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=1&size=10&role=${
-              roleFilter || ""
-            }`,
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
+  const fetchUsers = useCallback(async (page: number = 1, pageSize: number = 10) => {
+    if (isLoggedIn && role === "ADMIN") {
+      setLoading(true);
+      try {
+        const accessToken = localStorage.getItem("accessToken");
+        const response = await axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=${page}&size=${pageSize}&role=${
+            roleFilter || ""
+          }`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+        const sortedUsers = response.data.data.sort((a: User, b: User) => {
+          const roleOrder = { ADMIN: 0, CATECHIST: 1, PARENT: 2, STUDENT: 3 };
+          return (
+            roleOrder[a.role as keyof typeof roleOrder] -
+            roleOrder[b.role as keyof typeof roleOrder]
           );
-          const sortedUsers = response.data.data.sort((a: User, b: User) => {
-            const roleOrder = { ADMIN: 0, CATECHIST: 1, PARENT: 2, STUDENT: 3 };
-            return (
-              roleOrder[a.role as keyof typeof roleOrder] -
-              roleOrder[b.role as keyof typeof roleOrder]
-            );
-          });
-          setAllUsers(sortedUsers);
-          setUsers(sortedUsers);
-          setLoading(false);
-        } catch (error) {
-          console.error("Error fetching users:", error);
-          message.error("Failed to load user data");
-          setLoading(false);
-        }
+        });
+        setAllUsers(sortedUsers);
+        setUsers(sortedUsers);
+        setPagination(prevPagination => ({
+          ...prevPagination,
+          total: response.data.totalElements || sortedUsers.length,
+          current: page,
+          pageSize: pageSize,
+        }));
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        message.error("Failed to load user data");
+        setLoading(false);
       }
-    };
-
-    fetchUsers();
+    }
   }, [isLoggedIn, role, roleFilter]);
+
+  useEffect(() => {
+    fetchUsers(1, pagination.pageSize);
+  }, [roleFilter, fetchUsers, pagination.pageSize]);
+
+  const handlePaginationChange = (page: number, pageSize?: number) => {
+    fetchUsers(page, pageSize || pagination.pageSize);
+  };
+
 
   const roleFilterMenu = (
     <Menu onClick={({ key }) => setRoleFilter(key as string)}>
@@ -105,6 +121,18 @@ const AdminUserListScreen: React.FC = () => {
 
   const handleUploadTemplate = async (file: File) => {
     try {
+      console.log("File name:", file.name);
+    console.log("File size:", file.size, "bytes");
+    console.log("File type:", file.type);
+
+    // Read file contents
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const contents = e.target?.result;
+      console.log("File contents:", contents);
+    };
+    reader.readAsText(file);
+
       const accessToken = localStorage.getItem("accessToken");
       const formData = new FormData();
       formData.append("file", file);
@@ -122,8 +150,7 @@ const AdminUserListScreen: React.FC = () => {
       console.log(response);
 
       message.success("Template uploaded successfully");
-      // Optionally, you can refresh the user list here
-      // fetchUsers();
+      fetchUsers();
     } catch (error) {
       console.error("Error uploading template:", error);
       message.error("Failed to upload template");
@@ -252,13 +279,21 @@ const AdminUserListScreen: React.FC = () => {
         rowKey="id"
         loading={loading}
         className="w-full"
-        pagination={{
-          pageSize: 10,
-          total: users.length,
-          showSizeChanger: false,
-        }}
+        pagination={false}
+      />
+      <Pagination
+        current={pagination.current}
+        total={pagination.total}
+        pageSize={pagination.pageSize}
+        onChange={handlePaginationChange}
+        showSizeChanger
+        showQuickJumper
+        showTotal={(total) => `Total ${total} items`}
+        className="mt-4 text-right"
       />
     </div>
   );
+
 };
+
 export default AdminUserListScreen;
