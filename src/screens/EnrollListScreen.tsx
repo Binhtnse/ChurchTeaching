@@ -39,7 +39,7 @@ const EnrollListScreen: React.FC = () => {
   }, [checkAuthState]);
 
   useEffect(() => {
-    setPageTitle("Danh sách đăng ký học", "#4154f1");
+    setPageTitle("Danh sách đơn đăng ký học", "#4154f1");
   }, [setPageTitle]);
 
   const fetchData = async (page: number = 0, pageSize: number = 10) => {
@@ -175,14 +175,14 @@ const EnrollListScreen: React.FC = () => {
     <div>
       <div style={{ marginBottom: 16 }}>
         <Search
-          placeholder="Search by name"
+          placeholder="Tìm theo tên"
           onSearch={handleSearch}
           style={{ width: 200, marginRight: 16 }}
           onChange={(e) => handleSearch(e.target.value)}
         />
         <Select
           style={{ width: 120 }}
-          placeholder="Filter by status"
+          placeholder="Lọc theo trạng thái"
           onChange={handleStatusFilter}
           allowClear
         >

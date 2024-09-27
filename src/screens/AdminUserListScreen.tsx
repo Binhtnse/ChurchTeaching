@@ -87,7 +87,7 @@ const AdminUserListScreen: React.FC = () => {
     <Menu onClick={({ key }) => setRoleFilter(key as string)}>
       <Menu.Item key={null}>Tất cả vai trò</Menu.Item>
       <Menu.Item key="ADMIN">ADMIN</Menu.Item>
-      <Menu.Item key="CATECHIST">Giáo lý vien</Menu.Item>
+      <Menu.Item key="CATECHIST">Giáo lý viên</Menu.Item>
       <Menu.Item key="PARENT">Phụ huynh</Menu.Item>
       <Menu.Item key="STUDENT">Thiếu nhi thánh thể</Menu.Item>
     </Menu>
@@ -186,21 +186,26 @@ const AdminUserListScreen: React.FC = () => {
       key: "role",
       render: (role: string) => {
         let color = "default";
+        let displayRole = role;
         switch (role) {
           case "ADMIN":
             color = "red";
+            displayRole = "ADMIN";
             break;
           case "CATECHIST":
             color = "green";
+            displayRole = "GIÁO LÝ VIÊN";
             break;
           case "PARENT":
             color = "blue";
+            displayRole = "PHỤ HUYNH";
             break;
           case "STUDENT":
             color = "orange";
+            displayRole = "THIẾU NHI THÁNH THỂ";
             break;
         }
-        return <Tag color={color}>{role}</Tag>;
+        return <Tag color={color}>{displayRole}</Tag>;
       },
       sorter: (a: User, b: User) => {
         const roleOrder = { ADMIN: 0, CATECHIST: 1, PARENT: 2, STUDENT: 3 };
@@ -227,7 +232,7 @@ const AdminUserListScreen: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Danh sách tai khoan</h1>
+      <h1 className="text-2xl font-bold mb-4">Danh sách tài khoản</h1>
       <div className="flex justify-between items-center mb-4">
         <div className="flex space-x-4">
           <Input
@@ -238,7 +243,7 @@ const AdminUserListScreen: React.FC = () => {
           />
           <Dropdown overlay={roleFilterMenu}>
             <Button>
-              Filter by Role <DownOutlined />
+              Lọc theo vai trò <DownOutlined />
             </Button>
           </Dropdown>
         </div>

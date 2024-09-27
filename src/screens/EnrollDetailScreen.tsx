@@ -100,8 +100,8 @@ const EnrollDetailScreen: React.FC = () => {
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="px-6 py-4 bg-blue-600 text-white">
-          <h1 className="text-2xl font-bold">Thông tin đăng ký học</h1>
-          <p className="text-lg">{enrollmentData.nameParent}</p>
+          <h1 className="text-2xl font-bold">Thông tin đăng ký học giáo lý</h1>
+          <p className="text-lg">Người làm đơn: {enrollmentData.nameParent}</p>
         </div>
 
         <div className="p-6">
@@ -115,7 +115,7 @@ const EnrollDetailScreen: React.FC = () => {
             </p>
             <p className="text-gray-600">
               <span className="font-medium">Tiêu đề khảo sát:</span>{" "}
-              {enrollmentData.surveyTitle}
+              Bảng điền thông tin phụ huynh và thiếu nhi 
             </p>
           </div>
 
