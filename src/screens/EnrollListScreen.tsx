@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Table, Tag, Pagination, Input, Select } from "antd";
+import React, { useEffect, useState, useCallback } from "react";
+import { Table, Tag, Pagination, Input, Select, message } from "antd";
 import { Link } from "react-router-dom";
 import {
   CheckCircleOutlined,
@@ -27,6 +27,12 @@ const EnrollListScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [allData, setAllData] = useState<DataType[]>([]);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string; timeStatus: string }[]
+  >([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<
+    number | null
+  >(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -39,78 +45,102 @@ const EnrollListScreen: React.FC = () => {
   }, [checkAuthState]);
 
   useEffect(() => {
+    fetchAcademicYears();
+  }, []);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+      console.log("Academic Years Data:", response.data);
+      setAcademicYears(response.data);
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+      message.error("Failed to fetch academic years");
+    }
+  };
+
+  useEffect(() => {
     setPageTitle("Danh sách đơn đăng ký học", "#4154f1");
   }, [setPageTitle]);
 
-  const fetchData = async (page: number = 0, pageSize: number = 10) => {
-    if (isLoggedIn && role === "ADMIN") {
-      setLoading(true);
-      try {
-        const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}`
-        );
-        const { content, totalElements } = response.data.data;
-        const formattedData = content.map(
-          (item: {
-            id: React.Key;
+  const fetchData = useCallback(
+    async (page: number = 0, pageSize: number = 10) => {
+      if (isLoggedIn && role === "ADMIN" && selectedAcademicYear) {
+        setLoading(true);
+        try {
+          const response = await axios.get(
+            `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}`
+          );
+          const { data, pageResponse } = response.data;
+          const formattedData = data.map((item: {
+            id: number;
             name: string;
             status: string;
-            grade: {
-              major: {
-                name: string;
-              };
-            };
+            grade: { major: { name: string } };
+            academicYear: { year: string };
           }) => ({
             key: item.id,
             name: item.name,
             status: item.status,
             major: item.grade.major.name,
-          })
-        );
-        setAllData(formattedData);
-        setDataSource(formattedData);
-        setPagination({
-          ...pagination,
-          total: totalElements,
-          current: page + 1,
-        });
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+            academicYear: item.academicYear.year,
+          }));
+          setAllData(formattedData);
+          setDataSource(formattedData);
+          setPagination((prev) => ({
+            ...prev,
+            total: pageResponse.totalPage * pageResponse.pageSize,
+            current: pageResponse.currentPage + 1,
+          }));
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-  };
+    },
+    [isLoggedIn, role, selectedAcademicYear]
+  );
 
   useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, role]);
+    if (selectedAcademicYear) {
+      fetchData(0, pagination.pageSize);
+    }
+  }, [selectedAcademicYear, fetchData, pagination.pageSize]);
+
+  const handleAcademicYearChange = (value: number) => {
+    setSelectedAcademicYear(value);
+  };
 
   const handlePaginationChange = (page: number, pageSize: number) => {
     fetchData(page - 1, pageSize);
   };
 
   const filterData = (searchValue: string, statusValue: string | null) => {
-    return allData.filter(item => 
-      item.name.toLowerCase().includes(searchValue.toLowerCase()) &&
-      (!statusValue || item.status === statusValue)
+    return allData.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchValue.toLowerCase()) &&
+        (!statusValue || item.status === statusValue)
     );
   };
-  
+
   const handleSearch = (value: string) => {
     const filteredData = filterData(value, statusFilter);
     setDataSource(filteredData);
   };
-  
+
   const handleStatusFilter = (value: string | null) => {
     setStatusFilter(value);
-    const searchInput = document.querySelector<HTMLInputElement>('.ant-input-search input');
-    const searchValue = searchInput ? searchInput.value : '';
+    const searchInput = document.querySelector<HTMLInputElement>(
+      ".ant-input-search input"
+    );
+    const searchValue = searchInput ? searchInput.value : "";
     const filteredData = filterData(searchValue, value);
     setDataSource(filteredData);
   };
-  
+
   const columns = [
     {
       title: "STT",
@@ -127,6 +157,11 @@ const EnrollListScreen: React.FC = () => {
       title: "Ngành",
       dataIndex: "major",
       key: "major",
+    },
+    {
+      title: "Niên khóa",
+      dataIndex: "academicYear",
+      key: "academicYear",
     },
     {
       title: "Trạng thái",
@@ -174,6 +209,17 @@ const EnrollListScreen: React.FC = () => {
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
+        <Select
+          style={{ width: 200, marginRight: 16 }}
+          placeholder="Chọn niên khóa"
+          onChange={handleAcademicYearChange}
+        >
+          {academicYears.map((year) => (
+            <Option key={year.id} value={year.id}>
+              {year.year} {year.timeStatus === "NOW" ? "(Hiện tại)" : ""}
+            </Option>
+          ))}
+        </Select>
         <Search
           placeholder="Tìm theo tên"
           onSearch={handleSearch}
@@ -191,23 +237,28 @@ const EnrollListScreen: React.FC = () => {
           <Option value="REJECT">Từ chối</Option>
         </Select>
       </div>
-      <Table
-        dataSource={dataSource}
-        columns={columns}
-        bordered
-        loading={loading}
-        pagination={false}
-      />
-      <Pagination
-        current={pagination.current}
-        total={pagination.total}
-        pageSize={pagination.pageSize}
-        onChange={handlePaginationChange}
-        showSizeChanger
-        showQuickJumper
-        showTotal={(total) => `Total ${total} items`}
-      />
+      {selectedAcademicYear ? (
+        <>
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            bordered
+            loading={loading}
+            pagination={false}
+          />
+          <Pagination
+            current={pagination.current}
+            total={pagination.total}
+            pageSize={pagination.pageSize}
+            onChange={handlePaginationChange}
+            showSizeChanger
+            showQuickJumper
+            showTotal={(total) => `Total ${total} items`}
+          />
+        </>
+      ) : (
+        <div>Vui lòng chọn niên khóa</div>
+      )}
     </div>
   );
-};
-export default EnrollListScreen;
+};export default EnrollListScreen;
