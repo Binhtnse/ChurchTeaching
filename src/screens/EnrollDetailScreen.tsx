@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Flex, message } from "antd";
+import { Button, Flex, message, Modal, Input } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import usePageTitle from "../hooks/usePageTitle";
@@ -29,10 +29,12 @@ const EnrollDetailScreen: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [approvalLoading, setApprovalLoading] = useState(false);
+  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
   const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
-    setPageTitle('Thông tin đăng ký học', '#4154f1');
+    setPageTitle("Thông tin đăng ký học", "#4154f1");
   }, [setPageTitle]);
 
   useEffect(() => {
@@ -64,11 +66,9 @@ const EnrollDetailScreen: React.FC = () => {
         );
         console.log("Approval response:", response.data);
         message.success("Enrollment approved successfully");
-      } else {
-        // Existing rejection logic (if any)
-        console.log(`Rejection clicked for enrollment ${id}`);
+      } else if (action === "reject") {
+        setIsRejectModalVisible(true);
       }
-      navigate("/enroll-list");
     } catch (error) {
       console.error(
         `Error ${action === "approve" ? "approving" : "rejecting"} enrollment:`,
@@ -87,6 +87,23 @@ const EnrollDetailScreen: React.FC = () => {
       </div>
     );
   }
+
+  const handleReject = async () => {
+    try {
+      setApprovalLoading(true);
+      console.log(
+        `Rejection submitted for enrollment ${id} with reason: ${rejectionReason}`
+      );
+      message.success("Enrollment rejected successfully");
+      setIsRejectModalVisible(false);
+      navigate("/enroll-list");
+    } catch (error) {
+      console.error("Error rejecting enrollment:", error);
+      message.error("Failed to reject enrollment");
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
 
   if (!enrollmentData) {
     return (
@@ -114,8 +131,8 @@ const EnrollDetailScreen: React.FC = () => {
               {enrollmentData.registerInforId}
             </p>
             <p className="text-gray-600">
-              <span className="font-medium">Tiêu đề khảo sát:</span>{" "}
-              Bảng điền thông tin phụ huynh và thiếu nhi 
+              <span className="font-medium">Tiêu đề khảo sát:</span> Bảng điền
+              thông tin phụ huynh và thiếu nhi
             </p>
           </div>
 
@@ -178,6 +195,22 @@ const EnrollDetailScreen: React.FC = () => {
           </Flex>
         </div>
       </div>
+      <Modal
+        title="Lý do từ chối"
+        visible={isRejectModalVisible}
+        onOk={handleReject}
+        onCancel={() => setIsRejectModalVisible(false)}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        okButtonProps={{ loading: approvalLoading }}
+      >
+        <Input.TextArea
+          rows={4}
+          value={rejectionReason}
+          onChange={(e) => setRejectionReason(e.target.value)}
+          placeholder="Nhập lý do từ chối..."
+        />
+      </Modal>
     </div>
   );
 };

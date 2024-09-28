@@ -1,10 +1,24 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, message, Input, Dropdown, Button, Menu, Tag, Pagination } from "antd";
+import {
+  Table as AntTable,
+  message,
+  Input,
+  Dropdown,
+  Button,
+  Menu,
+  Tag,
+  Pagination,
+  Modal,
+  Upload,
+} from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
-import { SearchOutlined, DownOutlined } from "@ant-design/icons";
+import { SearchOutlined, DownOutlined, InboxOutlined } from "@ant-design/icons";
 import usePageTitle from "../hooks/usePageTitle";
+import * as Excel from "xlsx";
+
+const { Dragger } = Upload;
 
 interface User {
   id: number;
@@ -20,6 +34,10 @@ const AdminUserListScreen: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const { isLoggedIn, role, checkAuthState } = useAuthState();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [excelData, setExcelData] = useState<unknown>(null);
+  const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -35,44 +53,47 @@ const AdminUserListScreen: React.FC = () => {
     checkAuthState();
   }, [checkAuthState]);
 
-  const fetchUsers = useCallback(async (page: number = 1, pageSize: number = 10) => {
-    if (isLoggedIn && role === "ADMIN") {
-      setLoading(true);
-      try {
-        const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=${page}&size=${pageSize}&role=${
-            roleFilter || ""
-          }`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const sortedUsers = response.data.data.sort((a: User, b: User) => {
-          const roleOrder = { ADMIN: 0, CATECHIST: 1, PARENT: 2, STUDENT: 3 };
-          return (
-            roleOrder[a.role as keyof typeof roleOrder] -
-            roleOrder[b.role as keyof typeof roleOrder]
+  const fetchUsers = useCallback(
+    async (page: number = 1, pageSize: number = 10) => {
+      if (isLoggedIn && role === "ADMIN") {
+        setLoading(true);
+        try {
+          const accessToken = localStorage.getItem("accessToken");
+          const response = await axios.get(
+            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=${page}&size=${pageSize}&role=${
+              roleFilter || ""
+            }`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
           );
-        });
-        setAllUsers(sortedUsers);
-        setUsers(sortedUsers);
-        setPagination(prevPagination => ({
-          ...prevPagination,
-          total: response.data.totalElements || sortedUsers.length,
-          current: page,
-          pageSize: pageSize,
-        }));
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        message.error("Failed to load user data");
-        setLoading(false);
+          const sortedUsers = response.data.data.sort((a: User, b: User) => {
+            const roleOrder = { ADMIN: 0, CATECHIST: 1, PARENT: 2, STUDENT: 3 };
+            return (
+              roleOrder[a.role as keyof typeof roleOrder] -
+              roleOrder[b.role as keyof typeof roleOrder]
+            );
+          });
+          setAllUsers(sortedUsers);
+          setUsers(sortedUsers);
+          setPagination((prevPagination) => ({
+            ...prevPagination,
+            total: response.data.totalElements || sortedUsers.length,
+            current: page,
+            pageSize: pageSize,
+          }));
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching users:", error);
+          message.error("Failed to load user data");
+          setLoading(false);
+        }
       }
-    }
-  }, [isLoggedIn, role, roleFilter]);
+    },
+    [isLoggedIn, role, roleFilter]
+  );
 
   useEffect(() => {
     fetchUsers(1, pagination.pageSize);
@@ -81,7 +102,6 @@ const AdminUserListScreen: React.FC = () => {
   const handlePaginationChange = (page: number, pageSize?: number) => {
     fetchUsers(page, pageSize || pagination.pageSize);
   };
-
 
   const roleFilterMenu = (
     <Menu onClick={({ key }) => setRoleFilter(key as string)}>
@@ -105,11 +125,10 @@ const AdminUserListScreen: React.FC = () => {
           responseType: "blob",
         }
       );
-
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "user_template.xlsx"); // You can adjust the file name and extension as needed
+      link.setAttribute("download", "user_template.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -120,23 +139,11 @@ const AdminUserListScreen: React.FC = () => {
   };
 
   const handleUploadTemplate = async (file: File) => {
+    setIsUploading(true);
     try {
-      console.log("File name:", file.name);
-    console.log("File size:", file.size, "bytes");
-    console.log("File type:", file.type);
-
-    // Read file contents
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const contents = e.target?.result;
-      console.log("File contents:", contents);
-    };
-    reader.readAsText(file);
-
       const accessToken = localStorage.getItem("accessToken");
       const formData = new FormData();
       formData.append("file", file);
-
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/user/import",
         formData,
@@ -148,12 +155,14 @@ const AdminUserListScreen: React.FC = () => {
         }
       );
       console.log(response);
-
       message.success("Template uploaded successfully");
       fetchUsers();
+      setIsModalVisible(false);
     } catch (error) {
       console.error("Error uploading template:", error);
       message.error("Failed to upload template");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -253,22 +262,8 @@ const AdminUserListScreen: React.FC = () => {
               <Menu.Item key="1" onClick={handleDownloadTemplate}>
                 Tải template người dùng
               </Menu.Item>
-              <Menu.Item key="2">
-                <label htmlFor="upload-template">
-                  Tải template người dùng lên
-                </label>
-                <input
-                  id="upload-template"
-                  type="file"
-                  accept=".xlsx,.xls"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      handleUploadTemplate(file);
-                    }
-                  }}
-                />
+              <Menu.Item key="2" onClick={() => setIsModalVisible(true)}>
+                Tải template người dùng lên
               </Menu.Item>
             </Menu>
           }
@@ -278,7 +273,7 @@ const AdminUserListScreen: React.FC = () => {
           </Button>
         </Dropdown>
       </div>
-      <Table
+      <AntTable
         columns={columns}
         dataSource={users}
         rowKey="id"
@@ -296,9 +291,117 @@ const AdminUserListScreen: React.FC = () => {
         showTotal={(total) => `Total ${total} items`}
         className="mt-4 text-right"
       />
+      <Modal
+        title="Tải template người dùng lên"
+        visible={isModalVisible}
+        onOk={() => {
+          if (excelData instanceof File) {
+            handleUploadTemplate(excelData);
+          }
+        }}
+        onCancel={() => setIsModalVisible(false)}
+        confirmLoading={isUploading}
+        okText={isUploading ? "Đang tải lên..." : "Tải lên"}
+        width={1000} // Increase the width
+        style={{ top: 20 }} // Position the modal closer to the top of the screen
+        bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
+      >
+        <Dragger
+          name="file"
+          multiple={false}
+          showUploadList={false}
+          customRequest={({ file, onSuccess, onError }) => {
+            if (file instanceof File && file.name.endsWith(".xlsx")) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                if (file.name.length > 50) {
+                  message.error(
+                    `Tên file quá dài, vui lòng chọn một tên file ngắn hơn.`
+                  );
+                  onError?.(
+                    new Error(
+                      "Tên file quá dài, vui lòng chọn một tên file ngắn hơn."
+                    )
+                  );
+                  return;
+                }
+                const maxSize = 45 * 1024 * 1024;
+                if (file.size > maxSize) {
+                  message.error(
+                    `Kích thước file quá lớn, vui lòng chọn một file nhỏ hơn`
+                  );
+                  onError?.(
+                    new Error(
+                      "Kích thước file quá lớn, vui lòng chọn một file nhỏ hơn."
+                    )
+                  );
+                  return;
+                }
+                if (event.target && event.target.result) {
+                  const arrayBuffer = event.target.result as ArrayBuffer;
+                  const data = new Uint8Array(arrayBuffer);
+                  const workbook = Excel.read(data, { type: "array" });
+                  const firstSheetName = workbook.SheetNames[0];
+                  const worksheet = workbook.Sheets[firstSheetName];
+                  const jsonData = Excel.utils.sheet_to_json(worksheet);
+                  setExcelData(file);
+                  setPreviewData(jsonData as Record<string, unknown>[]);
+                  if (onSuccess) {
+                    onSuccess("ok");
+                  }
+                } else {
+                  console.error("Không tìm thấy file");
+                }
+              };
+              reader.readAsArrayBuffer(file);
+            } else {
+              if (onError) {
+                message.error(
+                  `File sai định dạng, làm ơn chọn định danh .xlsx.`
+                );
+                onError?.(
+                  new Error("File sai định dạng, làm ơn chọn định danh .xlsx .")
+                );
+              }
+            }
+          }}
+          onChange={(info) => {
+            if (info.file.status === "done") {
+              message.success(`${info.file.name} Tải file lên thành công.`);
+            } else if (info.file.status === "error") {
+              message.error(`${info.file.name} Tải file lên thất bại.`);
+            }
+          }}
+        >
+          <p className="ant-upload-drag-icon">
+            <InboxOutlined />
+          </p>
+          <p className="ant-upload-text">
+            Click or drag file to this area to upload
+          </p>
+          <p className="ant-upload-hint">
+            Support for a single upload. Strictly prohibited from uploading
+            company data or other banned files.
+          </p>
+        </Dragger>
+        {previewData.length > 0 && (
+          <div className="mt-4">
+            <h3>File Preview:</h3>
+            <AntTable
+              dataSource={previewData}
+              columns={Object.keys(previewData[0]).map((key) => ({
+                title: key,
+                dataIndex: key,
+                key: key,
+              }))}
+              pagination={false}
+              scroll={{ x: true, y: 300 }}
+              size="small"
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
-
 };
-
 export default AdminUserListScreen;
