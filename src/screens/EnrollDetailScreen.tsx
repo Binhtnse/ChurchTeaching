@@ -91,9 +91,11 @@ const EnrollDetailScreen: React.FC = () => {
   const handleReject = async () => {
     try {
       setApprovalLoading(true);
-      console.log(
-        `Rejection submitted for enrollment ${id} with reason: ${rejectionReason}`
+      const response = await axios.post(
+        `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/reject`,
+        { message: rejectionReason }
       );
+      console.log("Rejection response:", response.data);
       message.success("Enrollment rejected successfully");
       setIsRejectModalVisible(false);
       navigate("/enroll-list");
