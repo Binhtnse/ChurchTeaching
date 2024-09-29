@@ -80,7 +80,7 @@ const AdminUserListScreen: React.FC = () => {
           setUsers(sortedUsers);
           setPagination((prevPagination) => ({
             ...prevPagination,
-            total: response.data.totalElements || sortedUsers.length,
+            total: response.data.pageResponse.totalPage * pageSize,
             current: page,
             pageSize: pageSize,
           }));
