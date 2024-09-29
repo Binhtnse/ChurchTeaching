@@ -11,6 +11,9 @@ import StudentListScreen from "../screens/StudentListScreen";
 import AccountDetailScreen from "../screens/AccountDetailScreen";
 import AdminUserListScreen from "../screens/AdminUserListScreen";
 import AdminClassListScreen from "../screens/AdminClassListScreen";
+import AddSyllabusScreen from "../screens/AddSyllabusScreen";
+import ListSyllabusScreen from "../screens/ListSyllabusScreen";
+import SyllabusDetailScreen from "../screens/SyllabusDetailScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -106,6 +109,30 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminClassListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-syllabus"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AddSyllabusScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/list-syllabus"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <ListSyllabusScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/syllabus-detail/:id"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <SyllabusDetailScreen />
               </ProtectedRoute>
             }
           />

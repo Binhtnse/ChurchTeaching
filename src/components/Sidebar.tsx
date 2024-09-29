@@ -123,9 +123,13 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
         icon: <SolutionOutlined />,
       },
       {
-        key: "settings",
-        label: "Cài đặt hệ thống",
+        key: "syllabus",
+        label: "Quản lý giáo trình",
         icon: <SettingOutlined />,
+        children: [
+          { key: "list-syllabus", label: "Xem tất cả giáo trình" },
+          { key: "add-syllabus", label: "Tạo giáo trình" },
+        ],
       },
     ],
     GUEST: [
