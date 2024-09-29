@@ -8,18 +8,88 @@ import {
   InputNumber,
   message,
   Spin,
+  Row,
+  Col,
+  Typography,
+  Collapse,
+  Steps,
+  Divider,
+  List,
+  Tag,
 } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  BookOutlined,
+  ScheduleOutlined,
+  EyeOutlined,
+} from "@ant-design/icons";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
 
 const { Option } = Select;
+const { Title, Text } = Typography;
+const { Panel } = Collapse;
+const { Step } = Steps;
 
 interface Grade {
   id: number;
   name: string;
 }
+
+const SyllabusPreview: React.FC<{
+  formValues: {
+    name: string;
+    duration: string;
+    grade: number;
+    sessions: Array<{
+      name: string;
+      description: string;
+      slotCount: number;
+      slots: Array<{ name: string; description: string; type: string }>;
+    }>;
+  };
+  grades: Grade[];
+}> = ({ formValues, grades }) => {
+  return (
+    <div>
+      <Title level={4}>{formValues.name}</Title>
+      <Text>Thời lượng: {formValues.duration}</Text>
+      <br />
+      <Text>Khối: {grades.find((g) => g.id === formValues.grade)?.name}</Text>
+
+      <Title level={5} className="mt-4">
+        Phiên học
+      </Title>
+      <List
+        dataSource={formValues.sessions}
+        renderItem={(session, index: number) => (
+          <List.Item>
+            <List.Item.Meta
+              title={`Phiên ${index + 1}: ${session.name}`}
+              description={session.description}
+            />
+            <div>
+              <Text strong>Số buổi học: {session.slotCount}</Text>
+              <List
+                dataSource={session.slots}
+                renderItem={(slot, slotIndex: number) => (
+                  <List.Item>
+                    <List.Item.Meta
+                      title={`Buổi ${slotIndex + 1}: ${slot.name}`}
+                      description={slot.description}
+                    />
+                    <Tag color="blue">{slot.type}</Tag>
+                  </List.Item>
+                )}
+              />
+            </div>
+          </List.Item>
+        )}
+      />
+    </div>
+  );
+};
 
 const AddSyllabusScreen: React.FC = () => {
   const [form] = Form.useForm();
@@ -29,10 +99,12 @@ const AddSyllabusScreen: React.FC = () => {
   const { role, isLoggedIn } = useAuthState();
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   const onFinish = async (values: {
     name: string;
-    duration: number;
+    duration: string;
     grade: number;
     sessions: Array<{
       name: string;
@@ -49,7 +121,7 @@ const AddSyllabusScreen: React.FC = () => {
     try {
       const formattedData = {
         name: values.name,
-        duration: `${values.duration} weeks`,
+        duration: values.duration,
         levelID: values.grade,
         sessions: values.sessions.map((session) => ({
           name: session.name,
@@ -124,140 +196,226 @@ const AddSyllabusScreen: React.FC = () => {
     }
   };
 
+  const steps = [
+    {
+      title: "General Info",
+      content: (
+        <Card title="Thông tin chung" className="mb-6">
+          <Form.Item
+            name="name"
+            label="Tên Giáo Trình"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="duration"
+            label="Thời Lượng"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item name="grade" label="Khối" rules={[{ required: true }]}>
+            <Select>
+              {grades.map((grade) => (
+                <Option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Card>
+      ),
+    },
+    {
+      title: "Sessions",
+      content: (
+        <>
+          <Title level={3}>
+            <ScheduleOutlined /> Phiên học
+          </Title>
+          <Collapse>
+            {sessions.map((session, sessionIndex) => (
+              <Panel
+                header={`Phiên học ${sessionIndex + 1}`}
+                key={sessionIndex}
+              >
+                <Card className="mb-4" style={{ background: "#f0f2f5" }}>
+                  <Form.Item
+                    name={["sessions", sessionIndex, "name"]}
+                    label="Tên Phiên Học"
+                    rules={[{ required: true }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name={["sessions", sessionIndex, "description"]}
+                    label="Mô Tả"
+                  >
+                    <Input.TextArea />
+                  </Form.Item>
+                  <Form.Item
+                    name={["sessions", sessionIndex, "slotCount"]}
+                    label="Số Buổi Học"
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber min={1} />
+                  </Form.Item>
+
+                  <Title level={4}>Buổi học</Title>
+                  {session.slots.map((_slot, slotIndex) => (
+                    <Card
+                      key={slotIndex}
+                      className="mb-2"
+                      style={{ background: "#fff" }}
+                    >
+                      <Form.Item
+                        name={[
+                          "sessions",
+                          sessionIndex,
+                          "slots",
+                          slotIndex,
+                          "name",
+                        ]}
+                        label="Tên Buổi Học"
+                        rules={[{ required: true }]}
+                      >
+                        <Input />
+                      </Form.Item>
+                      <Form.Item
+                        name={[
+                          "sessions",
+                          sessionIndex,
+                          "slots",
+                          slotIndex,
+                          "description",
+                        ]}
+                        label="Mô tả"
+                      >
+                        <Input.TextArea />
+                      </Form.Item>
+                      <Form.Item
+                        name={[
+                          "sessions",
+                          sessionIndex,
+                          "slots",
+                          slotIndex,
+                          "type",
+                        ]}
+                        label="Loại Buổi Học"
+                        rules={[{ required: true }]}
+                      >
+                        <Select>
+                          <Option value="Lesson">Bài học</Option>
+                          <Option value="activity">Hoạt động</Option>
+                          <Option value="Prayer">Học kinh</Option>
+                        </Select>
+                      </Form.Item>
+                    </Card>
+                  ))}
+                  <Button
+                    type="dashed"
+                    onClick={() => addSlot(sessionIndex)}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    Thêm buổi học
+                  </Button>
+                </Card>
+              </Panel>
+            ))}
+          </Collapse>
+          <Button
+            type="dashed"
+            onClick={addSession}
+            block
+            icon={<PlusOutlined />}
+            className="mb-4 mt-4"
+          >
+            Thêm phiên học
+          </Button>
+        </>
+      ),
+    },
+    {
+      title: "Review",
+      content: (
+        <Card title="Xem trước giáo trình">
+          <SyllabusPreview formValues={form.getFieldsValue()} grades={grades} />
+        </Card>
+      ),
+    },
+  ];
+
+  const next = () => {
+    setCurrentStep(currentStep + 1);
+  };
+
+  const prev = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
   if (!isLoggedIn || role !== "ADMIN") {
     return <ForbiddenScreen />;
   }
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Add New Syllabus</h1>
+      <Title level={2}>
+        <BookOutlined /> Tạo giáo trình mới
+      </Title>
       <Spin spinning={loading}>
-        <Form form={form} layout="vertical" onFinish={onFinish}>
-          <Card className="mb-6">
-            <Form.Item
-              name="name"
-              label="Syllabus Name"
-              rules={[{ required: true }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="duration"
-              label="Duration (weeks)"
-              rules={[{ required: true }]}
-            >
-              <InputNumber min={1} />
-            </Form.Item>
-            <Form.Item name="grade" label="Grade" rules={[{ required: true }]}>
-              <Select>
-                {grades.map((grade) => (
-                  <Option key={grade.id} value={grade.id}>
-                    {grade.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Card>
-
-          <h2 className="text-xl font-semibold mb-4">Sessions</h2>
-          {sessions.map((session, sessionIndex) => (
-            <Card key={sessionIndex} className="mb-4">
-              <h3 className="text-lg font-medium mb-2">
-                Session {sessionIndex + 1}
-              </h3>
-              <Form.Item
-                name={["sessions", sessionIndex, "name"]}
-                label="Session Name"
-                rules={[{ required: true }]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                name={["sessions", sessionIndex, "description"]}
-                label="Description"
-              >
-                <Input.TextArea />
-              </Form.Item>
-              <Form.Item
-                name={["sessions", sessionIndex, "slotCount"]}
-                label="Number of Slots"
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={1} />
-              </Form.Item>
-
-              <h4 className="text-base font-medium mb-2">Slots</h4>
-              {session.slots.map((_slot, slotIndex) => (
-                <Card key={slotIndex} className="mb-2">
-                  <Form.Item
-                    name={[
-                      "sessions",
-                      sessionIndex,
-                      "slots",
-                      slotIndex,
-                      "name",
-                    ]}
-                    label="Slot Name"
-                    rules={[{ required: true }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name={[
-                      "sessions",
-                      sessionIndex,
-                      "slots",
-                      slotIndex,
-                      "description",
-                    ]}
-                    label="Description"
-                  >
-                    <Input.TextArea />
-                  </Form.Item>
-                  <Form.Item
-                    name={[
-                      "sessions",
-                      sessionIndex,
-                      "slots",
-                      slotIndex,
-                      "type",
-                    ]}
-                    label="Slot Type"
-                    rules={[{ required: true }]}
-                  >
-                    <Select>
-                      <Option value="lesson">Lesson</Option>
-                      <Option value="activity">Activity</Option>
-                      <Option value="discussion">Discussion</Option>
-                      {/* Add more slot type options as needed */}
-                    </Select>
-                  </Form.Item>
-                </Card>
-              ))}
-              <Button
-                type="dashed"
-                onClick={() => addSlot(sessionIndex)}
-                block
-                icon={<PlusOutlined />}
-              >
-                Add Slot
-              </Button>
-            </Card>
+        <Steps current={currentStep}>
+          {steps.map((item) => (
+            <Step key={item.title} title={item.title} />
           ))}
-          <Button
-            type="dashed"
-            onClick={addSession}
-            block
-            icon={<PlusOutlined />}
-            className="mb-4"
-          >
-            Add Session
-          </Button>
-          <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Submit Syllabus
-            </Button>
-          </Form.Item>
+        </Steps>
+        <Divider />
+        <Form form={form} layout="vertical" onFinish={onFinish}>
+          <Row gutter={24}>
+            <Col span={previewVisible ? 16 : 24}>
+              {steps[currentStep].content}
+            </Col>
+            {previewVisible && (
+              <Col span={8}>
+                <Card title="Xem trước" extra={<EyeOutlined />}>
+                  <SyllabusPreview
+                    formValues={form.getFieldsValue()}
+                    grades={grades}
+                  />
+                </Card>
+              </Col>
+            )}
+          </Row>
+          <Row justify="space-between" className="mt-4">
+            <Col>
+              {currentStep > 0 && (
+                <Button onClick={() => prev()}>Previous</Button>
+              )}
+            </Col>
+            <Col>
+              <Button
+                type="primary"
+                ghost
+                onClick={() => setPreviewVisible(!previewVisible)}
+                icon={<EyeOutlined />}
+              >
+                {previewVisible ? "Hide Preview" : "Show Preview"}
+              </Button>
+            </Col>
+            <Col>
+              {currentStep < steps.length - 1 && (
+                <Button type="primary" onClick={() => next()}>
+                  Next
+                </Button>
+              )}
+              {currentStep === steps.length - 1 && (
+                <Button type="primary" htmlType="submit">
+                  Thêm giáo trình
+                </Button>
+              )}
+            </Col>
+          </Row>
         </Form>
       </Spin>
     </div>
