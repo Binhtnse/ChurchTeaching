@@ -10,13 +10,13 @@ import {
   Pagination,
   Modal,
   Upload,
+  Tabs,
 } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import { SearchOutlined, DownOutlined, InboxOutlined } from "@ant-design/icons";
 import usePageTitle from "../hooks/usePageTitle";
-import * as Excel from "xlsx";
 
 const { Dragger } = Upload;
 
@@ -28,6 +28,33 @@ interface User {
   status: string;
 }
 
+interface UserImportData {
+  fatherName: string;
+  fatherSaintName: string;
+  motherName: string;
+  motherSaintName: string;
+  parentEmail: string;
+  parentPhoneNumber: string;
+  childName: string;
+  childGender: string;
+  childDob: string;
+  childSaintName: string;
+  baptismDate: string;
+  baptismChurch: string;
+  firstCommunionDate: string;
+  firstCommunionChurch: string;
+  confirmationDate: string;
+  confirmationBishop: string;
+  error?: string;
+}
+
+interface ValidationResponse {
+  invalidRecords: UserImportData[];
+  validRecords: UserImportData[];
+}
+
+const { TabPane } = Tabs;
+
 const AdminUserListScreen: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,9 +62,9 @@ const AdminUserListScreen: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [excelData, setExcelData] = useState<unknown>(null);
-  const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [validRecords, setValidRecords] = useState<UserImportData[]>([]);
+  const [invalidRecords, setInvalidRecords] = useState<UserImportData[]>([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -144,8 +171,9 @@ const AdminUserListScreen: React.FC = () => {
       const accessToken = localStorage.getItem("accessToken");
       const formData = new FormData();
       formData.append("file", file);
-      const response = await axios.post(
-        "https://sep490-backend-production.up.railway.app/api/v1/user/import",
+
+      const validationResponse = await axios.post<ValidationResponse>(
+        "https://sep490-backend-production.up.railway.app/api/user/validate",
         formData,
         {
           headers: {
@@ -154,13 +182,39 @@ const AdminUserListScreen: React.FC = () => {
           },
         }
       );
+
+      setValidRecords(validationResponse.data.validRecords);
+      setInvalidRecords(validationResponse.data.invalidRecords);
+      message.success("File validated successfully");
+    } catch (error) {
+      console.error("Error validating file:", error);
+      message.error("Failed to validate file");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleImportUsers = async () => {
+    setIsUploading(true);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.post(
+        "https://sep490-backend-production.up.railway.app/api/v1/user/import",
+        validRecords,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       console.log(response);
-      message.success("Template uploaded successfully");
+      message.success("Valid records imported successfully");
       fetchUsers();
       setIsModalVisible(false);
     } catch (error) {
-      console.error("Error uploading template:", error);
-      message.error("Failed to upload template");
+      console.error("Error importing users:", error);
+      message.error("Failed to import users");
     } finally {
       setIsUploading(false);
     }
@@ -294,16 +348,12 @@ const AdminUserListScreen: React.FC = () => {
       <Modal
         title="Tải template người dùng lên"
         visible={isModalVisible}
-        onOk={() => {
-          if (excelData instanceof File) {
-            handleUploadTemplate(excelData);
-          }
-        }}
+        onOk={handleImportUsers}
         onCancel={() => setIsModalVisible(false)}
         confirmLoading={isUploading}
         okText={isUploading ? "Đang tải lên..." : "Tải lên"}
-        width={1000} // Increase the width
-        style={{ top: 20 }} // Position the modal closer to the top of the screen
+        width={1000}
+        style={{ top: 20 }}
         bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
       >
         <Dragger
@@ -312,57 +362,13 @@ const AdminUserListScreen: React.FC = () => {
           showUploadList={false}
           customRequest={({ file, onSuccess, onError }) => {
             if (file instanceof File && file.name.endsWith(".xlsx")) {
-              const reader = new FileReader();
-              reader.onload = (event) => {
-                if (file.name.length > 50) {
-                  message.error(
-                    `Tên file quá dài, vui lòng chọn một tên file ngắn hơn.`
-                  );
-                  onError?.(
-                    new Error(
-                      "Tên file quá dài, vui lòng chọn một tên file ngắn hơn."
-                    )
-                  );
-                  return;
-                }
-                const maxSize = 45 * 1024 * 1024;
-                if (file.size > maxSize) {
-                  message.error(
-                    `Kích thước file quá lớn, vui lòng chọn một file nhỏ hơn`
-                  );
-                  onError?.(
-                    new Error(
-                      "Kích thước file quá lớn, vui lòng chọn một file nhỏ hơn."
-                    )
-                  );
-                  return;
-                }
-                if (event.target && event.target.result) {
-                  const arrayBuffer = event.target.result as ArrayBuffer;
-                  const data = new Uint8Array(arrayBuffer);
-                  const workbook = Excel.read(data, { type: "array" });
-                  const firstSheetName = workbook.SheetNames[0];
-                  const worksheet = workbook.Sheets[firstSheetName];
-                  const jsonData = Excel.utils.sheet_to_json(worksheet);
-                  setExcelData(file);
-                  setPreviewData(jsonData as Record<string, unknown>[]);
-                  if (onSuccess) {
-                    onSuccess("ok");
-                  }
-                } else {
-                  console.error("Không tìm thấy file");
-                }
-              };
-              reader.readAsArrayBuffer(file);
+              handleUploadTemplate(file);
+              onSuccess?.("ok");
             } else {
-              if (onError) {
-                message.error(
-                  `File sai định dạng, làm ơn chọn định danh .xlsx.`
-                );
-                onError?.(
-                  new Error("File sai định dạng, làm ơn chọn định danh .xlsx .")
-                );
-              }
+              message.error(`File sai định dạng, làm ơn chọn định danh .xlsx.`);
+              onError?.(
+                new Error("File sai định dạng, làm ơn chọn định danh .xlsx .")
+              );
             }
           }}
           onChange={(info) => {
@@ -384,20 +390,37 @@ const AdminUserListScreen: React.FC = () => {
             company data or other banned files.
           </p>
         </Dragger>
-        {previewData.length > 0 && (
+        {(validRecords.length > 0 || invalidRecords.length > 0) && (
           <div className="mt-4">
             <h3>File Preview:</h3>
-            <AntTable
-              dataSource={previewData}
-              columns={Object.keys(previewData[0]).map((key) => ({
-                title: key,
-                dataIndex: key,
-                key: key,
-              }))}
-              pagination={false}
-              scroll={{ x: true, y: 300 }}
-              size="small"
-            />
+            <Tabs defaultActiveKey="1">
+              <TabPane tab="Valid Records" key="1">
+                <AntTable
+                  dataSource={validRecords}
+                  columns={Object.keys(validRecords[0] || {}).map((key) => ({
+                    title: key,
+                    dataIndex: key,
+                    key: key,
+                  }))}
+                  pagination={false}
+                  scroll={{ x: true, y: 300 }}
+                  size="small"
+                />
+              </TabPane>
+              <TabPane tab="Invalid Records" key="2">
+                <AntTable
+                  dataSource={invalidRecords}
+                  columns={Object.keys(invalidRecords[0] || {}).map((key) => ({
+                    title: key,
+                    dataIndex: key,
+                    key: key,
+                  }))}
+                  pagination={false}
+                  scroll={{ x: true, y: 300 }}
+                  size="small"
+                />
+              </TabPane>
+            </Tabs>
           </div>
         )}
       </Modal>
