@@ -26,6 +26,7 @@ import {
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -100,41 +101,46 @@ const AddSyllabusScreen: React.FC = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [formValues, setFormValues] = useState({});
   const [previewVisible, setPreviewVisible] = useState(false);
+  const navigate = useNavigate();
 
-  const onFinish = async (values: {
-    name: string;
-    duration: string;
-    grade: number;
-    sessions: Array<{
-      name: string;
-      description: string;
-      slotCount: number;
-      slots: Array<{
-        name: string;
-        description: string;
-        type: string;
-      }>;
-    }>;
-  }) => {
+  const onFinish = async () => {
+    const values = { ...formValues, ...form.getFieldsValue() };
+    console.log("Received form values:", values);
     setLoading(true);
     try {
       const formattedData = {
         name: values.name,
         duration: values.duration,
         levelID: values.grade,
-        sessions: values.sessions.map((session) => ({
-          name: session.name,
-          description: session.description,
-          numberOfSlot: session.slotCount,
-          slots: session.slots.map((slot, slotIndex) => ({
-            name: slot.name,
-            description: slot.description,
-            orderSlot: slotIndex + 1,
-            slotType: slot.type,
-          })),
-        })),
+        sessions: values.sessions
+          ? values.sessions.map(
+              (session: {
+                name: string;
+                description: string;
+                slotCount: number;
+                slots: Array<{
+                  name: string;
+                  description: string;
+                  type: string;
+                }>;
+              }) => ({
+                name: session.name,
+                description: session.description,
+                numberOfSlot: session.slotCount,
+                slots: session.slots.map((slot, slotIndex) => ({
+                  name: slot.name,
+                  description: slot.description,
+                  orderSlot: slotIndex + 1,
+                  slotType: slot.type,
+                })),
+              })
+            )
+          : [],
       };
+
+      console.log("Syllabus object to be sent:", formattedData);
 
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/syllabus",
@@ -145,6 +151,7 @@ const AddSyllabusScreen: React.FC = () => {
         message.success("Syllabus created successfully");
         form.resetFields();
         setSessions([]);
+        navigate('/list-syllabus')
       } else {
         message.error("Failed to create syllabus");
       }
@@ -159,8 +166,14 @@ const AddSyllabusScreen: React.FC = () => {
   useEffect(() => {
     const fetchGrades = async () => {
       try {
+        const token = localStorage.getItem("accessToken");
         const response = await axios.get(
-          "https://sep490-backend-production.up.railway.app/api/grade?page=0&size=10"
+          "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         if (response.data.status === "success") {
           setGrades(response.data.data);
@@ -348,7 +361,10 @@ const AddSyllabusScreen: React.FC = () => {
   ];
 
   const next = () => {
-    setCurrentStep(currentStep + 1);
+    form.validateFields().then((values) => {
+      setFormValues((prevValues) => ({ ...prevValues, ...values }));
+      setCurrentStep(currentStep + 1);
+    });
   };
 
   const prev = () => {
@@ -371,7 +387,14 @@ const AddSyllabusScreen: React.FC = () => {
           ))}
         </Steps>
         <Divider />
-        <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          onValuesChange={(allValues) => {
+            console.log("Form values changed:", allValues);
+          }}
+        >
           <Row gutter={24}>
             <Col span={previewVisible ? 16 : 24}>
               {steps[currentStep].content}

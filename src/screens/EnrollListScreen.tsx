@@ -15,7 +15,12 @@ interface DataType {
   key: React.Key;
   name: string;
   status: string;
-  major: string;
+  grade: string;
+  academicYear: string;
+  email: string | null;
+  description: string;
+  link: string;
+  survey: string;
 }
 
 const { Search } = Input;
@@ -34,7 +39,7 @@ const EnrollListScreen: React.FC = () => {
     number | null
   >(null);
   const [pagination, setPagination] = useState({
-    current: 1,
+    current: 0,
     pageSize: 10,
     total: 0,
   });
@@ -67,55 +72,67 @@ const EnrollListScreen: React.FC = () => {
 
   const fetchData = useCallback(
     async (page: number = 0, pageSize: number = 10) => {
-      if (isLoggedIn && role === "ADMIN" && selectedAcademicYear) {
-        setLoading(true);
+      if (!selectedAcademicYear || !isLoggedIn || role !== "ADMIN") {
+        return;
+      }
+      setLoading(true);
         try {
           const response = await axios.get(
             `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}`
           );
           const { data, pageResponse } = response.data;
-          const formattedData = data.map((item: {
-            id: number;
-            name: string;
-            status: string;
-            grade: { major: { name: string } };
-            academicYear: { year: string };
-          }) => ({
-            key: item.id,
-            name: item.name,
-            status: item.status,
-            major: item.grade.major.name,
-            academicYear: item.academicYear.year,
-          }));
+          const formattedData = data.map(
+            (item: {
+              id: number;
+              name: string;
+              status: string;
+              grade: string;
+              academicYear: string;
+              email: string | null;
+              description: string;
+              link: string;
+              survey: string;
+            }) => ({
+              key: item.id,
+              name: item.name,
+              status: item.status,
+              grade: item.grade,
+              academicYear: item.academicYear,
+              email: item.email,
+              description: item.description,
+              link: item.link,
+              survey: item.survey,
+            })
+          );
           setAllData(formattedData);
           setDataSource(formattedData);
-          setPagination((prev) => ({
-            ...prev,
-            total: pageResponse.totalPage * pageResponse.pageSize,
-            current: pageResponse.currentPage + 1,
+          setPagination((prevPagination) => ({
+            ...prevPagination,
+            total: pageResponse.totalPage * pageSize,
+            current: page,
+            pageSize: pageSize,
           }));
         } catch (error) {
           console.error("Error fetching data:", error);
         } finally {
           setLoading(false);
         }
-      }
     },
     [isLoggedIn, role, selectedAcademicYear]
   );
 
   useEffect(() => {
-    if (selectedAcademicYear) {
+    if (selectedAcademicYear && isLoggedIn && role === "ADMIN") {
       fetchData(0, pagination.pageSize);
     }
-  }, [selectedAcademicYear, fetchData, pagination.pageSize]);
+  }, [selectedAcademicYear, isLoggedIn, role, fetchData, pagination.pageSize]);
 
   const handleAcademicYearChange = (value: number) => {
     setSelectedAcademicYear(value);
   };
 
-  const handlePaginationChange = (page: number, pageSize: number) => {
-    fetchData(page - 1, pageSize);
+  const handlePaginationChange = (page: number, pageSize?: number) => {
+    fetchData(page, pageSize || pagination.pageSize);
   };
 
   const filterData = (searchValue: string, statusValue: string | null) => {
@@ -154,9 +171,9 @@ const EnrollListScreen: React.FC = () => {
       key: "name",
     },
     {
-      title: "Ngành",
-      dataIndex: "major",
-      key: "major",
+      title: "Khối",
+      dataIndex: "grade",
+      key: "grade",
     },
     {
       title: "Niên khóa",
@@ -180,7 +197,7 @@ const EnrollListScreen: React.FC = () => {
             color = "processing";
             icon = <ClockCircleOutlined />;
             break;
-          case "REJECT":
+          case "REJECTED":
             color = "error";
             icon = <CloseCircleOutlined />;
             break;
@@ -188,7 +205,7 @@ const EnrollListScreen: React.FC = () => {
 
         return (
           <Tag icon={icon} color={color}>
-            {status.toUpperCase()}
+            {status === "REJECTED" ? "REJECT" : status.toUpperCase()}
           </Tag>
         );
       },
@@ -254,6 +271,7 @@ const EnrollListScreen: React.FC = () => {
             showSizeChanger
             showQuickJumper
             showTotal={(total) => `Total ${total} items`}
+            className="mt-4 text-right"
           />
         </>
       ) : (
@@ -261,4 +279,6 @@ const EnrollListScreen: React.FC = () => {
       )}
     </div>
   );
-};export default EnrollListScreen;
+};
+
+export default EnrollListScreen;

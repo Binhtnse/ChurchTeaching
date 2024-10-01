@@ -66,6 +66,7 @@ const EnrollDetailScreen: React.FC = () => {
         );
         console.log("Approval response:", response.data);
         message.success("Enrollment approved successfully");
+        navigate('/enroll-list');
       } else if (action === "reject") {
         setIsRejectModalVisible(true);
       }
@@ -91,9 +92,9 @@ const EnrollDetailScreen: React.FC = () => {
   const handleReject = async () => {
     try {
       setApprovalLoading(true);
+      const encodedReason = encodeURIComponent(rejectionReason);
       const response = await axios.post(
-        `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/reject`,
-        { message: rejectionReason }
+        `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/rejectmessage=${encodedReason}`
       );
       console.log("Rejection response:", response.data);
       message.success("Enrollment rejected successfully");

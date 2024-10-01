@@ -63,13 +63,13 @@ const SyllabusDetailScreen: React.FC = () => {
     return <Text>Syllabus not found</Text>;
   }
 
-  const handleSessionChange = (value: number) => {
-    setSelectedSession(value);
+  const handleSessionChange = (value: number | 'all') => {
+    setSelectedSession(value === 'all' ? null : value);
     setSelectedSlot(null);
   };
 
-  const handleSlotChange = (value: number) => {
-    setSelectedSlot(value);
+  const handleSlotChange = (value: number | 'all') => {
+    setSelectedSlot(value === 'all' ? null : value);
   };
 
   const filteredSessions = selectedSession
@@ -107,6 +107,7 @@ const SyllabusDetailScreen: React.FC = () => {
             onChange={handleSessionChange}
             allowClear
           >
+            <Option key="all" value="all">Tất cả</Option>
             {syllabus.sessions.map((session) => (
               <Option key={session.id} value={session.id}>
                 {session.name}
@@ -120,8 +121,8 @@ const SyllabusDetailScreen: React.FC = () => {
             placeholder="Select a slot"
             onChange={handleSlotChange}
             allowClear
-            disabled={!selectedSession}
           >
+            <Option key="all" value="all">Tất cả</Option>
             {filteredSlots.map((slot) => (
               <Option key={slot.id} value={slot.id}>
                 {slot.name}

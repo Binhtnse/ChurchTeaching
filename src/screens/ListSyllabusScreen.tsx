@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Table, Typography, Tag } from "antd";
 import axios from "axios";
-import { useAuthState } from '../hooks/useAuthState';
-import ForbiddenScreen from './ForbiddenScreen';
-import { useNavigate } from 'react-router-dom';
+import { useAuthState } from "../hooks/useAuthState";
+import ForbiddenScreen from "./ForbiddenScreen";
+import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
 
@@ -19,34 +19,49 @@ const ListSyllabusScreen: React.FC = () => {
   const [syllabuses, setSyllabuses] = useState<Syllabus[]>([]);
   const [loading, setLoading] = useState(true);
   const { role, isLoggedIn } = useAuthState();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchSyllabuses = async () => {
-      try {
-        const response = await axios.get(
-          "https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=0&size=1&sort="
-        );
-        setSyllabuses(
-          response.data.data.map((item: Syllabus) => ({
-            id: item.id,
-            name: item.name,
-            duration: item.duration,
-            levelName: item.levelName,
-            levelID: item.levelID,
-          }))
-        );
-      } catch (error) {
-        console.error("Error fetching syllabuses:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchSyllabuses = async (page: number = 1, pageSize: number = 10) => {
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=${page}&size=${pageSize}`
+      );
+      setSyllabuses(
+        response.data.data.map((item: Syllabus) => ({
+          id: item.id,
+          name: item.name,
+          duration: item.duration,
+          levelName: item.levelName,
+          levelID: item.levelID,
+        }))
+      );
+      setPagination((prevPagination) => ({
+        ...prevPagination,
+        total: response.data.pageResponse.totalPage * pageSize,
+        current: page,
+        pageSize: pageSize,
+      }));
+    } catch (error) {
+      console.error("Error fetching syllabuses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (isLoggedIn && (role === 'ADMIN')) {
-        fetchSyllabuses();
-      }
-  }, [isLoggedIn, role]);
+  const handlePaginationChange = (page: number, pageSize?: number) => {
+    fetchSyllabuses(page, pageSize || pagination.pageSize);
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && role === "ADMIN") {
+      fetchSyllabuses(1, pagination.pageSize);
+    }
+  }, [isLoggedIn, role, pagination.pageSize]);
 
   const columns = [
     {
@@ -76,7 +91,7 @@ const ListSyllabusScreen: React.FC = () => {
     navigate(`/syllabus-detail/${record.id}`);
   };
 
-  if (!isLoggedIn || (role !== 'ADMIN')) {
+  if (!isLoggedIn || role !== "ADMIN") {
     return <ForbiddenScreen />;
   }
 
@@ -92,14 +107,18 @@ const ListSyllabusScreen: React.FC = () => {
         loading={loading}
         className="bg-white rounded-lg shadow"
         pagination={{
-          pageSize: 10,
+          current: pagination.current,
+          total: pagination.total,
+          pageSize: pagination.pageSize,
+          onChange: handlePaginationChange,
           showSizeChanger: true,
           showQuickJumper: true,
+          showTotal: (total) => `Total ${total} items`,
         }}
         onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-            style: { cursor: 'pointer' },
-          })}
+          onClick: () => handleRowClick(record),
+          style: { cursor: "pointer" },
+        })}
       />
     </div>
   );
