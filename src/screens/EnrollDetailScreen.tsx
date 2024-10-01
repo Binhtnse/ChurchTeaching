@@ -93,8 +93,8 @@ const EnrollDetailScreen: React.FC = () => {
     try {
       setApprovalLoading(true);
       const encodedReason = encodeURIComponent(rejectionReason);
-      const response = await axios.post(
-        `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/rejectmessage=${encodedReason}`
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/reject?message=${encodedReason}`
       );
       console.log("Rejection response:", response.data);
       message.success("Enrollment rejected successfully");

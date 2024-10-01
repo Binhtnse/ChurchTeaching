@@ -41,17 +41,16 @@ interface Major {
 interface Grade {
   id: number;
   name: string;
-  description: string | null;
-  status: string;
+  age: number;
+  level: string;
+  description: string;
+  syllabusName: string;
   major: {
     id: number;
     name: string;
-    description: string | null;
+    ageRange: string;
+    description: string;
   };
-  createdBy: string | null;
-  createdDate: string | null;
-  lastModifiedBy: string | null;
-  lastModifiedDate: string | null;
 }
 
 const formItemLayout = {
@@ -73,6 +72,7 @@ const EnrollScreen: React.FC = () => {
   const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
   const [loading, setLoading] = useState(false);
   const [majors, setMajors] = useState<Major[]>([]);
+  const [selectedMajor, setSelectedMajor] = useState<number | null>(null);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [isSurveyLoading, setIsSurveyLoading] = useState(true);
   const [currentGroup, setCurrentGroup] = useState(0);
@@ -82,7 +82,7 @@ const EnrollScreen: React.FC = () => {
   const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
-    setPageTitle('Đơn đăng ký học', '#4154f1');
+    setPageTitle("Đơn đăng ký học", "#4154f1");
   }, [setPageTitle]);
 
   const questionGroups = [
@@ -158,7 +158,7 @@ const EnrollScreen: React.FC = () => {
             <Select onChange={handleGradeChange}>
               {grades.map((grade) => (
                 <Option key={grade.id} value={grade.id}>
-                  {grade.name}
+                  {`${grade.name} - ${grade.level} (${grade.age} tuổi)`}
                 </Option>
               ))}
             </Select>
@@ -169,6 +169,12 @@ const EnrollScreen: React.FC = () => {
             (q) => q.questionId === questionId
           );
           if (!question) return null;
+          if ((selectedMajor === 1 || selectedMajor === 2) && questionId >= 13) {
+            return null;
+          }
+          if (selectedMajor === 3 && questionId >= 15) {
+            return null;
+          }
           return (
             <Form.Item
               key={question.questionId}
@@ -321,14 +327,14 @@ const EnrollScreen: React.FC = () => {
   const fetchGrades = async (majorId: number) => {
     try {
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/major/${majorId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/grade/${majorId}`
       );
       if (
         response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data.grades)
+        response.data.status === "success" &&
+        Array.isArray(response.data.data)
       ) {
-        setGrades(response.data.data.grades);
+        setGrades(response.data.data);
       } else {
         console.error("Unexpected response structure:", response.data);
         setGrades([]);
@@ -341,6 +347,7 @@ const EnrollScreen: React.FC = () => {
 
   const handleMajorChange = (value: number) => {
     console.log(`Selected major ID: ${value}`);
+    setSelectedMajor(value);
     fetchGrades(value);
   };
 
@@ -428,7 +435,7 @@ const EnrollScreen: React.FC = () => {
 
   return (
     <div>
-      <div style={{ marginLeft: "256px", padding: "20px" }}>    
+      <div style={{ marginLeft: "256px", padding: "20px" }}>
         <Form
           {...formItemLayout}
           form={form}
@@ -440,7 +447,7 @@ const EnrollScreen: React.FC = () => {
           scrollToFirstError
         >
           <h1 className="text-3xl font-bold text-blue-500 text-center mb-6 pb-3 border-b-2 border-blue-500">
-          Bảng điền thông tin phụ huynh và thiếu nhi 
+            Bảng điền thông tin phụ huynh và thiếu nhi
           </h1>
           {renderQuestionGroup(currentGroup)}
           <Form.Item>
