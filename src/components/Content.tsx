@@ -1,26 +1,32 @@
 import { Content } from 'antd/es/layout/layout';
 import React from 'react';
-import { Breadcrumb } from 'antd';
-import { useLocation } from 'react-router-dom';
 import usePageTitle from "../hooks/usePageTitle";
 
 export default function MyContent({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
   const { pageTitle } = usePageTitle();
-  const pathSnippets = location.pathname.split('/').filter(i => i);
-
-  const breadcrumbItems = pathSnippets.map((_, index) => {
-    const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
-    return {
-      key: url,
-      title: index === pathSnippets.length - 1 ? pageTitle : pathSnippets[index].charAt(0).toUpperCase() + pathSnippets[index].slice(1),
-    };
-  });
 
   return (
-    <Content className='px-3 py-20 ml-64'>
-      <Breadcrumb items={[{ title: 'Home' }, ...breadcrumbItems]} />
-      <main className='h-full'>{children}</main>
+    <Content className='px-3 py-20 ml-4'>
+      <h1 className="text-3xl font-bold mb-6">{pageTitle}</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <article className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-3">Latest Church Teachings</h2>
+          <p className="text-gray-600 mb-4">Explore the most recent teachings and insights from our church leaders.</p>
+          <a href="#" className="text-blue-600 hover:underline">Read more</a>
+        </article>
+        <article className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-3">Upcoming Events</h2>
+          <p className="text-gray-600 mb-4">Stay informed about our church's upcoming events and gatherings.</p>
+          <a href="#" className="text-blue-600 hover:underline">View calendar</a>
+        </article>
+        <article className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-3">Community Outreach</h2>
+          <p className="text-gray-600 mb-4">Learn about our ongoing community service projects and how you can get involved.</p>
+          <a href="#" className="text-blue-600 hover:underline">Volunteer now</a>
+        </article>
+      </div>
+      <main className='h-full mt-8'>{children}</main>
     </Content>
   );
 }
+

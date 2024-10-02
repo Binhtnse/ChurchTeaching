@@ -1,24 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   BookOutlined,
   HomeOutlined,
   CalendarOutlined,
   TeamOutlined,
-  UnlockOutlined,
-  LogoutOutlined,
   HistoryOutlined,
   FormOutlined,
   UserOutlined,
-  SolutionOutlined
+  SolutionOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { Menu } from "antd";
+import { Menu, Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 type MenuItem = Required<MenuProps>["items"][number];
 
-const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
+const getMenuItems = (role: string): MenuItem[] => {
   const commonItems: MenuItem[] = [
     {
       key: "",
@@ -135,25 +135,21 @@ const getMenuItems = (role: string, isLoggedIn: boolean): MenuItem[] => {
     ],
   };
 
-  const authItem: MenuItem = {
-    key: isLoggedIn ? "logout" : "login",
-    label: isLoggedIn ? "Đăng xuất" : "Đăng nhập",
-    icon: isLoggedIn ? <LogoutOutlined /> : <UnlockOutlined />,
-  };
-
   const validRoles = ["STUDENT", "CATECHIST", "PARENT", "ADMIN", "GUEST"];
   const safeRole = validRoles.includes(role.toUpperCase())
     ? role.toUpperCase()
     : "GUEST";
 
-  return [...commonItems, ...(roleSpecificItems[safeRole] || []), authItem];
+  return [...commonItems, ...(roleSpecificItems[safeRole] || [])];
 };
 
-const Sidebar: React.FC<{ role: string; isLoggedIn: boolean }> = ({
-  role,
-  isLoggedIn,
-}) => {
+const Sidebar: React.FC<{ role: string }> = ({ role }) => {
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const toggleCollapsed = () => {
+    setCollapsed(!collapsed);
+  };
 
   const onClick: MenuProps["onClick"] = async (e) => {
     if (e.key === "login") {
@@ -176,35 +172,43 @@ const Sidebar: React.FC<{ role: string; isLoggedIn: boolean }> = ({
       navigate(`/${e.key}`);
     }
   };
-  const items = getMenuItems(role, isLoggedIn);
+  const items = getMenuItems(role);
 
   return (
     <div
       style={{
-        height: "100vh",
-        width: "256px",
-        position: "fixed",
-        left: 0,
-        top: 0,
-        bottom: 0,
+        width: collapsed ? "80px" : "256px",
+        transition: "width 0.3s",
+        backgroundColor: "white",
+        boxShadow: "2px 0 8px rgba(0,0,0,0.15)",
       }}
     >
-      <div
-        style={{ backgroundColor: "#D60A0B", height: "100px", width: "100%" }}
-      ></div>
+      <Button
+        type="text"
+        onClick={toggleCollapsed}
+        style={{
+          width: "100%",
+          marginBottom: 16,
+          textAlign: "left",
+          padding: "16px",
+        }}
+      >
+        {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+      </Button>
       <Menu
         onClick={onClick}
         style={{
-          backgroundColor: "#14238A",
-          color: "white",
-          height: "calc(100% - 50px)",
+          backgroundColor: "white",
+          color: "black",
+          height: "calc(100% - 64px)",
           width: "100%",
+          border: "none",
         }}
         defaultSelectedKeys={["1"]}
         defaultOpenKeys={["sub1"]}
         mode="inline"
         items={items}
-        theme="dark"
+        inlineCollapsed={collapsed}
       />
     </div>
   );
