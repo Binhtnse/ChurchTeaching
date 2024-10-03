@@ -14,7 +14,6 @@ import {
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 type MenuItem = Required<MenuProps>["items"][number];
 
@@ -61,17 +60,8 @@ const getMenuItems = (role: string): MenuItem[] => {
         children: [
           { key: "student-list", label: "Danh sách thiếu nhi" },
           { key: "catechist-attendance", label: "Xem điểm danh" },
+          { key: "catechist-grade", label: "Xem điểm lớp" },
         ],
-      },
-      {
-        key: "grading",
-        label: "Chấm điểm",
-        icon: <BookOutlined />,
-      },
-      {
-        key: "account",
-        label: "Tài khoản",
-        icon: <UserOutlined />,
       },
     ],
     PARENT: [
@@ -93,11 +83,6 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "enroll",
         label: "Đăng ký học",
         icon: <FormOutlined />,
-      },
-      {
-        key: "account",
-        label: "Tài khoản",
-        icon: <UserOutlined />,
       },
     ],
     ADMIN: [
@@ -152,25 +137,7 @@ const Sidebar: React.FC<{ role: string }> = ({ role }) => {
   };
 
   const onClick: MenuProps["onClick"] = async (e) => {
-    if (e.key === "login") {
-      navigate("/login");
-    } else if (e.key === "logout") {
-      try {
-        await axios.post(
-          "https://sep490-backend-production.up.railway.app/api/v1/user/logout"
-        );
-        // Clear user data from localStorage
-        localStorage.removeItem("userLogin");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        navigate("/login");
-      } catch (error) {
-        console.error("Logout failed:", error);
-        // You might want to show an error message to the user here
-      }
-    } else {
       navigate(`/${e.key}`);
-    }
   };
   const items = getMenuItems(role);
 
