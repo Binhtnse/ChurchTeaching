@@ -53,6 +53,10 @@ interface Grade {
   };
 }
 
+interface ChildData {
+  [key: string]: unknown;
+}
+
 const formItemLayout = {
   labelCol: {
     xs: { span: 24 },
@@ -74,9 +78,11 @@ const EnrollScreen: React.FC = () => {
   const [majors, setMajors] = useState<Major[]>([]);
   const [selectedMajor, setSelectedMajor] = useState<number | null>(null);
   const [grades, setGrades] = useState<Grade[]>([]);
+  const [childrenData, setChildrenData] = useState<ChildData[]>([{}]);
   const [isSurveyLoading, setIsSurveyLoading] = useState(true);
   const [currentGroup, setCurrentGroup] = useState(0);
   const [fileList, setFileList] = useState<unknown[]>([]);
+  const [parentInfo, setParentInfo] = useState<{ [key: number]: unknown }>({});
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [groupData, setGroupData] = useState<{ [key: string]: unknown }>({});
   const { setPageTitle } = usePageTitle();
@@ -127,152 +133,184 @@ const EnrollScreen: React.FC = () => {
     setFileList(newFileList);
   };
 
-  const renderQuestionGroup = (groupIndex: number) => {
+  const renderQuestionGroup = (groupIndex: number, childIndex: number) => {
     const group = questionGroups[groupIndex];
     return (
       <>
-        <h3 className="text-xl font-semibold text-blue-600 mb-4 pb-2 border-b border-blue-300">
-          {group.title}
-        </h3>
-        {group.fields?.includes("major") && (
-          <Form.Item
-            name="major"
-            label="Ngành thiếu nhi muốn đăng ký"
-            rules={[{ required: true, message: "Vui lòng chọn ngành" }]}
-          >
-            <Select onChange={handleMajorChange}>
-              {majors.map((major) => (
-                <Option key={major.id} value={major.id}>
-                  {major.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        )}
-        {group.fields?.includes("gradeId") && (
-          <Form.Item
-            name="gradeId"
-            label="Khối thiếu nhi muốn đăng ký"
-            rules={[{ required: true, message: "Vui lòng chọn khối" }]}
-          >
-            <Select onChange={handleGradeChange}>
-              {grades.map((grade) => (
-                <Option key={grade.id} value={grade.id}>
-                  {`${grade.name} - ${grade.level} (${grade.age} tuổi)`}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        )}
-        {group.questions.map((questionId) => {
-          const question = surveyData?.questions.find(
-            (q) => q.questionId === questionId
-          );
-          if (!question) return null;
-          if ((selectedMajor === 1 || selectedMajor === 2) && questionId >= 13) {
-            return null;
-          }
-          if (selectedMajor === 3 && questionId >= 15) {
-            return null;
-          }
-          return (
-            <Form.Item
-              key={question.questionId}
-              name={question.questionId}
-              label={question.questionText}
-              rules={[
-                // Remove required rule for the "Thông tin liên quan khác" group
-                ...(groupIndex !== 2
-                  ? [
-                      {
-                        required: true,
-                        message: `Vui lòng trả lời câu hỏi này!`,
-                      },
-                    ]
-                  : []),
-              ]}
-            >
-              {question.questionId === 9 ||
-              question.questionId === 11 ||
-              question.questionId === 13 ||
-              question.questionId === 15 ? (
-                <DatePicker
-                  format="DD-MM-YYYY"
-                  onChange={(date) => {
-                    form.setFieldsValue({
-                      [question.questionId]: date,
-                    });
-                  }}
-                />
-              ) : question.questionType === "text" ? (
-                <Input />
-              ) : (
-                <Select placeholder="Chọn một lựa chọn">
-                  {question.options?.map((option) => (
-                    <Option key={option.optionId} value={option.optionId}>
-                      {option.optionText}
+        {childIndex > 0 && groupIndex === 0 ? null : (
+          <>
+            <h3 className="text-xl font-semibold text-blue-600 mb-4 pb-2 border-b border-blue-300">
+              {group.title} {childIndex > 0 ? `(Child ${childIndex + 1})` : ""}
+            </h3>
+            {group.fields?.includes("major") && (
+              <Form.Item
+                name="major"
+                label="Ngành thiếu nhi muốn đăng ký"
+                rules={[{ required: true, message: "Vui lòng chọn ngành" }]}
+              >
+                <Select onChange={handleMajorChange}>
+                  {majors.map((major) => (
+                    <Option key={major.id} value={major.id}>
+                      {major.name}
                     </Option>
                   ))}
                 </Select>
-              )}
-            </Form.Item>
-          );
-        })}
-        {group.fields?.includes("image") && (
-          <Form.Item
-            name="image"
-            label="Hình ảnh bằng chứng"
-            valuePropName="fileList"
-            getValueFromEvent={(e) => {
-              if (Array.isArray(e)) {
-                return e;
+              </Form.Item>
+            )}
+            {group.fields?.includes("gradeId") && (
+              <Form.Item
+                name="gradeId"
+                label="Khối thiếu nhi muốn đăng ký"
+                rules={[{ required: true, message: "Vui lòng chọn khối" }]}
+              >
+                <Select onChange={handleGradeChange}>
+                  {grades.map((grade) => (
+                    <Option key={grade.id} value={grade.id}>
+                      {`${grade.name} - ${grade.level} (${grade.age} tuổi)`}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            )}
+            {group.questions.map((questionId) => {
+              const question = surveyData?.questions.find(
+                (q) => q.questionId === questionId
+              );
+              if (!question) return null;
+              if (
+                (selectedMajor === 1 || selectedMajor === 2) &&
+                questionId >= 13
+              ) {
+                return null;
               }
-              return e && e.fileList;
-            }}
-          >
-            <Upload
-              name="image"
-              listType="text"
-              multiple={true}
-              fileList={fileList as UploadFile[]}
-              onChange={handleChange}
-              beforeUpload={(file) => {
-                const isJpgOrPng =
-                  file.type === "image/jpeg" || file.type === "image/png";
-                if (!isJpgOrPng) {
-                  message.error("You can only upload JPG/PNG file!");
-                }
-                const isLt2M = file.size / 1024 / 1024 < 2;
-                if (!isLt2M) {
-                  message.error("Image must smaller than 2MB!");
-                }
-                return isJpgOrPng && isLt2M;
-              }}
-              customRequest={async ({ file, onSuccess }) => {
-                try {
-                  const secureUrl = await uploadToCloudinary(file as File);
-                  if (onSuccess) {
-                    onSuccess(secureUrl);
+              if (selectedMajor === 3 && questionId >= 15) {
+                return null;
+              }
+              return (
+                <Form.Item
+                  key={question.questionId}
+                  name={question.questionId}
+                  label={question.questionText}
+                  rules={[
+                    // Remove required rule for the "Thông tin liên quan khác" group
+                    ...(groupIndex !== 2
+                      ? [
+                          {
+                            required: true,
+                            message: `Vui lòng trả lời câu hỏi này!`,
+                          },
+                        ]
+                      : []),
+                  ]}
+                >
+                  {question.questionId === 9 ||
+                  question.questionId === 11 ||
+                  question.questionId === 13 ||
+                  question.questionId === 15 ? (
+                    <DatePicker
+                      format="DD-MM-YYYY"
+                      onChange={(date) => {
+                        form.setFieldsValue({
+                          [question.questionId]: date,
+                        });
+                      }}
+                    />
+                  ) : question.questionType === "text" ? (
+                    <Input />
+                  ) : (
+                    <Select placeholder="Chọn một lựa chọn">
+                      {question.options?.map((option) => (
+                        <Option key={option.optionId} value={option.optionId}>
+                          {option.optionText}
+                        </Option>
+                      ))}
+                    </Select>
+                  )}
+                </Form.Item>
+              );
+            })}
+            {group.fields?.includes("image") && (
+              <Form.Item
+                name="image"
+                label="Hình ảnh bằng chứng"
+                valuePropName="fileList"
+                getValueFromEvent={(e) => {
+                  if (Array.isArray(e)) {
+                    return e;
                   }
-                  setUploadedUrls((prevUrls) => [...prevUrls, secureUrl]);
-                } catch (error) {
-                  console.error("Upload failed:", error);
-                }
-              }}
-            >
-              <Button icon={<UploadOutlined />}>Upload Images</Button>
-            </Upload>
-          </Form.Item>
+                  return e && e.fileList;
+                }}
+              >
+                <Upload
+                  name="image"
+                  listType="text"
+                  multiple={true}
+                  fileList={fileList as UploadFile[]}
+                  onChange={handleChange}
+                  beforeUpload={(file) => {
+                    const isJpgOrPng =
+                      file.type === "image/jpeg" || file.type === "image/png";
+                    if (!isJpgOrPng) {
+                      message.error("You can only upload JPG/PNG file!");
+                    }
+                    const isLt2M = file.size / 1024 / 1024 < 2;
+                    if (!isLt2M) {
+                      message.error("Image must smaller than 2MB!");
+                    }
+                    return isJpgOrPng && isLt2M;
+                  }}
+                  customRequest={async ({ file, onSuccess }) => {
+                    try {
+                      const secureUrl = await uploadToCloudinary(file as File);
+                      if (onSuccess) {
+                        onSuccess(secureUrl);
+                      }
+                      setUploadedUrls((prevUrls) => [...prevUrls, secureUrl]);
+                    } catch (error) {
+                      console.error("Upload failed:", error);
+                    }
+                  }}
+                >
+                  <Button icon={<UploadOutlined />}>Upload Images</Button>
+                </Upload>
+              </Form.Item>
+            )}
+          </>
         )}
       </>
     );
+  };
+
+  const addAnotherChild = () => {
+    const currentChildData = form.getFieldsValue();
+    setChildrenData((prevData) => [...prevData, currentChildData]);
+    setCurrentGroup(1);
+    form.resetFields();
+    form.setFieldsValue(parentInfo);
   };
 
   const nextGroup = () => {
     form
       .validateFields()
       .then((values) => {
-        setGroupData((prevData) => ({ ...prevData, ...values }));
+        if (currentGroup === 0) {
+          setParentInfo({
+            1: values[1],
+            2: values[2],
+            3: values[3],
+            4: values[4],
+            5: values[5],
+            6: values[6],
+          });
+        }
+        setChildrenData((prevData) => {
+          const newData = [...prevData];
+          newData[newData.length - 1] = {
+            ...newData[newData.length - 1],
+            ...values,
+          };
+          return newData;
+        });
         setCurrentGroup(currentGroup + 1);
       })
       .catch((error) => {
@@ -358,23 +396,22 @@ const EnrollScreen: React.FC = () => {
 
   const onFinish = async (values: { [key: string]: unknown }) => {
     setLoading(true);
-    console.log("Form values before processing: ", values);
-    const allData = { ...groupData, ...values };
-    console.log("All form data:", allData);
+    const finalChildData = [
+      ...childrenData.slice(0, -1),
+      { ...childrenData[childrenData.length - 1], ...values },
+    ];
 
-    const requestBody = {
+    const requestBody = finalChildData.map((childData) => ({
       surveyId: 1,
-      note: allData.note || "Đây là thông tin thêm cho khảo sát này.",
-      gradeId: allData.gradeId as number,
+      note: childData.note || "Đây là thông tin thêm cho khảo sát này.",
+      gradeId: childData.gradeId as number,
       answers: surveyData?.questions.map((question) => {
-        const answer = allData[question.questionId];
+        const answer =
+          question.questionId <= 6
+            ? parentInfo[question.questionId]
+            : childData[question.questionId];
         let formattedAnswer = answer;
-        if (
-          question.questionId === 9 ||
-          question.questionId === 11 ||
-          question.questionId === 13 ||
-          question.questionId === 15
-        ) {
+        if ([9, 11, 13, 15].includes(question.questionId)) {
           formattedAnswer = answer
             ? dayjs(answer as Dayjs).format("DD-MM-YYYY")
             : null;
@@ -390,7 +427,7 @@ const EnrollScreen: React.FC = () => {
         };
       }),
       links: uploadedUrls,
-    };
+    }));
 
     console.log("Request body:", JSON.stringify(requestBody, null, 2));
 
@@ -404,7 +441,6 @@ const EnrollScreen: React.FC = () => {
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error submitting registration:", error);
-      // Handle error (e.g., show error message to user)
     } finally {
       setLoading(false);
     }
@@ -449,16 +485,21 @@ const EnrollScreen: React.FC = () => {
           <h1 className="text-3xl font-bold text-blue-500 text-center mb-6 pb-3 border-b-2 border-blue-500">
             Bảng điền thông tin phụ huynh và thiếu nhi
           </h1>
-          {renderQuestionGroup(currentGroup)}
+          {renderQuestionGroup(currentGroup, 0)}
           <Form.Item>
             {currentGroup > 0 && <Button onClick={prevGroup}>Quay lại</Button>}
             {currentGroup < questionGroups.length - 1 && (
               <Button onClick={nextGroup}>Tiếp theo</Button>
             )}
             {currentGroup === questionGroups.length - 1 && (
-              <Button type="primary" onClick={handleSubmit} loading={loading}>
-                Đăng ký
-              </Button>
+              <>
+                <Button onClick={addAnotherChild}>
+                  Register Another Child
+                </Button>
+                <Button type="primary" onClick={handleSubmit} loading={loading}>
+                  Đăng ký
+                </Button>
+              </>
             )}
           </Form.Item>
         </Form>

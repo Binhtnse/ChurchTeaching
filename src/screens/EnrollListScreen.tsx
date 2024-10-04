@@ -12,6 +12,7 @@ import axios from "axios";
 import usePageTitle from "../hooks/usePageTitle";
 
 interface DataType {
+  id: number;
   key: React.Key;
   name: string;
   status: string;
@@ -71,44 +72,32 @@ const EnrollListScreen: React.FC = () => {
   }, [setPageTitle]);
 
   const fetchData = useCallback(
-    async (page: number = 0, pageSize: number = 10) => {
+    async (page: number = 1, pageSize: number = 10) => {
       if (!selectedAcademicYear || !isLoggedIn || role !== "ADMIN") {
         return;
       }
       setLoading(true);
         try {
           const response = await axios.get(
-            `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}`
+            `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page - 1}&size=${pageSize}&academicYearId=${selectedAcademicYear}`
           );
-          const { data, pageResponse } = response.data;
-          const formattedData = data.map(
-            (item: {
-              id: number;
-              name: string;
-              status: string;
-              grade: string;
-              academicYear: string;
-              email: string | null;
-              description: string;
-              link: string;
-              survey: string;
-            }) => ({
-              key: item.id,
-              name: item.name,
-              status: item.status,
-              grade: item.grade,
-              academicYear: item.academicYear,
-              email: item.email,
-              description: item.description,
-              link: item.link,
-              survey: item.survey,
-            })
-          );
+          const { data } = response.data;
+          const formattedData = data.map((item: DataType) => ({
+            key: item.id,
+            name: item.name,
+            status: item.status,
+            grade: item.grade,
+            academicYear: item.academicYear,
+            email: item.email,
+            description: item.description,
+            link: item.link,
+            survey: item.survey,
+          }));
           setAllData(formattedData);
           setDataSource(formattedData);
           setPagination((prevPagination) => ({
             ...prevPagination,
-            total: pageResponse.totalPage * pageSize,
+            total: response.data.pageResponse.totalPage * pageSize,
             current: page,
             pageSize: pageSize,
           }));
@@ -123,9 +112,11 @@ const EnrollListScreen: React.FC = () => {
 
   useEffect(() => {
     if (selectedAcademicYear && isLoggedIn && role === "ADMIN") {
-      fetchData(0, pagination.pageSize);
+      fetchData(1, pagination.pageSize);
     }
-  }, [selectedAcademicYear, isLoggedIn, role, fetchData, pagination.pageSize]);
+  }, [selectedAcademicYear, isLoggedIn, role, pagination.pageSize, fetchData]);
+  
+  
 
   const handleAcademicYearChange = (value: number) => {
     setSelectedAcademicYear(value);
@@ -280,5 +271,4 @@ const EnrollListScreen: React.FC = () => {
     </div>
   );
 };
-
 export default EnrollListScreen;
