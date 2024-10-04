@@ -115,8 +115,6 @@ const EnrollListScreen: React.FC = () => {
       fetchData(1, pagination.pageSize);
     }
   }, [selectedAcademicYear, isLoggedIn, role, pagination.pageSize, fetchData]);
-  
-  
 
   const handleAcademicYearChange = (value: number) => {
     setSelectedAcademicYear(value);

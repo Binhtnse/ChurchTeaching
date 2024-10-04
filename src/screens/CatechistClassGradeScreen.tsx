@@ -8,9 +8,15 @@ const { Title } = Typography;
 const { Option } = Select;
 
 interface GradeTemplate {
+  id: number;
+  name: string;
+  maxExamCount: number;
   exams: {
+    id: number;
     name: string;
     weight: number;
+    status: string | null;
+    gradeTemplateName: string;
   }[];
 }
 
@@ -51,6 +57,7 @@ interface StudentGrade {
   score: number;
   examName: string;
   className: string;
+  scores: { [examName: string]: number };
 }
 
 interface ApiResponse {
@@ -109,7 +116,8 @@ const CatechistClassGradeScreen: React.FC = () => {
             },
           }
         );
-        setClassGrades(response.data.data);
+        const mergedGrades = mergeStudentGrades(response.data.data);
+        setClassGrades(mergedGrades);
         setPagination((prevPagination) => ({
           ...prevPagination,
           total: response.data.pageResponse.totalPage * pageSize,
@@ -182,18 +190,32 @@ const CatechistClassGradeScreen: React.FC = () => {
     setSelectedGrade(value);
   };
 
+  const mergeStudentGrades = (grades: StudentGrade[]): StudentGrade[] => {
+    const mergedGrades: { [key: string]: StudentGrade } = {};
+  
+    grades.forEach(grade => {
+      const key = `${grade.studentName}-${grade.account}`;
+      if (!mergedGrades[key]) {
+        mergedGrades[key] = { ...grade, scores: {} };
+      }
+      mergedGrades[key].scores[grade.examName] = grade.score;
+    });
+  
+    return Object.values(mergedGrades);
+  };
+
   const fetchGradeTemplate = useCallback(async () => { 
       try {
         const accessToken = localStorage.getItem('accessToken');
-        const response = await axios.get<{ data: GradeTemplate }>(
-          `https://sep490-backend-production.up.railway.app/api/v1/grade-template/1`,
+        const response = await axios.get<{ data: GradeTemplate[]  }>(
+          `https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
           }
         );
-        setGradeTemplate(response.data.data);
+        setGradeTemplate(response.data.data[0]);
       } catch (error) {
         console.error('Error fetching grade template:', error);
         message.error('Failed to load grade template data');
@@ -237,27 +259,21 @@ const CatechistClassGradeScreen: React.FC = () => {
       key: 'studentName',
     },
     ...(gradeTemplate?.exams?.map((exam) => ({
-      title: exam.name,
-      dataIndex: 'score',
-      key: exam.name,
-      render: (score: number, record: StudentGrade) => {
-        const examScore = record.examName === exam.name ? score : '-';
-        return examScore;
-      },
-    })) || []),
-    {
-      title: 'Tổng điểm',
-      key: 'totalScore',
-      render: (record: StudentGrade) => {
-        const totalScore = gradeTemplate?.exams?.reduce((acc, exam) => {
-          if (record.examName === exam.name) {
-            return acc + (record.score * exam.weight);
-          }
-          return acc;
-        }, 0);
-        return totalScore?.toFixed(2) || '-';
-      },
+    title: exam.name,
+    dataIndex: ['scores', exam.name],
+    key: exam.name,
+    render: (score: number) => score || '-',
+  })) || []),
+  {
+    title: 'Tổng điểm',
+    key: 'totalScore',
+    render: (record: StudentGrade) => {
+      const totalScore = gradeTemplate?.exams?.reduce((acc, exam) => {
+        return acc + ((record.scores[exam.name] || 0) * exam.weight);
+      }, 0);
+      return totalScore?.toFixed(2) || '-';
     },
+  },
   ];
 
   const classColumns = [

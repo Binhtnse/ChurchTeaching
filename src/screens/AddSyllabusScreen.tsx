@@ -16,12 +16,14 @@ import {
   Divider,
   List,
   Tag,
+  Upload,
 } from "antd";
 import {
   PlusOutlined,
   BookOutlined,
   ScheduleOutlined,
   EyeOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -60,7 +62,7 @@ const SyllabusPreview: React.FC<{
       <Text>Khối: {grades.find((g) => g.id === formValues.grade)?.name}</Text>
 
       <Title level={5} className="mt-4">
-        Phiên học
+        Chương
       </Title>
       <List
         dataSource={formValues.sessions}
@@ -101,6 +103,9 @@ const AddSyllabusScreen: React.FC = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string }[]
+  >([]);
   const [formValues, setFormValues] = useState({});
   const [previewVisible, setPreviewVisible] = useState(false);
   const navigate = useNavigate();
@@ -111,8 +116,10 @@ const AddSyllabusScreen: React.FC = () => {
     setLoading(true);
     try {
       const formattedData = {
+        academicYearId: values.academicYearId,
         name: values.name,
         duration: values.duration,
+        levelName: grades.find((g) => g.id === values.grade)?.name || "",
         levelID: values.grade,
         sessions: values.sessions
           ? values.sessions.map(
@@ -121,9 +128,11 @@ const AddSyllabusScreen: React.FC = () => {
                 description: string;
                 slotCount: number;
                 slots: Array<{
+                  materialLinks: string[];
                   name: string;
                   description: string;
                   type: string;
+                  materialName: string;
                 }>;
               }) => ({
                 name: session.name,
@@ -134,6 +143,10 @@ const AddSyllabusScreen: React.FC = () => {
                   description: slot.description,
                   orderSlot: slotIndex + 1,
                   slotType: slot.type,
+                  materialRequestDTO: {
+                    name: slot.materialName || "",
+                    links: slot.materialLinks || [],
+                  },
                 })),
               })
             )
@@ -151,7 +164,7 @@ const AddSyllabusScreen: React.FC = () => {
         message.success("Syllabus created successfully");
         form.resetFields();
         setSessions([]);
-        navigate('/list-syllabus')
+        navigate("/list-syllabus");
       } else {
         message.error("Failed to create syllabus");
       }
@@ -162,6 +175,22 @@ const AddSyllabusScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchAcademicYears = async () => {
+      try {
+        const response = await axios.get(
+          "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+        );
+        setAcademicYears(response.data);
+      } catch (error) {
+        console.error("Error fetching academic years:", error);
+        message.error("Failed to fetch academic years");
+      }
+    };
+
+    fetchAcademicYears();
+  }, []);
 
   useEffect(() => {
     const fetchGrades = async () => {
@@ -237,6 +266,19 @@ const AddSyllabusScreen: React.FC = () => {
               ))}
             </Select>
           </Form.Item>
+          <Form.Item
+            name="academicYearId"
+            label="Academic Year"
+            rules={[{ required: true }]}
+          >
+            <Select>
+              {academicYears.map((year) => (
+                <Option key={year.id} value={year.id}>
+                  {year.year}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
         </Card>
       ),
     },
@@ -245,18 +287,15 @@ const AddSyllabusScreen: React.FC = () => {
       content: (
         <>
           <Title level={3}>
-            <ScheduleOutlined /> Phiên học
+            <ScheduleOutlined /> Chương
           </Title>
           <Collapse>
             {sessions.map((session, sessionIndex) => (
-              <Panel
-                header={`Phiên học ${sessionIndex + 1}`}
-                key={sessionIndex}
-              >
+              <Panel header={`Chương ${sessionIndex + 1}`} key={sessionIndex}>
                 <Card className="mb-4" style={{ background: "#f0f2f5" }}>
                   <Form.Item
                     name={["sessions", sessionIndex, "name"]}
-                    label="Tên Phiên Học"
+                    label="Tên Chương"
                     rules={[{ required: true }]}
                   >
                     <Input />
@@ -324,6 +363,74 @@ const AddSyllabusScreen: React.FC = () => {
                           <Option value="Prayer">Học kinh</Option>
                         </Select>
                       </Form.Item>
+                      <Form.Item
+                        name={[
+                          "sessions",
+                          sessionIndex,
+                          "slots",
+                          slotIndex,
+                          "materialName",
+                        ]}
+                        label="Material Name"
+                      >
+                        <Input />
+                      </Form.Item>
+                      <Form.Item
+                        name={[
+                          "sessions",
+                          sessionIndex,
+                          "slots",
+                          slotIndex,
+                          "materialLinks",
+                        ]}
+                        label="Material Links"
+                      >
+                        <Upload
+                          name="file"
+                          multiple
+                          customRequest={async ({ file, onSuccess }) => {
+                            try {
+                              if (file instanceof File) {
+                                const secureUrl = await uploadToCloudinary(
+                                  file
+                                );
+                                if (onSuccess) {
+                                  onSuccess(secureUrl);
+                                }
+                                // Update form values
+                                const currentLinks =
+                                  form.getFieldValue([
+                                    "sessions",
+                                    sessionIndex,
+                                    "slots",
+                                    slotIndex,
+                                    "materialLinks",
+                                  ]) || [];
+                                form.setFieldsValue({
+                                  sessions: {
+                                    [sessionIndex]: {
+                                      slots: {
+                                        [slotIndex]: {
+                                          materialLinks: [
+                                            ...currentLinks,
+                                            secureUrl,
+                                          ],
+                                        },
+                                      },
+                                    },
+                                  },
+                                });
+                              } else {
+                                throw new Error("Invalid file type");
+                              }
+                            } catch (error) {
+                              console.error("Upload failed:", error);
+                            }
+                          }}
+                        >
+                          <Button icon={<UploadOutlined />}>Upload</Button>
+                        </Upload>
+                      </Form.Item>
                     </Card>
                   ))}
                   <Button
@@ -345,7 +452,7 @@ const AddSyllabusScreen: React.FC = () => {
             icon={<PlusOutlined />}
             className="mb-4 mt-4"
           >
-            Thêm phiên học
+            Thêm chương
           </Button>
         </>
       ),
@@ -359,6 +466,30 @@ const AddSyllabusScreen: React.FC = () => {
       ),
     },
   ];
+
+  const uploadToCloudinary = async (file: File) => {
+    const CLOUD_NAME = "dlhd1ztab";
+    const PRESET_NAME = "qtsuml94";
+    const FOLDER_NAME = "do an";
+    const api = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", PRESET_NAME);
+    formData.append("folder", FOLDER_NAME);
+
+    try {
+      const response = await axios.post(api, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data.secure_url;
+    } catch (error) {
+      console.error("Upload failed:", error);
+      throw error;
+    }
+  };
 
   const next = () => {
     form.validateFields().then((values) => {
