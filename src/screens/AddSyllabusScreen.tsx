@@ -16,19 +16,18 @@ import {
   Divider,
   List,
   Tag,
-  Upload,
 } from "antd";
 import {
   PlusOutlined,
   BookOutlined,
   ScheduleOutlined,
   EyeOutlined,
-  UploadOutlined,
 } from "@ant-design/icons";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import CloudinaryUploadWidget from "../components/CloudinaryUploadWidget";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -121,6 +120,7 @@ const AddSyllabusScreen: React.FC = () => {
         duration: values.duration,
         levelName: grades.find((g) => g.id === values.grade)?.name || "",
         levelID: values.grade,
+        isCurrent: 'true',
         sessions: values.sessions
           ? values.sessions.map(
               (session: {
@@ -313,7 +313,6 @@ const AddSyllabusScreen: React.FC = () => {
                   >
                     <InputNumber min={1} />
                   </Form.Item>
-
                   <Title level={4}>Buổi học</Title>
                   {session.slots.map((_slot, slotIndex) => (
                     <Card
@@ -385,54 +384,47 @@ const AddSyllabusScreen: React.FC = () => {
                         ]}
                         label="Material Links"
                       >
-                        <Upload
-                          name="file"
-                          multiple
-                          customRequest={async ({ file, onSuccess }) => {
-                            try {
-                              if (file instanceof File) {
-                                const secureUrl = await uploadToCloudinary(
-                                  file
-                                );
-                                if (onSuccess) {
-                                  onSuccess(secureUrl);
-                                }
-                                // Update form values
-                                const currentLinks =
-                                  form.getFieldValue([
-                                    "sessions",
-                                    sessionIndex,
-                                    "slots",
-                                    slotIndex,
-                                    "materialLinks",
-                                  ]) || [];
-                                form.setFieldsValue({
-                                  sessions: {
-                                    [sessionIndex]: {
-                                      slots: {
-                                        [slotIndex]: {
-                                          materialLinks: [
-                                            ...currentLinks,
-                                            secureUrl,
-                                          ],
-                                        },
-                                      },
+                        <CloudinaryUploadWidget
+                          onUploadSuccess={(info: unknown) => {
+                            const uploadInfo = info as {
+                              secure_url: string;
+                              original_filename: string;
+                            };
+                            const currentLinks =
+                              form.getFieldValue([
+                                "sessions",
+                                sessionIndex,
+                                "slots",
+                                slotIndex,
+                                "materialLinks",
+                              ]) || [];
+                            const newLink = {
+                              url: uploadInfo.secure_url,
+                              fileName: uploadInfo.original_filename,
+                            };
+                            form.setFieldsValue({
+                              sessions: {
+                                [sessionIndex]: {
+                                  slots: {
+                                    [slotIndex]: {
+                                      materialLinks: [...currentLinks, newLink],
                                     },
                                   },
-                                });
-                              } else {
-                                throw new Error("Invalid file type");
-                              }
-                            } catch (error) {
-                              console.error("Upload failed:", error);
-                            }
+                                },
+                              },
+                            });
+                            message.success(
+                              `File "${uploadInfo.original_filename}" uploaded successfully`
+                            );
                           }}
-                        >
-                          <Button icon={<UploadOutlined />}>Upload</Button>
-                        </Upload>
+                          onUploadFailure={(error) => {
+                            console.error("Upload failed:", error);
+                            message.error("Failed to upload file");
+                          }}
+                        />
                       </Form.Item>
                     </Card>
-                  ))}
+                  ))}{" "}
                   <Button
                     type="dashed"
                     onClick={() => addSlot(sessionIndex)}
@@ -466,30 +458,6 @@ const AddSyllabusScreen: React.FC = () => {
       ),
     },
   ];
-
-  const uploadToCloudinary = async (file: File) => {
-    const CLOUD_NAME = "dlhd1ztab";
-    const PRESET_NAME = "qtsuml94";
-    const FOLDER_NAME = "do an";
-    const api = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", PRESET_NAME);
-    formData.append("folder", FOLDER_NAME);
-
-    try {
-      const response = await axios.post(api, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      return response.data.secure_url;
-    } catch (error) {
-      console.error("Upload failed:", error);
-      throw error;
-    }
-  };
 
   const next = () => {
     form.validateFields().then((values) => {
