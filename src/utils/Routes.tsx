@@ -15,6 +15,7 @@ import AddSyllabusScreen from "../screens/AddSyllabusScreen";
 import ListSyllabusScreen from "../screens/ListSyllabusScreen";
 import SyllabusDetailScreen from "../screens/SyllabusDetailScreen";
 import CatechistClassGradeScreen from "../screens/CatechistClassGradeScreen";
+import AdminClassDetailScreen from "../screens/AdminClassDetailScreen";
 import CatechistScheduleScreen from "../screens/CatechistScheduleScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
@@ -127,6 +128,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminClassListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/class/:classId"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminClassDetailScreen />
               </ProtectedRoute>
             }
           />
