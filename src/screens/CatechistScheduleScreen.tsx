@@ -93,6 +93,8 @@ const CatechistScheduleScreen: React.FC = () => {
           "https://sep490-backend-production.up.railway.app/api/v1/schedule/catechist/8"
         );
         setScheduleData(response.data.data);
+        setSelectedYear(response.data.data.academicYear);
+        setSelectedWeek(response.data.data.schedule[0].weekNumber);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching schedule:", error);
@@ -114,17 +116,19 @@ const CatechistScheduleScreen: React.FC = () => {
     return timetable;
   };
 
-  const currentWeek = scheduleData?.schedule.find(week => week.weekNumber === selectedWeek);
+  const currentWeek = scheduleData?.schedule.find(
+    (week) => week.weekNumber === selectedWeek
+  );
 
   const renderCalendar = (timetable: Timetable) => {
     const days = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
+      "Thứ Hai",
+      "Thứ Ba",
+      "Thứ Tư",
+      "Thứ Năm",
+      "Thứ Sáu",
+      "Thứ Bảy",
+      "Chủ Nhật",
     ];
     const times = Array.from(
       new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
@@ -145,6 +149,8 @@ const CatechistScheduleScreen: React.FC = () => {
                   <div>
                     <strong>{timetable[day][time]?.name}</strong>
                     <div>{timetable[day][time]?.description}</div>
+                    <div>Loại buổi học: {timetable[day][time]?.slotType}</div>
+                    <div>Chương: {timetable[day][time]?.session.name}</div>
                   </div>
                 )}
               </CalendarCell>
@@ -183,7 +189,7 @@ const CatechistScheduleScreen: React.FC = () => {
           style={{ width: 200 }}
           value={selectedWeek}
           onChange={(value) => setSelectedWeek(value)}
-          placeholder="Select week"
+          placeholder="Chọn tuần"
         >
           {scheduleData?.schedule.map((week) => (
             <Option key={week.weekNumber} value={week.weekNumber}>
@@ -194,11 +200,15 @@ const CatechistScheduleScreen: React.FC = () => {
       </div>
 
       <Text strong>Niên Khóa: {selectedYear}</Text>
-      <Text strong className="ml-4">Tuần: {selectedWeek}</Text>
+      <Text strong className="ml-4">
+        Tuần: {selectedWeek}
+      </Text>
 
       {currentWeek && (
         <div className="mt-4">
-          <Text>Từ {currentWeek.startDate} đến {currentWeek.endDate}</Text>
+          <Text>
+            Từ {currentWeek.startDate} đến {currentWeek.endDate}
+          </Text>
           {currentWeek.classes.map((classItem, index) => {
             const timetable = createTimetable(classItem.slots);
             return (
