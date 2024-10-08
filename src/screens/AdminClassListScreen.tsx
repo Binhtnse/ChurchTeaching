@@ -1,19 +1,28 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo } from "react";
-import { Table, Space, Button, message, notification } from "antd";
+import {
+  Table,
+  Space,
+  Button,
+  message,
+  notification,
+  Input,
+  Select,
+} from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
-import { ExportOutlined } from "@ant-design/icons";
+import { EditOutlined, ExportOutlined } from "@ant-design/icons";
 import usePageTitle from "../hooks/usePageTitle";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { TableProps } from "antd";
-import EditClassModal from "../components/EditClassModal";
 import CreateClassModal from "../components/CreateClassModal";
 import ImportFileModal from "../components/ImportFileModal";
 
 const Context = React.createContext({ message: "Default" });
-
+const { Search } = Input;
+const { Option } = Select;
 interface ClassData {
   id: number;
   name: string;
@@ -25,11 +34,19 @@ interface ClassData {
 
 const AdminClassListScreen: React.FC = () => {
   const [api, contextHolder] = notification.useNotification();
-
   const contextValue = useMemo(() => ({ message: "Ant Design" }), []);
+
+  const navigate = useNavigate();
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const { setPageTitle } = usePageTitle();
   const [data, setData] = useState<ClassData[]>([]);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string; timeStatus: string }[]
+  >([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<
+    number | null
+  >(null);
+
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -93,6 +110,25 @@ const AdminClassListScreen: React.FC = () => {
   useEffect(() => {
     setPageTitle("Danh sách lớp học", "#4154f1");
   }, [setPageTitle]);
+  useEffect(() => {
+    fetchAcademicYears();
+  }, []);
+
+  const handleAcademicYearChange = (value: number) => {
+    setSelectedAcademicYear(value);
+  };
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+      console.log("Academic Years Data:", response.data);
+      setAcademicYears(response.data);
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+      message.error("Failed to fetch academic years");
+    }
+  };
 
   const fetchData = async (
     page: number = 1,
@@ -176,10 +212,17 @@ const AdminClassListScreen: React.FC = () => {
       key: "action",
       render: (_, record) => (
         <Space size="middle">
-          <EditClassModal classId={record.id} />
+          {/* <EditClassModal classId={record.id} /> */}
           {/* <Button danger icon={<DeleteOutlined />}>
             Delete
           </Button> */}
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => navigate(`/class/${record.id}`)}
+          >
+            Chi tiết
+          </Button>
         </Space>
       ),
     },
@@ -209,6 +252,35 @@ const AdminClassListScreen: React.FC = () => {
 
           <ImportFileModal />
         </div>
+      </div>
+      <div className="flex flex-wrap gap-5">
+        <Search
+          placeholder="Tìm theo tên lớp"
+          // onSearch={handleSearch}
+          style={{ width: 200 }}
+          // onChange={(e) => handleSearch(e.target.value)}
+        />
+        <Select
+          style={{ width: 200, marginRight: 16 }}
+          placeholder="Chọn niên khóa"
+          onChange={handleAcademicYearChange}
+        >
+          {academicYears.map((year) => (
+            <Option key={year.id} value={year.id}>
+              {year.year} {year.timeStatus === "NOW" ? "(Hiện tại)" : ""}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          style={{ width: 200 }}
+          placeholder="Lọc theo trạng thái"
+          // onChange={handleStatusFilter}
+          allowClear
+        >
+          <Option value="APPROVE">Đồng ý</Option>
+          <Option value="PENDING">Đang chờ</Option>
+          <Option value="REJECT">Từ chối</Option>
+        </Select>
       </div>
       <Table
         columns={columns}
