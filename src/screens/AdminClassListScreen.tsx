@@ -1,84 +1,160 @@
-import React, { useState, useEffect } from "react";
-import { Table, Space, Button, message } from "antd";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect, useMemo } from "react";
+import { Table, Space, Button, message, notification } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { ExportOutlined } from "@ant-design/icons";
 import usePageTitle from "../hooks/usePageTitle";
+import { useSearchParams } from "react-router-dom";
+import type { TableProps } from "antd";
+import EditClassModal from "../components/EditClassModal";
+import CreateClassModal from "../components/CreateClassModal";
+import ImportFileModal from "../components/ImportFileModal";
+
+const Context = React.createContext({ message: "Default" });
 
 interface ClassData {
   id: number;
   name: string;
-  startTime: string;
-  endTime: string;
+  numberOfCatechist: number | null;
   gradeName: string;
-  academicYear: number;
+  academicYear: string;
   status: string;
 }
 
 const AdminClassListScreen: React.FC = () => {
-  const [classes, setClasses] = useState<ClassData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [api, contextHolder] = notification.useNotification();
+
+  const contextValue = useMemo(() => ({ message: "Ant Design" }), []);
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const { setPageTitle } = usePageTitle();
+  const [data, setData] = useState<ClassData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 2,
+    totalPage: 0,
+  });
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => {
-    checkAuthState();
-  }, [checkAuthState]);
+  const API_URL =
+    "https://sep490-backend-production.up.railway.app/api/v1/class/list";
+  const DEFAULT_PAGE_SIZE = 5;
 
-  useEffect(() => {
-    setPageTitle('Danh sách lớp học', '#4154f1');
-  }, [setPageTitle]);
-
-  useEffect(() => {
-    if (isLoggedIn && role === "ADMIN") {
-      fetchClasses();
-    }
-  }, [isLoggedIn, role]);
-
-  const fetchClasses = async () => {
-    setLoading(true);
+  const handleExport = async () => {
     try {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=10",
+        "https://sep490-backend-production.up.railway.app/api/v1/class/export",
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
+          responseType: "blob",
         }
       );
-      setClasses(response.data.data);
-      setLoading(false);
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      const link = document.createElement("a");
+      link.href = url;
+
+      const contentDisposition = response.headers["content-disposition"];
+      const fileName = contentDisposition
+        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+        : "exported_file.xlsx";
+
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.log(error);
+      if (error.response.data.message) {
+        api.error({
+          message: `Lỗi ${error.response.data.message}`,
+          placement: "topRight",
+        });
+      } else {
+        api.error({
+          message: `Lỗi ${error.message}`,
+          placement: "topRight",
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    checkAuthState();
+  }, [checkAuthState]);
+  useEffect(() => {
+    setPageTitle("Danh sách lớp học", "#4154f1");
+  }, [setPageTitle]);
+
+  const fetchData = async (
+    page: number = 1,
+    pageSize: number = DEFAULT_PAGE_SIZE
+  ) => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}?page=${page}&size=${pageSize}`
+      );
+      const { data, pageResponse } = response.data;
+
+      setData(data);
+      setPagination({
+        current: pageResponse.currentPage,
+        pageSize: pageResponse.pageSize,
+        totalPage: pageResponse.totalPage * pageResponse.pageSize,
+      });
     } catch (error) {
-      console.error("Error fetching classes:", error);
       message.error("Failed to load class data");
+      console.error("Error fetching data:", error);
+    } finally {
       setLoading(false);
     }
   };
 
-  const columns = [
+  const updateQueryParams = (page: number, pageSize: number) => {
+    setSearchParams({ page: String(page), size: String(pageSize) });
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && role === "ADMIN") {
+      const page = searchParams.get("page")
+        ? parseInt(searchParams.get("page")!)
+        : 1;
+      const size = searchParams.get("size")
+        ? parseInt(searchParams.get("size")!)
+        : DEFAULT_PAGE_SIZE;
+
+      fetchData(page, size);
+    }
+  }, [isLoggedIn, role, searchParams]);
+
+  const handleTableChange = (pagination: any) => {
+    updateQueryParams(pagination.current, pagination.pageSize);
+  };
+
+  const columns: TableProps<ClassData>["columns"] = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
     },
     {
-      title: "Tên lớp",
+      title: "Tên Lớp",
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "Thời gian bắt đầu",
-      dataIndex: "startTime",
-      key: "startTime",
-      render: (text: string) => new Date(text).toLocaleString(),
-    },
-    {
-      title: "Thời gian kết thúc",
-      dataIndex: "endTime",
-      key: "endTime",
-      render: (text: string) => new Date(text).toLocaleString(),
+      title: "Số lượng giáo lý viên",
+      dataIndex: "numberOfCatechist",
+      key: "numberOfCatechist",
     },
     {
       title: "Khối",
@@ -86,19 +162,27 @@ const AdminClassListScreen: React.FC = () => {
       key: "gradeName",
     },
     {
-      title: "Niên khóa",
+      title: "Năm học",
       dataIndex: "academicYear",
       key: "academicYear",
     },
     {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+    },
+    {
       title: "Hành động",
       key: "action",
-      render: () => (
+      render: (_, record) => (
         <Space size="middle">
-          <Button type="primary" size="small" icon={<EditOutlined />}>Edit</Button>
-          <Button danger size="small" icon={<DeleteOutlined />}>Delete</Button>
+          <EditClassModal classId={record.id} />
+          {/* <Button danger icon={<DeleteOutlined />}>
+            Delete
+          </Button> */}
         </Space>
-      ),    },
+      ),
+    },
   ];
 
   if (!isLoggedIn || role !== "ADMIN") {
@@ -107,26 +191,42 @@ const AdminClassListScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
+      <Context.Provider value={contextValue}>{contextHolder}</Context.Provider>
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-blue-600">Danh sách lớp giáo lý</h1>
+        <h1 className="text-2xl font-bold text-blue-600">
+          Danh sách lớp giáo lý
+        </h1>
+        <div className="gap-2 flex">
+          <CreateClassModal />
+          <Button
+            type="primary"
+            className=" px-4 py-2 rounded"
+            onClick={handleExport}
+          >
+            <ExportOutlined />
+            Export
+          </Button>
+
+          <ImportFileModal />
+        </div>
       </div>
       <Table
         columns={columns}
-        dataSource={classes}
+        dataSource={data}
         onRow={() => {
           return {
-            className: 'hover:bg-gray-100 transition-colors duration-200',
+            className: "hover:bg-gray-100 transition-colors duration-200",
           };
         }}
-        rowKey="id"        
+        rowKey="id"
         loading={loading}
-        className="bg-white rounded-lg shadow-lg"
         pagination={{
-          pageSize: 10,
-          total: classes.length,
-          showSizeChanger: false,
-          className: "bg-white p-4",
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.totalPage,
         }}
+        onChange={handleTableChange}
+        className="bg-white rounded-lg shadow-lg"
       />
     </div>
   );
