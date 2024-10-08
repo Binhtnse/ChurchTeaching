@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Form,
   Input,
@@ -39,6 +39,19 @@ interface Grade {
   name: string;
 }
 
+interface GradeTemplate {
+  id: number;
+  name: string;
+  maxExamCount: number;
+  exams: {
+    id: number;
+    name: string;
+    weight: number;
+    status: string | null;
+    gradeTemplateName: string;
+  }[];
+}
+
 const SyllabusPreview: React.FC<{
   formValues: {
     name: string;
@@ -68,7 +81,7 @@ const SyllabusPreview: React.FC<{
         renderItem={(session, index: number) => (
           <List.Item>
             <List.Item.Meta
-              title={`Phiên ${index + 1}: ${session.name}`}
+              title={`Chương ${index + 1}: ${session.name}`}
               description={session.description}
             />
             <div>
@@ -102,6 +115,13 @@ const AddSyllabusScreen: React.FC = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [gradeTemplates, setGradeTemplates] = useState<GradeTemplate[]>([]);
+  const [selectedGradeTemplate, setSelectedGradeTemplate] = useState<
+    number | null
+  >(null);
+  const [policies, setPolicies] = useState<
+    { id: number; absenceLimit: number; numberOfMember: number }[]
+  >([]);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string }[]
   >([]);
@@ -120,7 +140,9 @@ const AddSyllabusScreen: React.FC = () => {
         duration: values.duration,
         levelName: grades.find((g) => g.id === values.grade)?.name || "",
         levelID: values.grade,
-        isCurrent: 'true',
+        isCurrent: "true",
+        gradeTemplateId: values.gradeTemplateId,
+        policyId: values.policyId,
         sessions: values.sessions
           ? values.sessions.map(
               (session: {
@@ -161,7 +183,7 @@ const AddSyllabusScreen: React.FC = () => {
       );
 
       if (response.status === 200 || response.status === 201) {
-        message.success("Syllabus created successfully");
+        message.success("Tạo chương trình học thành công");
         form.resetFields();
         setSessions([]);
         navigate("/list-syllabus");
@@ -175,6 +197,48 @@ const AddSyllabusScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const fetchGradeTemplate = useCallback(async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      setGradeTemplates(response.data.data);
+    } catch (error) {
+      console.error("Error fetching grade template:", error);
+      message.error("Failed to load grade template data");
+    }
+  }, []);
+
+  const fetchPolicies = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/policy"
+      );
+      if (response.data.status === "success") {
+        setPolicies(response.data.data);
+      } else {
+        message.error("Failed to fetch policies");
+      }
+    } catch (error) {
+      console.error("Error fetching policies:", error);
+      message.error("An error occurred while fetching policies");
+    }
+  };
+
+  useEffect(() => {
+    fetchPolicies();
+  }, []);
+
+  useEffect(() => {
+    fetchGradeTemplate();
+  }, [fetchGradeTemplate]);
 
   useEffect(() => {
     const fetchAcademicYears = async () => {
@@ -233,14 +297,14 @@ const AddSyllabusScreen: React.FC = () => {
       setSessions(newSessions);
     } else {
       message.warning(
-        `You can't add more than ${declaredSlotCount} slots to this session.`
+        `Bạn không thể tạo nhiều hơn ${declaredSlotCount} buổi cho chương này.`
       );
     }
   };
 
   const steps = [
     {
-      title: "General Info",
+      title: "Thông tin chung",
       content: (
         <Card title="Thông tin chung" className="mb-6">
           <Form.Item
@@ -268,7 +332,7 @@ const AddSyllabusScreen: React.FC = () => {
           </Form.Item>
           <Form.Item
             name="academicYearId"
-            label="Academic Year"
+            label="Niên khóa"
             rules={[{ required: true }]}
           >
             <Select>
@@ -279,11 +343,37 @@ const AddSyllabusScreen: React.FC = () => {
               ))}
             </Select>
           </Form.Item>
+          <Form.Item
+            name="gradeTemplateId"
+            label="Khung chấm điểm"
+            rules={[{ required: true }]}
+          >
+            <Select onChange={(value) => setSelectedGradeTemplate(value)}>
+              {gradeTemplates.map((template) => (
+                <Option key={template.id} value={template.id}>
+                  {template.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="policyId"
+            label="Quy định"
+            rules={[{ required: true }]}
+          >
+            <Select>
+              {policies.map((policy) => (
+                <Option key={policy.id} value={policy.id}>
+                  {`Absence Limit: ${policy.absenceLimit}, Members: ${policy.numberOfMember}`}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
         </Card>
       ),
     },
     {
-      title: "Sessions",
+      title: "Chương",
       content: (
         <>
           <Title level={3}>
@@ -370,7 +460,7 @@ const AddSyllabusScreen: React.FC = () => {
                           slotIndex,
                           "materialName",
                         ]}
-                        label="Material Name"
+                        label="Tài Liệu"
                       >
                         <Input />
                       </Form.Item>
@@ -382,7 +472,7 @@ const AddSyllabusScreen: React.FC = () => {
                           slotIndex,
                           "materialLinks",
                         ]}
-                        label="Material Links"
+                        label="Link tài liệu"
                       >
                         <CloudinaryUploadWidget
                           onUploadSuccess={(info: unknown) => {
@@ -398,16 +488,12 @@ const AddSyllabusScreen: React.FC = () => {
                                 slotIndex,
                                 "materialLinks",
                               ]) || [];
-                            const newLink = {
-                              url: uploadInfo.secure_url,
-                              fileName: uploadInfo.original_filename,
-                            };
                             form.setFieldsValue({
                               sessions: {
                                 [sessionIndex]: {
                                   slots: {
                                     [slotIndex]: {
-                                      materialLinks: [...currentLinks, newLink],
+                                      materialLinks: [...currentLinks, uploadInfo.secure_url],
                                     },
                                   },
                                 },
@@ -473,6 +559,8 @@ const AddSyllabusScreen: React.FC = () => {
   if (!isLoggedIn || role !== "ADMIN") {
     return <ForbiddenScreen />;
   }
+
+  console.log(selectedGradeTemplate);
 
   return (
     <div className="p-6">

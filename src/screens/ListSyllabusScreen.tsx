@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Typography, Tag } from "antd";
+import { Table, Typography, Tag, message, Select } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -9,16 +9,30 @@ const { Title } = Typography;
 
 interface Syllabus {
   id: number;
-  name: string;
-  duration: string;
-  levelName: string;
-  levelID: number;
+  grade: {
+    name: string;
+    age: number;
+  };
+  syllabus: {
+    name: string;
+    duration: string;
+  };
+  academicYear: {
+    year: string;
+  };
+  isCurrent: string;
 }
 
 const ListSyllabusScreen: React.FC = () => {
   const [syllabuses, setSyllabuses] = useState<Syllabus[]>([]);
   const [loading, setLoading] = useState(true);
   const { role, isLoggedIn } = useAuthState();
+  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string }[]
+  >([]);
+  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -26,25 +40,58 @@ const ListSyllabusScreen: React.FC = () => {
   });
   const navigate = useNavigate();
 
-  const fetchSyllabuses = async (page: number = 1, pageSize: number = 10) => {
+  const fetchGrades = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.status === "success") {
+        setGrades(response.data.data);
+      } else {
+        message.error("Failed to fetch grades");
+      }
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+      message.error("An error occurred while fetching grades");
+    }
+  };
+
+  const fetchAcademicYears = async () => {
     try {
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=${page}&size=${pageSize}`
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      setSyllabuses(
-        response.data.data.map((item: Syllabus) => ({
-          id: item.id,
-          name: item.name,
-          duration: item.duration,
-          levelName: item.levelName,
-          levelID: item.levelID,
-        }))
+      setAcademicYears(response.data);
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+      message.error("Failed to fetch academic years");
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && role === "ADMIN") {
+      fetchGrades();
+      fetchAcademicYears();
+    }
+  }, [isLoggedIn, role]);
+
+  const fetchSyllabuses = async (page: number = 1, pageSize: number = 10, gradeId: number = 0, yearId: number = 0) => {
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=${page}&size=${pageSize}&gradeId=${gradeId}&yearId=${yearId}`
       );
+      setSyllabuses(response.data.data);
       setPagination((prevPagination) => ({
         ...prevPagination,
-        total: response.data.pageResponse.totalPage * pageSize,
-        current: page,
-        pageSize: pageSize,
+        total: response.data.pageResponse.totalElements,
+        current: response.data.pageResponse.currentPage + 1,
+        pageSize: response.data.pageResponse.pageSize,
       }));
     } catch (error) {
       console.error("Error fetching syllabuses:", error);
@@ -57,6 +104,26 @@ const ListSyllabusScreen: React.FC = () => {
     fetchSyllabuses(page, pageSize || pagination.pageSize);
   };
 
+  const handleGradeChange = (value: number) => {
+    setSelectedGrade(value);
+    if (selectedYear !== null) {
+      fetchSyllabuses(1, pagination.pageSize, value, selectedYear);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedGrade !== null && selectedYear !== null) {
+      fetchSyllabuses(1, pagination.pageSize, selectedGrade, selectedYear);
+    }
+  }, [pagination.pageSize, selectedGrade, selectedYear]);
+
+  const handleYearChange = (value: number) => {
+    setSelectedYear(value);
+    if (selectedGrade !== null) {
+      fetchSyllabuses(1, pagination.pageSize, selectedGrade, value);
+    }
+  };
+
   useEffect(() => {
     if (isLoggedIn && role === "ADMIN") {
       fetchSyllabuses(1, pagination.pageSize);
@@ -65,25 +132,36 @@ const ListSyllabusScreen: React.FC = () => {
 
   const columns = [
     {
-      title: "ID",
+      title: "STT",
       dataIndex: "id",
       key: "id",
     },
     {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
+      title: "Tên giáo trình",
+      dataIndex: ["syllabus", "name"],
+      key: "syllabusName",
     },
     {
-      title: "Duration",
-      dataIndex: "duration",
+      title: "Thời gian",
+      dataIndex: ["syllabus", "duration"],
       key: "duration",
     },
     {
-      title: "Level",
-      dataIndex: "levelName",
-      key: "levelName",
+      title: "Khối",
+      dataIndex: ["grade", "name"],
+      key: "gradeName",
       render: (text: string) => <Tag color="blue">{text}</Tag>,
+    },
+    {
+      title: "Niên khóa",
+      dataIndex: ["academicYear", "year"],
+      key: "academicYear",
+    },
+    {
+      title: "Current",
+      dataIndex: "isCurrent",
+      key: "isCurrent",
+      render: (text: string) => (text === "true" ? "Đang áp dụng" : "Chưa áp dụng"),
     },
   ];
 
@@ -98,8 +176,34 @@ const ListSyllabusScreen: React.FC = () => {
   return (
     <div className="p-6">
       <Title level={2} className="mb-6">
-        Syllabus List
+        Danh sách giáo trình
       </Title>
+      <div className="mb-4">
+        <Select
+          style={{ width: 200, marginRight: 16 }}
+          placeholder="Chọn khối"
+          onChange={handleGradeChange}
+          value={selectedGrade}
+        >
+          {grades.map((grade) => (
+            <Select.Option key={grade.id} value={grade.id}>
+              {grade.name}
+            </Select.Option>
+          ))}
+        </Select>
+        <Select
+          style={{ width: 200 }}
+          placeholder="Chọn niên khóa"
+          onChange={handleYearChange}
+          value={selectedYear}
+        >
+          {academicYears.map((year) => (
+            <Select.Option key={year.id} value={year.id}>
+              {year.year}
+            </Select.Option>
+          ))}
+        </Select>
+      </div>
       <Table
         columns={columns}
         dataSource={syllabuses}
