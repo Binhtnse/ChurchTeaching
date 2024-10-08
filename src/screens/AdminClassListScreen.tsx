@@ -46,6 +46,7 @@ const AdminClassListScreen: React.FC = () => {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<
     number | null
   >(null);
+  console.log(selectedAcademicYear);
 
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
