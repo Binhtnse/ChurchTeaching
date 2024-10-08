@@ -63,6 +63,11 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "catechist-grade", label: "Xem điểm lớp" },
         ],
       },
+      {
+        key: "schedule",
+        label: "Lịch giảng dạy",
+        icon: <CalendarOutlined />,
+      },
     ],
     PARENT: [
       {
