@@ -156,7 +156,7 @@ const AdminClassDetailScreen: React.FC = () => {
             Quay lại
           </Button>
           <h1 className="text-2xl font-bold text-blue-600">
-            Thông lớp {classData?.className}
+            Thông tin {classData?.className}
           </h1>
         </div>
       </div>
@@ -168,16 +168,16 @@ const AdminClassDetailScreen: React.FC = () => {
       >
         <Row gutter={[16, 16]}>
           <Col span={12}>
-            <Form.Item label="Class Name" name="className">
+            <Form.Item label="Tên lớp" name="className">
               <Input />
             </Form.Item>
-            <Form.Item label="Number of Catechists" name="numberOfCatechist">
+            <Form.Item label="Số lượng giáo viên" name="numberOfCatechist">
               <InputNumber style={{ width: "100%" }} />
             </Form.Item>
-            <Form.Item label="Grade Name" name="gradeId">
+            <Form.Item label="Khối" name="gradeId">
               <Input name="gradeId" />
             </Form.Item>
-            <Form.Item label="Academic Year" name="academicYearId">
+            <Form.Item label="Niên khóa" name="academicYearId">
               <Select>
                 {academicYears.map((year) => (
                   <Select.Option key={year.id} value={year.id}>
@@ -186,7 +186,7 @@ const AdminClassDetailScreen: React.FC = () => {
                 ))}
               </Select>
             </Form.Item>
-            <Form.Item label="Status" name="status">
+            <Form.Item label="Trạng thái" name="status">
               <Select>
                 {statusOptions.map((status) => (
                   <Select.Option key={status} value={status}>
@@ -197,7 +197,7 @@ const AdminClassDetailScreen: React.FC = () => {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item label="Teachers">
+            <Form.Item label="Giáo viên">
               <div>
                 <strong>Giáo viên chính:</strong>{" "}
                 {classData?.mainTeachers
@@ -210,7 +210,7 @@ const AdminClassDetailScreen: React.FC = () => {
                 <div key={teacher.id}>{teacher.name}</div>
               ))}
             </Form.Item>
-            <Form.Item label="Students">
+            <Form.Item label="Thiếu nhi thánh thể">
               <Table
                 dataSource={classData?.students}
                 columns={columns}
