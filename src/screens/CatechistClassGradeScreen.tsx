@@ -135,8 +135,7 @@ const CatechistClassGradeScreen: React.FC = () => {
         await axios.post(
           'https://sep490-backend-production.up.railway.app/api/v1/student-grade',
           {
-            studentId: student.id,
-            classId: selectedClass,
+            studentClassId: student.id,
             exams: exams
           },
           {
@@ -496,7 +495,7 @@ const CatechistClassGradeScreen: React.FC = () => {
   onClick={isEditing ? saveChanges : toggleEditing} 
   style={{ marginBottom: 16 }}
 >
-  {isEditing ? 'Save Changes' : 'Edit Scores'}
+  {isEditing ? 'Lưu thay đổi' : 'Ghi nhận điểm'}
 </Button>
             <Table
               columns={classGradeColumns}
