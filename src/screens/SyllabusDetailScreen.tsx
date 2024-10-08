@@ -42,7 +42,7 @@ const SyllabusDetailScreen: React.FC = () => {
     const fetchSyllabusDetail = async () => {
       try {
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/syllabus/${id}`
+          `https://sep490-backend-production.up.railway.app/api/syllabus/${id}?status=ACTIVE`
         );
         setSyllabus(response.data.data);
       } catch (error) {
