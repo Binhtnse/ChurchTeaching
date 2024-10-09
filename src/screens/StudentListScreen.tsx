@@ -1,61 +1,61 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Table, Input, Button, Space, message, Typography } from "antd";
 import {
   SearchOutlined,
   FileTextOutlined,
   UserOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
 import usePageTitle from "../hooks/usePageTitle";
+import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
 
 interface Student {
-  key: string;
-  stt: number;
-  name: string;
-  phone: string;
-  gender: string;
-  email: string;
+  id: number;
+  studentClassId: number;
+  fullName: string;
+  account: string;
+  status: string;
+}
+
+interface ClassInfo {
+  id: number | null;
+  className: string;
+  students: Student[];
 }
 
 const StudentListScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [loading, setLoading] = useState(false);
-  const [students, setStudents] = useState<Student[]>([]);
   const { setPageTitle } = usePageTitle();
+  const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
+  const navigate = useNavigate();
+  const { classId } = useParams<{ classId: string }>();
 
   useEffect(() => {
-    setPageTitle('Danh sách thiếu nhi', '#4154f1');
+    setPageTitle("Danh sách thiếu nhi", "#4154f1");
   }, [setPageTitle]);
 
   useEffect(() => {
     checkAuthState();
   }, [checkAuthState]);
 
-  useEffect(() => {
-    if (isLoggedIn && role === "CATECHIST") {
-      fetchStudents();
-    }
-  }, [isLoggedIn, role]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=1"
+        `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`
       );
-      if (
-        response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data.students)
-      ) {
-        setStudents(response.data.data.students);
+      if (response.status === 200 || response.status === 304) {
+        setClassInfo(response.data.data);
       } else {
-        setStudents([]);
+        setClassInfo(null);
       }
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -63,28 +63,21 @@ const StudentListScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  }, [classId]);
+
+  useEffect(() => {
+    if (isLoggedIn && role === "CATECHIST" && classId) {
+      fetchStudents();
+    }
+  }, [isLoggedIn, role, classId, fetchStudents]);
+
+  const handleBack = () => {
+    navigate("/classes");
   };
 
   const columns: ColumnsType<Student> = [
-    { title: "STT", dataIndex: "stt", key: "stt" },
-    { title: "Tên thiếu nhi", dataIndex: "name", key: "name" },
-    { title: "Số điện thoại", dataIndex: "phone", key: "phone" },
-    { title: "Giới tính", dataIndex: "gender", key: "gender" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    {
-      title: "Hành động",
-      key: "action",
-      render: () => (
-        <Space size="middle">
-          <Button type="link" className="text-blue-600 hover:text-blue-800">
-            Sửa
-          </Button>
-          <Button type="link" className="text-red-600 hover:text-red-800">
-            Xóa
-          </Button>
-        </Space>
-      ),
-    },
+    { title: "STT", dataIndex: "studentClassId", key: "studentClassId" },
+    { title: "Tên thiếu nhi", dataIndex: "fullName", key: "fullName" },
   ];
 
   const handleViewClassGrades = () => {
@@ -103,6 +96,13 @@ const StudentListScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
+      <Button
+        icon={<ArrowLeftOutlined />}
+        onClick={handleBack}
+        className="mb-4"
+      >
+        Back to Class List
+      </Button>
       <Title level={2} className="mb-6 text-center text-gray-800">
         Danh sách Thiếu Nhi
       </Title>
@@ -134,7 +134,7 @@ const StudentListScreen: React.FC = () => {
         </div>
         <Table
           columns={columns}
-          dataSource={students}
+          dataSource={classInfo?.students}
           loading={loading}
           className="border border-gray-200 rounded-lg"
           pagination={{

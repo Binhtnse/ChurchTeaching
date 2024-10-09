@@ -63,6 +63,7 @@ const AdminUserListScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [validRecords, setValidRecords] = useState<UserImportData[]>([]);
   const [invalidRecords, setInvalidRecords] = useState<UserImportData[]>([]);
   const [pagination, setPagination] = useState({
@@ -71,6 +72,7 @@ const AdminUserListScreen: React.FC = () => {
     total: 0,
   });
   const { setPageTitle } = usePageTitle();
+  console.log(allUsers);
 
   useEffect(() => {
     setPageTitle("Danh sách tài khoản", "#4154f1");
@@ -86,10 +88,9 @@ const AdminUserListScreen: React.FC = () => {
         setLoading(true);
         try {
           const accessToken = localStorage.getItem("accessToken");
+          const roleParam = roleFilter ? `&role=${roleFilter}` : '';
           const response = await axios.get(
-            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=${page}&size=${pageSize}&role=${
-              roleFilter || ""
-            }`,
+            `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=${page}&size=${pageSize}${roleParam}&fullName=${searchTerm}`,
             {
               headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -119,12 +120,17 @@ const AdminUserListScreen: React.FC = () => {
         }
       }
     },
-    [isLoggedIn, role, roleFilter]
+    [isLoggedIn, role, roleFilter, searchTerm]
   );
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    fetchUsers(1, pagination.pageSize);
+  };
 
   useEffect(() => {
     fetchUsers(1, pagination.pageSize);
-  }, [roleFilter, fetchUsers, pagination.pageSize]);
+  }, [roleFilter, fetchUsers, pagination.pageSize, searchTerm]);
 
   const handlePaginationChange = (page: number, pageSize?: number) => {
     fetchUsers(page, pageSize || pagination.pageSize);
@@ -220,13 +226,6 @@ const AdminUserListScreen: React.FC = () => {
     }
   };
 
-  const handleSearch = (value: string) => {
-    const filteredUsers = allUsers.filter((user) =>
-      user.fullName.toLowerCase().includes(value.toLowerCase())
-    );
-    setUsers(filteredUsers);
-  };
-
   const columns = [
     {
       title: "STT",
@@ -302,6 +301,7 @@ const AdminUserListScreen: React.FC = () => {
             placeholder="Tìm kiếm theo tên"
             prefix={<SearchOutlined />}
             onChange={(e) => handleSearch(e.target.value)}
+            onPressEnter={(e) => handleSearch((e.target as HTMLInputElement).value)}
             style={{ width: 200 }}
           />
           <Dropdown overlay={roleFilterMenu}>

@@ -33,6 +33,8 @@ const EnrollListScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [allData, setAllData] = useState<DataType[]>([]);
+  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
+  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -51,8 +53,11 @@ const EnrollListScreen: React.FC = () => {
   }, [checkAuthState]);
 
   useEffect(() => {
-    fetchAcademicYears();
-  }, []);
+    if (isLoggedIn && role === "ADMIN") {
+      fetchAcademicYears();
+      fetchGrades();
+    }
+  }, [isLoggedIn, role]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -67,6 +72,28 @@ const EnrollListScreen: React.FC = () => {
     }
   };
 
+  const fetchGrades = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.status === "success") {
+        setGrades(response.data.data);
+      } else {
+        message.error("Failed to fetch grades");
+      }
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+      message.error("An error occurred while fetching grades");
+    }
+  };
+
   useEffect(() => {
     setPageTitle("Danh sách đơn đăng ký học", "#4154f1");
   }, [setPageTitle]);
@@ -77,37 +104,40 @@ const EnrollListScreen: React.FC = () => {
         return;
       }
       setLoading(true);
-        try {
-          const response = await axios.get(
-            `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page - 1}&size=${pageSize}&academicYearId=${selectedAcademicYear}`
-          );
-          const { data } = response.data;
-          const formattedData = data.map((item: DataType) => ({
-            key: item.id,
-            name: item.name,
-            status: item.status,
-            grade: item.grade,
-            academicYear: item.academicYear,
-            email: item.email,
-            description: item.description,
-            link: item.link,
-            survey: item.survey,
-          }));
-          setAllData(formattedData);
-          setDataSource(formattedData);
-          setPagination((prevPagination) => ({
-            ...prevPagination,
-            total: response.data.pageResponse.totalPage * pageSize,
-            current: page,
-            pageSize: pageSize,
-          }));
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        } finally {
-          setLoading(false);
-        }
+      try {
+        const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
+        const response = await axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${
+            page - 1
+          }&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}`
+        );
+        const { data } = response.data;
+        const formattedData = data.map((item: DataType) => ({
+          key: item.id,
+          name: item.name,
+          status: item.status,
+          grade: item.grade,
+          academicYear: item.academicYear,
+          email: item.email,
+          description: item.description,
+          link: item.link,
+          survey: item.survey,
+        }));
+        setAllData(formattedData);
+        setDataSource(formattedData);
+        setPagination((prevPagination) => ({
+          ...prevPagination,
+          total: response.data.pageResponse.totalPage * pageSize,
+          current: page,
+          pageSize: pageSize,
+        }));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
     },
-    [isLoggedIn, role, selectedAcademicYear]
+    [isLoggedIn, role, selectedAcademicYear, selectedGrade]
   );
 
   useEffect(() => {
@@ -115,6 +145,10 @@ const EnrollListScreen: React.FC = () => {
       fetchData(1, pagination.pageSize);
     }
   }, [selectedAcademicYear, isLoggedIn, role, pagination.pageSize, fetchData]);
+
+  const handleGradeChange = (value: number) => {
+    setSelectedGrade(value);
+  };
 
   const handleAcademicYearChange = (value: number) => {
     setSelectedAcademicYear(value);
@@ -223,6 +257,18 @@ const EnrollListScreen: React.FC = () => {
           {academicYears.map((year) => (
             <Option key={year.id} value={year.id}>
               {year.year} {year.timeStatus === "NOW" ? "(Hiện tại)" : ""}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          style={{ width: 200, marginRight: 16 }}
+          placeholder="Chọn khối"
+          onChange={handleGradeChange}
+          value={selectedGrade}
+        >
+          {grades.map((grade) => (
+            <Option key={grade.id} value={grade.id}>
+              {grade.name}
             </Option>
           ))}
         </Select>

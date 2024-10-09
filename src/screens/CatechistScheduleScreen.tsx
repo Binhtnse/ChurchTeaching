@@ -56,7 +56,7 @@ interface ScheduleData {
 
 const CalendarGrid = styled.div`
   display: grid;
-  grid-template-columns: auto repeat(7, 1fr);
+  grid-template-columns: auto repeat(6, 1fr) 2fr;
   gap: 1px;
   background-color: #f0f0f0;
 `;
@@ -66,6 +66,11 @@ const CalendarCell = styled.div`
   padding: 8px;
   min-height: 100px;
   border: 1px solid #f0f0f0;
+`;
+
+const SundayCell = styled(CalendarCell)`
+  grid-column: 8;
+  background-color: #f9f9f9;
 `;
 
 const TimeCell = styled(CalendarCell)`
@@ -94,7 +99,13 @@ const CatechistScheduleScreen: React.FC = () => {
         );
         setScheduleData(response.data.data);
         setSelectedYear(response.data.data.academicYear);
-        setSelectedWeek(response.data.data.schedule[0].weekNumber);
+        const currentDate = new Date();
+        const currentWeek = response.data.data.schedule.find((week: WeekSchedule) => {
+          const startDate = new Date(week.startDate);
+          const endDate = new Date(week.endDate);
+          return currentDate >= startDate && currentDate <= endDate;
+        });
+        setSelectedWeek(currentWeek ? currentWeek.weekNumber : response.data.data.schedule[0].weekNumber);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching schedule:", error);
@@ -120,7 +131,7 @@ const CatechistScheduleScreen: React.FC = () => {
     (week) => week.weekNumber === selectedWeek
   );
 
-  const renderCalendar = (timetable: Timetable) => {
+  const renderCalendar = (timetable: Timetable, classItem: Class) => {
     const days = [
       "Thứ Hai",
       "Thứ Ba",
@@ -143,18 +154,19 @@ const CatechistScheduleScreen: React.FC = () => {
         {times.map((time) => (
           <React.Fragment key={time}>
             <TimeCell>{time}</TimeCell>
-            {days.map((day) => (
-              <CalendarCell key={`${day}-${time}`}>
-                {timetable[day] && timetable[day][time] && (
-                  <div>
-                    <strong>{timetable[day][time]?.name}</strong>
-                    <div>{timetable[day][time]?.description}</div>
-                    <div>Loại buổi học: {timetable[day][time]?.slotType}</div>
-                    <div>Chương: {timetable[day][time]?.session.name}</div>
-                  </div>
-                )}
-              </CalendarCell>
-            ))}
+            {days.map((day, index) => {
+              const CellComponent = index === 6 ? SundayCell : CalendarCell;
+              return (
+                <CellComponent key={`${day}-${time}`}>
+                  {timetable[day] && timetable[day][time] && (
+                    <div className="flex flex-col">
+                      <Text>Phòng: {classItem.roomNo}</Text>
+                      <strong>{timetable[day][time]?.name}</strong>
+                    </div>
+                  )}
+                </CellComponent>
+              );
+            })}
           </React.Fragment>
         ))}
       </CalendarGrid>
@@ -217,8 +229,7 @@ const CatechistScheduleScreen: React.FC = () => {
                 title={`${classItem.className} - ${classItem.grade}`}
                 className="mb-4 mt-4"
               >
-                <Text>Phòng: {classItem.roomNo}</Text>
-                {renderCalendar(timetable)}
+                {renderCalendar(timetable, classItem)}
               </Card>
             );
           })}

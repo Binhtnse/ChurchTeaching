@@ -57,11 +57,6 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "classes",
         label: "Lớp học",
         icon: <TeamOutlined />,
-        children: [
-          { key: "student-list", label: "Danh sách thiếu nhi" },
-          { key: "catechist-attendance", label: "Xem điểm danh" },
-          { key: "catechist-grade", label: "Xem điểm lớp" },
-        ],
       },
       {
         key: "schedule",
