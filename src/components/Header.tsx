@@ -7,7 +7,7 @@ import axios from "axios";
 const { Header: AntHeader } = Layout;
 const { Title } = Typography;
 
-const Header: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
+const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedIn, userName }) => {
   const navigate = useNavigate();
 
   const handleMenuClick = async (e: { key: string }) => {
@@ -62,7 +62,7 @@ const Header: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
         />
         <Dropdown overlay={menu} placement="bottomRight">
           <Button icon={<UserOutlined />}>
-            {isLoggedIn ? "Account" : "Login"}
+          {isLoggedIn ? userName || "Account" : "Login"}
           </Button>
         </Dropdown>
       </Space>

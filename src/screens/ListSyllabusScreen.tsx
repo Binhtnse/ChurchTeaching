@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Table, Typography, Tag, message, Select } from "antd";
+import React, { useEffect, useState, useCallback } from "react";
+import { Table, Typography, Tag, message, Select, Spin } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -81,46 +81,51 @@ const ListSyllabusScreen: React.FC = () => {
     }
   }, [isLoggedIn, role]);
 
-  const fetchSyllabuses = async (page: number = 1, pageSize: number = 10, gradeId: number = 0, yearId: number = 0) => {
-    try {
-      const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=${page}&size=${pageSize}&gradeId=${gradeId}&yearId=${yearId}`
-      );
-      setSyllabuses(response.data.data);
-      setPagination((prevPagination) => ({
-        ...prevPagination,
-        total: response.data.pageResponse.totalElements,
-        current: response.data.pageResponse.currentPage + 1,
-        pageSize: response.data.pageResponse.pageSize,
-      }));
-    } catch (error) {
-      console.error("Error fetching syllabuses:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchSyllabuses = useCallback(
+    async (page: number = 1, pageSize: number = 10, gradeId: number = 0) => {
+      if (selectedYear === null) return;
+      try {
+        const yearId = `&yearId=${selectedYear}`;
+        const response = await axios.get(
+          `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=${page}&size=${pageSize}&gradeId=${gradeId}${yearId}`
+        );
+        setSyllabuses(response.data.data);
+        setPagination((prevPagination) => ({
+          ...prevPagination,
+          total: response.data.pageResponse.totalElements,
+          current: response.data.pageResponse.currentPage + 1,
+          pageSize: response.data.pageResponse.pageSize,
+        }));
+      } catch (error) {
+        console.error("Error fetching syllabuses:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedYear]
+  );
 
   const handlePaginationChange = (page: number, pageSize?: number) => {
     fetchSyllabuses(page, pageSize || pagination.pageSize);
   };
 
-  const handleGradeChange = (value: number) => {
+  const handleGradeChange = (value: number | null) => {
     setSelectedGrade(value);
     if (selectedYear !== null) {
-      fetchSyllabuses(1, pagination.pageSize, value, selectedYear);
+      fetchSyllabuses(1, pagination.pageSize, value || 0);
     }
   };
 
   useEffect(() => {
-    if (selectedGrade !== null && selectedYear !== null) {
-      fetchSyllabuses(1, pagination.pageSize, selectedGrade, selectedYear);
+    if (isLoggedIn && role === "ADMIN" && selectedYear !== null) {
+      fetchSyllabuses(1, pagination.pageSize);
     }
-  }, [pagination.pageSize, selectedGrade, selectedYear]);
+  }, [isLoggedIn, role, pagination.pageSize, fetchSyllabuses, selectedYear]);
 
-  const handleYearChange = (value: number) => {
+  const handleYearChange = (value: number | null) => {
     setSelectedYear(value);
-    if (selectedGrade !== null) {
-      fetchSyllabuses(1, pagination.pageSize, selectedGrade, value);
+    if (value !== null) {
+      fetchSyllabuses(1, pagination.pageSize, selectedGrade || 0);
     }
   };
 
@@ -128,7 +133,7 @@ const ListSyllabusScreen: React.FC = () => {
     if (isLoggedIn && role === "ADMIN") {
       fetchSyllabuses(1, pagination.pageSize);
     }
-  }, [isLoggedIn, role, pagination.pageSize]);
+  }, [isLoggedIn, role, pagination.pageSize, fetchSyllabuses]);
 
   const columns = [
     {
@@ -150,7 +155,7 @@ const ListSyllabusScreen: React.FC = () => {
       title: "Khối",
       dataIndex: ["grade", "name"],
       key: "gradeName",
-      render: (text: string) => <Tag color="blue">{text}</Tag>,
+      render: (text: string) => <Tag color="blue" className="px-3 py-1 rounded-full">{text}</Tag>,
     },
     {
       title: "Niên khóa",
@@ -161,7 +166,11 @@ const ListSyllabusScreen: React.FC = () => {
       title: "Current",
       dataIndex: "isCurrent",
       key: "isCurrent",
-      render: (text: string) => (text === "true" ? "Đang áp dụng" : "Chưa áp dụng"),
+      render: (text: string) => (
+        <Tag color={text === "true" ? "green" : "orange"} className="px-3 py-1 rounded-full">
+          {text === "true" ? "Đang áp dụng" : "Chưa áp dụng"}
+        </Tag>
+      ),
     },
   ];
 
@@ -173,59 +182,73 @@ const ListSyllabusScreen: React.FC = () => {
     return <ForbiddenScreen />;
   }
 
-  return (
-    <div className="p-6">
-      <Title level={2} className="mb-6">
-        Danh sách giáo trình
-      </Title>
-      <div className="mb-4">
-        <Select
-          style={{ width: 200, marginRight: 16 }}
-          placeholder="Chọn khối"
-          onChange={handleGradeChange}
-          value={selectedGrade}
-        >
-          {grades.map((grade) => (
-            <Select.Option key={grade.id} value={grade.id}>
-              {grade.name}
-            </Select.Option>
-          ))}
-        </Select>
-        <Select
-          style={{ width: 200 }}
-          placeholder="Chọn niên khóa"
-          onChange={handleYearChange}
-          value={selectedYear}
-        >
-          {academicYears.map((year) => (
-            <Select.Option key={year.id} value={year.id}>
-              {year.year}
-            </Select.Option>
-          ))}
-        </Select>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <Spin size="large" />
       </div>
-      <Table
-        columns={columns}
-        dataSource={syllabuses}
-        rowKey="id"
-        loading={loading}
-        className="bg-white rounded-lg shadow"
-        pagination={{
-          current: pagination.current,
-          total: pagination.total,
-          pageSize: pagination.pageSize,
-          onChange: handlePaginationChange,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total) => `Total ${total} items`,
-        }}
-        onRow={(record) => ({
-          onClick: () => handleRowClick(record),
-          style: { cursor: "pointer" },
-        })}
-      />
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <Title level={2} className="mb-6">
+          Danh sách giáo trình
+        </Title>
+        <div className="mb-6 flex justify-start items-center space-x-4">
+          <Select
+            style={{ width: 200 }}
+            placeholder="Chọn niên khóa"
+            onChange={handleYearChange}
+            value={selectedYear}
+            allowClear
+            className="border rounded-md"
+          >
+            {academicYears.map((year) => (
+              <Select.Option key={year.id} value={year.id}>
+                {year.year}
+              </Select.Option>
+            ))}
+          </Select>
+          <Select
+            style={{ width: 200, marginRight: 16 }}
+            placeholder="Chọn khối"
+            onChange={handleGradeChange}
+            value={selectedGrade}
+            allowClear
+            className="border rounded-md"
+          >
+            {grades.map((grade) => (
+              <Select.Option key={grade.id} value={grade.id}>
+                {grade.name}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+        <Table
+          columns={columns}
+          dataSource={syllabuses}
+          rowKey="id"
+          loading={loading}
+          className="bg-white rounded-lg shadow"
+          pagination={{
+            current: pagination.current,
+            total: pagination.total,
+            pageSize: pagination.pageSize,
+            onChange: handlePaginationChange,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total) => `Tổng cộng ${total} mục`,
+            className: "mt-4",
+          }}
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+            className: "hover:bg-gray-50 cursor-pointer transition-colors duration-150",
+          })}
+        />
+      </div>
     </div>
   );
 };
-
 export default ListSyllabusScreen;

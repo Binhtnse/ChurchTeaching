@@ -8,11 +8,11 @@ import { useAuthState } from "../hooks/useAuthState";
 const { Content } = Layout;
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
-    const { role, isLoggedIn } = useAuthState();
+    const { role, isLoggedIn, userName } = useAuthState();
   
     return (
       <Layout className="min-h-screen">
-        <Header isLoggedIn={isLoggedIn} />
+        <Header isLoggedIn={isLoggedIn} userName={userName}/>
         <Layout className="flex-1 flex flex-row">
           <Sidebar role={role} />
           <Layout className="flex flex-col flex-1">

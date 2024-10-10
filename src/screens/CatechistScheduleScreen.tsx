@@ -164,6 +164,11 @@ const CatechistScheduleScreen: React.FC = () => {
                       <strong>{timetable[day][time]?.name}</strong>
                     </div>
                   )}
+                  {index === 6 && (
+                  <div className="mt-2">
+                    <Text strong>{`${classItem.className} - ${classItem.grade}`}</Text>
+                  </div>
+                )}
                 </CellComponent>
               );
             })}
@@ -226,7 +231,6 @@ const CatechistScheduleScreen: React.FC = () => {
             return (
               <Card
                 key={index}
-                title={`${classItem.className} - ${classItem.grade}`}
                 className="mb-4 mt-4"
               >
                 {renderCalendar(timetable, classItem)}
