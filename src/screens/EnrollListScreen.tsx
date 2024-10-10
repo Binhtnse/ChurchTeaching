@@ -42,7 +42,7 @@ const EnrollListScreen: React.FC = () => {
     number | null
   >(null);
   const [pagination, setPagination] = useState({
-    current: 0,
+    current: 1,
     pageSize: 10,
     total: 0,
   });
@@ -106,10 +106,9 @@ const EnrollListScreen: React.FC = () => {
       setLoading(true);
       try {
         const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
+        const statusParam = statusFilter ? `&status=${statusFilter}` : "";
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${
-            page - 1
-          }&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}`
+          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}${statusParam}`
         );
         const { data } = response.data;
         const formattedData = data.map((item: DataType) => ({
@@ -137,7 +136,7 @@ const EnrollListScreen: React.FC = () => {
         setLoading(false);
       }
     },
-    [isLoggedIn, role, selectedAcademicYear, selectedGrade]
+    [isLoggedIn, role, selectedAcademicYear, selectedGrade, statusFilter]
   );
 
   useEffect(() => {
