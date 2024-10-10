@@ -81,8 +81,13 @@ const StudentListScreen: React.FC = () => {
   ];
 
   const handleViewClassGrades = () => {
-    // Implement view class grades logic
-    console.log("Viewing class grades");
+    if (classInfo && classInfo.id) {
+      console.log(classInfo.id)
+      navigate(`/catechist-grade/${classInfo.id}`);
+    } else {
+      console.error("Class ID is undefined");
+      message.error("Unable to view grades. Class ID is missing.");
+    }
   };
 
   const handleAttendance = () => {

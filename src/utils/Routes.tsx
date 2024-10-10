@@ -101,7 +101,7 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/catechist-grade"
+            path="/catechist-grade/:classId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <CatechistClassGradeScreen />
