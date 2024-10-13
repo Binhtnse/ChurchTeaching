@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Typography, Spin, message, Button, Input, Pagination } from "antd";
+import {
+  Table,
+  Typography,
+  Spin,
+  message,
+  Button,
+  Input,
+  Pagination,
+} from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -20,6 +28,14 @@ interface GradeTemplate {
   }[];
 }
 
+interface Student {
+  id: number;
+  studentClassId: number;
+  fullName: string;
+  account: string;
+  status: string;
+}
+
 interface StudentGrade {
   id: number;
   studentName: string;
@@ -35,6 +51,7 @@ const CatechistClassGradeScreen: React.FC = () => {
   const [classGrades, setClassGrades] = useState<StudentGrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [allCellsFilled, setAllCellsFilled] = useState(false);
   const [gradeTemplate, setGradeTemplate] = useState<GradeTemplate | null>(
     null
   );
@@ -45,7 +62,7 @@ const CatechistClassGradeScreen: React.FC = () => {
     total: 0,
   });
 
-  const toggleEditing = () => { 
+  const toggleEditing = () => {
     if (isEditing) {
       fetchClassGrades();
     }
@@ -89,33 +106,80 @@ const CatechistClassGradeScreen: React.FC = () => {
     }
   };
 
-  const fetchClassGrades = useCallback(async (page: number = 1, pageSize: number = 10) => {
-    if (isLoggedIn && role === "CATECHIST" && classId) {
-      setLoading(true);
-      try {
-        const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=${page}&size=${pageSize}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        setClassGrades(response.data.data);
-        setPagination({
-          current: response.data.pageResponse.currentPage,
-          pageSize: response.data.pageResponse.pageSize,
-          total: response.data.pageResponse.totalPage * response.data.pageResponse.pageSize,
-        });
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching grades:", error);
-        message.error("Failed to load grade data");
-        setLoading(false);
+  const checkAllCellsFilled = useCallback(() => {
+    const allFilled = classGrades.every((student) =>
+      gradeTemplate?.exams?.every(
+        (exam) => student.scores[exam.name] !== undefined
+      )
+    );
+    setAllCellsFilled(allFilled);
+  }, [classGrades, gradeTemplate]);
+
+  useEffect(() => {
+    checkAllCellsFilled();
+  }, [classGrades, gradeTemplate, checkAllCellsFilled]);
+
+  const fetchClassGrades = useCallback(
+    async (page: number = 1, pageSize: number = 10) => {
+      if (isLoggedIn && role === "CATECHIST" && classId) {
+        setLoading(true);
+        try {
+          const accessToken = localStorage.getItem("accessToken");
+          const [studentsResponse, gradesResponse] = await Promise.all([
+            axios.get(
+              `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
+            ),
+            axios.get(
+              `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=${page}&size=${pageSize}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
+            ),
+          ]);
+
+          const students = studentsResponse.data.data.students;
+          const grades = gradesResponse.data.data;
+
+          const gradeMap = new Map();
+          grades.forEach((grade: StudentGrade) => {
+            if (!gradeMap.has(grade.account)) {
+              gradeMap.set(grade.account, { scores: {} });
+            }
+            gradeMap.get(grade.account).scores[grade.examName] = grade.score;
+          });
+
+          const combinedData = students.map((student: Student) => {
+            const gradeData = gradeMap.get(student.account) || { scores: {} };
+            return {
+              ...student,
+              ...gradeData,
+              scores: gradeData.scores,
+            };
+          });
+
+          setClassGrades(combinedData);
+          setPagination({
+            current: gradesResponse.data.pageResponse.currentPage,
+            pageSize: gradesResponse.data.pageResponse.pageSize,
+            total: studentsResponse.data.data.students.length,
+          });
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          message.error("Failed to load data");
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-  }, [isLoggedIn, role, classId]);
+    },
+    [isLoggedIn, role, classId]
+  );
 
   const fetchGradeTemplate = useCallback(async () => {
     try {
@@ -139,6 +203,26 @@ const CatechistClassGradeScreen: React.FC = () => {
     fetchClassGrades(page, pageSize || pagination.pageSize);
   };
 
+  const handleFinalize = async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.post(
+        `https://sep490-backend-production.up.railway.app/api/v1/student-grade/finalize/class/${classId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      message.success("Grades finalized successfully");
+      // Optionally, you can refresh the data or update the UI state here
+    } catch (error) {
+      console.error("Error finalizing grades:", error);
+      message.error("Failed to finalize grades");
+    }
+  };
+
   const handleScoreChange = (
     studentId: number,
     examName: string,
@@ -152,6 +236,7 @@ const CatechistClassGradeScreen: React.FC = () => {
           : grade
       )
     );
+    checkAllCellsFilled();
   };
 
   useEffect(() => {
@@ -170,8 +255,8 @@ const CatechistClassGradeScreen: React.FC = () => {
     },
     {
       title: "Tên thiếu nhi",
-      dataIndex: "studentName",
-      key: "studentName",
+      dataIndex: "fullName",
+      key: "fullName",
     },
     ...(gradeTemplate?.exams?.map((exam) => ({
       title: exam.name,
@@ -217,6 +302,11 @@ const CatechistClassGradeScreen: React.FC = () => {
         >
           {isEditing ? "Lưu thay đổi" : "Ghi nhận điểm"}
         </Button>
+        {allCellsFilled && (
+          <Button onClick={handleFinalize} style={{ marginBottom: 16 }}>
+            Tổng kết
+          </Button>
+        )}
         <Table
           columns={classGradeColumns}
           dataSource={classGrades}

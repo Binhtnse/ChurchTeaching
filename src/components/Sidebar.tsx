@@ -6,7 +6,6 @@ import {
   TeamOutlined,
   HistoryOutlined,
   FormOutlined,
-  UserOutlined,
   SolutionOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -33,9 +32,9 @@ const getMenuItems = (role: string): MenuItem[] => {
   const roleSpecificItems: Record<string, MenuItem[]> = {
     STUDENT: [
       {
-        key: "assignments",
-        label: "Bài tập",
-        icon: <BookOutlined />,
+        key: "student-schedule",
+        label: "Lịch học",
+        icon: <CalendarOutlined />,
       },
       {
         key: "progress",
@@ -45,11 +44,6 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "study-grades", label: "Xem điểm" },
           { key: "study-attendance", label: "Xem điểm danh" },
         ],
-      },
-      {
-        key: "account",
-        label: "Tài khoản",
-        icon: <UserOutlined />,
       },
     ],
     CATECHIST: [
