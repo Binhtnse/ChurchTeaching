@@ -104,6 +104,16 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "add-syllabus", label: "Tạo giáo trình" },
         ],
       },
+      {
+        key: "admin-student-list",
+        label: "Quản lý danh sách thiếu nhi",
+        icon: <SolutionOutlined />,
+      },
+      {
+        key: "policy-list",
+        label: "Quản lý các quy định",
+        icon: <SolutionOutlined />,
+      },
     ],
     GUEST: [
       {

@@ -3,7 +3,6 @@ import { Table, Input, Button, Space, message, Typography } from "antd";
 import {
   SearchOutlined,
   FileTextOutlined,
-  UserOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -90,10 +89,6 @@ const StudentListScreen: React.FC = () => {
     }
   };
 
-  const handleAttendance = () => {
-    // Implement attendance logic
-    console.log("Taking attendance");
-  };
 
   if (!isLoggedIn || role !== "CATECHIST") {
     return <ForbiddenScreen />;
@@ -126,14 +121,6 @@ const StudentListScreen: React.FC = () => {
               className="bg-green-500 text-white hover:bg-green-600"
             >
               Xem điểm lớp
-            </Button>
-            <Button
-              type="primary"
-              icon={<UserOutlined />}
-              onClick={handleAttendance}
-              className="bg-blue-500 hover:bg-blue-600"
-            >
-              Điểm danh
             </Button>
           </Space>
         </div>
