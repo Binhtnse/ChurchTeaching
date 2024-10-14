@@ -110,9 +110,13 @@ const getMenuItems = (role: string): MenuItem[] => {
         icon: <SolutionOutlined />,
       },
       {
-        key: "policy-list",
+        key: "policy",
         label: "Quản lý các quy định",
         icon: <SolutionOutlined />,
+        children: [
+          { key: "policy-list", label: "Xem tất cả quy định" },
+          { key: "add-policy", label: "Thêm quy định" },
+        ],
       },
     ],
     GUEST: [

@@ -20,6 +20,7 @@ interface Timetable {
 }
 
 interface Slot {
+  timeTableId: string;
   dayOfWeek: string;
   time: string;
   slotOrder: number;
