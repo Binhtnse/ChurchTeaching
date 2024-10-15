@@ -1,28 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   Space,
   Button,
   message,
-  notification,
   Input,
   Select,
+  Pagination,
+  Tag,
 } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
-import { EditOutlined, ExportOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  EditOutlined,
+  ExportOutlined,
+} from "@ant-design/icons";
 import usePageTitle from "../hooks/usePageTitle";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import type { TableProps } from "antd";
+import { useNavigate } from "react-router-dom";
 import CreateClassModal from "../components/CreateClassModal";
 import ImportFileModal from "../components/ImportFileModal";
 
-const Context = React.createContext({ message: "Default" });
 const { Search } = Input;
 const { Option } = Select;
-interface ClassData {
+
+interface DataType {
   id: number;
   name: string;
   numberOfCatechist: number | null;
@@ -32,33 +38,159 @@ interface ClassData {
 }
 
 const AdminClassListScreen: React.FC = () => {
-  const [api, contextHolder] = notification.useNotification();
-  const contextValue = useMemo(() => ({ message: "Ant Design" }), []);
-
   const navigate = useNavigate();
   const { isLoggedIn, role, checkAuthState } = useAuthState();
-  const { setPageTitle } = usePageTitle();
-  const [data, setData] = useState<ClassData[]>([]);
+  const [dataSource, setDataSource] = useState<DataType[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [allData, setAllData] = useState<DataType[]>([]);
+  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
+  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<
     number | null
   >(null);
-  console.log(selectedAcademicYear);
-
-  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 2,
-    totalPage: 0,
+    pageSize: 10,
+    total: 0,
   });
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { setPageTitle } = usePageTitle();
 
-  const API_URL =
-    "https://sep490-backend-production.up.railway.app/api/v1/class/list";
-  const DEFAULT_PAGE_SIZE = 5;
+  useEffect(() => {
+    checkAuthState();
+  }, [checkAuthState]);
+  useEffect(() => {
+    checkAuthState();
+  }, [checkAuthState]);
 
+  useEffect(() => {
+    if (isLoggedIn && role === "ADMIN") {
+      fetchAcademicYears();
+      fetchGrades();
+    }
+  }, [isLoggedIn, role]);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+      console.log("Academic Years Data:", response.data);
+      setAcademicYears(response.data);
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+      message.error("Failed to fetch academic years");
+    }
+  };
+
+  const fetchGrades = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.status === "success") {
+        setGrades(response.data.data);
+      } else {
+        message.error("Failed to fetch grades");
+      }
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+      message.error("An error occurred while fetching grades");
+    }
+  };
+
+  useEffect(() => {
+    setPageTitle("Danh sách đơn đăng ký học", "#4154f1");
+  }, [setPageTitle]);
+
+  const fetchData = useCallback(
+    async (page: number = 1, pageSize: number = 10) => {
+      if (!selectedAcademicYear || !isLoggedIn || role !== "ADMIN") {
+        return;
+      }
+      setLoading(true);
+      try {
+        const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
+        const statusParam = statusFilter ? `&status=${statusFilter}` : "";
+        const response = await axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}${statusParam}`
+        );
+        const { data } = response.data;
+        const formattedData = data.map((item: DataType) => ({
+          key: item.id,
+          id: item.id,
+          name: item.name,
+          status: item.status,
+          grade: item.gradeName,
+          academicYear: item.academicYear,
+          numberOfCatechist: item.numberOfCatechist,
+        }));
+        setAllData(formattedData);
+        setDataSource(formattedData);
+        setPagination((prevPagination) => ({
+          ...prevPagination,
+          total: response.data.pageResponse.totalPage * pageSize,
+          current: page,
+          pageSize: pageSize,
+        }));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isLoggedIn, role, selectedAcademicYear, selectedGrade, statusFilter]
+  );
+
+  useEffect(() => {
+    if (selectedAcademicYear && isLoggedIn && role === "ADMIN") {
+      fetchData(1, pagination.pageSize);
+    }
+  }, [selectedAcademicYear, isLoggedIn, role, pagination.pageSize, fetchData]);
+
+  const handleGradeChange = (value: number) => {
+    setSelectedGrade(value);
+  };
+
+  const handleAcademicYearChange = (value: number) => {
+    setSelectedAcademicYear(value);
+  };
+
+  const handlePaginationChange = (page: number, pageSize?: number) => {
+    fetchData(page, pageSize || pagination.pageSize);
+  };
+
+  const filterData = (searchValue: string, statusValue: string | null) => {
+    return allData.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchValue.toLowerCase()) &&
+        (!statusValue || item.status === statusValue)
+    );
+  };
+
+  const handleSearch = (value: string) => {
+    const filteredData = filterData(value, statusFilter);
+    setDataSource(filteredData);
+  };
+
+  const handleStatusFilter = (value: string | null) => {
+    setStatusFilter(value);
+    const searchInput = document.querySelector<HTMLInputElement>(
+      ".ant-input-search input"
+    );
+    const searchValue = searchInput ? searchInput.value : "";
+    const filteredData = filterData(searchValue, value);
+    setDataSource(filteredData);
+  };
   const handleExport = async () => {
     try {
       const accessToken = localStorage.getItem("accessToken");
@@ -91,114 +223,36 @@ const AdminClassListScreen: React.FC = () => {
     } catch (error: any) {
       console.log(error);
       if (error.response.data.message) {
-        api.error({
-          message: `Lỗi ${error.response.data.message}`,
-          placement: "topRight",
-        });
+        message.error(`Lỗi ${error.response.data.message}`);
       } else {
-        api.error({
-          message: `Lỗi ${error.message}`,
-          placement: "topRight",
-        });
+        message.error(`Lỗi ${error.message}`);
       }
     }
   };
-
-  useEffect(() => {
-    checkAuthState();
-  }, [checkAuthState]);
-  useEffect(() => {
-    setPageTitle("Danh sách lớp học", "#4154f1");
-  }, [setPageTitle]);
-  useEffect(() => {
-    fetchAcademicYears();
-  }, []);
-
-  const handleAcademicYearChange = (value: number) => {
-    setSelectedAcademicYear(value);
-  };
-  const fetchAcademicYears = async () => {
-    try {
-      const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
-      );
-      console.log("Academic Years Data:", response.data);
-      setAcademicYears(response.data);
-    } catch (error) {
-      console.error("Error fetching academic years:", error);
-      message.error("Failed to fetch academic years");
-    }
-  };
-
-  const fetchData = async (
-    page: number = 1,
-    pageSize: number = DEFAULT_PAGE_SIZE
-  ) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${API_URL}?page=${page}&size=${pageSize}`
-      );
-      const { data, pageResponse } = response.data;
-
-      setData(data);
-      setPagination({
-        current: pageResponse.currentPage,
-        pageSize: pageResponse.pageSize,
-        totalPage: pageResponse.totalPage * pageResponse.pageSize,
-      });
-    } catch (error) {
-      message.error("Failed to load class data");
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateQueryParams = (page: number, pageSize: number) => {
-    setSearchParams({ page: String(page), size: String(pageSize) });
-  };
-
-  useEffect(() => {
-    if (isLoggedIn && role === "ADMIN") {
-      const page = searchParams.get("page")
-        ? parseInt(searchParams.get("page")!)
-        : 1;
-      const size = searchParams.get("size")
-        ? parseInt(searchParams.get("size")!)
-        : DEFAULT_PAGE_SIZE;
-
-      fetchData(page, size);
-    }
-  }, [isLoggedIn, role, searchParams]);
-
-  const handleTableChange = (pagination: any) => {
-    updateQueryParams(pagination.current, pagination.pageSize);
-  };
-
-  const columns: TableProps<ClassData>["columns"] = [
+  const columns = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
+      title: "STT",
+      key: "index",
+      width: "10%",
+      render: (_: unknown, __: unknown, index: number) => index + 1,
     },
     {
-      title: "Tên Lớp",
+      title: "Tên lớp",
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "Số lượng giáo lý viên",
+      title: "Số lượng giáo viên",
       dataIndex: "numberOfCatechist",
       key: "numberOfCatechist",
     },
     {
       title: "Khối",
-      dataIndex: "gradeName",
-      key: "gradeName",
+      dataIndex: "grade",
+      key: "grade",
     },
     {
-      title: "Năm học",
+      title: "Niên khóa",
       dataIndex: "academicYear",
       key: "academicYear",
     },
@@ -206,11 +260,43 @@ const AdminClassListScreen: React.FC = () => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
+      render: (status: string) => {
+        let color = "default";
+        let icon = null;
+
+        switch (status) {
+          case "APPROVE":
+            color = "success";
+            icon = <CheckCircleOutlined />;
+            break;
+          case "PENDING":
+            color = "processing";
+            icon = <ClockCircleOutlined />;
+            break;
+          case "REJECTED":
+            color = "error";
+            icon = <CloseCircleOutlined />;
+            break;
+        }
+
+        return (
+          <Tag icon={icon} color={color}>
+            {status === "REJECTED" ? "REJECT" : status.toUpperCase()}
+          </Tag>
+        );
+      },
     },
+    // {
+    //   title: "Hành động",
+    //   key: "action",
+    //   render: (_: unknown, record: DataType) => (
+    //     <Link to={`/enroll-list/${record.id}`}>Xem chi tiết</Link>
+    //   ),
+    // },
     {
       title: "Hành động",
       key: "action",
-      render: (_, record) => (
+      render: (_: unknown, record: DataType) => (
         <Space size="middle">
           {/* <EditClassModal classId={record.id} /> */}
           {/* <Button danger icon={<DeleteOutlined />}>
@@ -234,7 +320,6 @@ const AdminClassListScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <Context.Provider value={contextValue}>{contextHolder}</Context.Provider>
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-blue-600">
           Danh sách lớp giáo lý
@@ -253,13 +338,7 @@ const AdminClassListScreen: React.FC = () => {
           <ImportFileModal />
         </div>
       </div>
-      <div className="flex flex-wrap gap-5">
-        <Search
-          placeholder="Tìm theo tên lớp"
-          // onSearch={handleSearch}
-          style={{ width: 200 }}
-          // onChange={(e) => handleSearch(e.target.value)}
-        />
+      <div style={{ marginBottom: 16 }}>
         <Select
           style={{ width: 200, marginRight: 16 }}
           placeholder="Chọn niên khóa"
@@ -272,9 +351,28 @@ const AdminClassListScreen: React.FC = () => {
           ))}
         </Select>
         <Select
-          style={{ width: 200 }}
+          style={{ width: 200, marginRight: 16 }}
+          placeholder="Chọn khối"
+          onChange={handleGradeChange}
+          value={selectedGrade}
+          allowClear
+        >
+          {grades.map((grade) => (
+            <Option key={grade.id} value={grade.id}>
+              {grade.name}
+            </Option>
+          ))}
+        </Select>
+        <Search
+          placeholder="Tìm theo tên"
+          onSearch={handleSearch}
+          style={{ width: 200, marginRight: 16 }}
+          onChange={(e) => handleSearch(e.target.value)}
+        />
+        <Select
+          style={{ width: 120 }}
           placeholder="Lọc theo trạng thái"
-          // onChange={handleStatusFilter}
+          onChange={handleStatusFilter}
           allowClear
         >
           <Option value="APPROVE">Đồng ý</Option>
@@ -282,24 +380,30 @@ const AdminClassListScreen: React.FC = () => {
           <Option value="REJECT">Từ chối</Option>
         </Select>
       </div>
-      <Table
-        columns={columns}
-        dataSource={data}
-        onRow={() => {
-          return {
-            className: "hover:bg-gray-100 transition-colors duration-200",
-          };
-        }}
-        rowKey="id"
-        loading={loading}
-        pagination={{
-          current: pagination.current,
-          pageSize: pagination.pageSize,
-          total: pagination.totalPage,
-        }}
-        onChange={handleTableChange}
-        className="bg-white rounded-lg shadow-lg"
-      />
+
+      {selectedAcademicYear ? (
+        <>
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            bordered
+            loading={loading}
+            pagination={false}
+          />
+          <Pagination
+            current={pagination.current}
+            total={pagination.total}
+            pageSize={pagination.pageSize}
+            onChange={handlePaginationChange}
+            showSizeChanger
+            showQuickJumper
+            showTotal={(total) => `Total ${total} items`}
+            className="mt-4 text-right"
+          />
+        </>
+      ) : (
+        <div>Vui lòng chọn niên khóa</div>
+      )}
     </div>
   );
 };
