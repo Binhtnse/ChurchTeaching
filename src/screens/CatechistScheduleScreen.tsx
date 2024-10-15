@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Card, Typography, Spin, Select } from "antd";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -91,22 +92,37 @@ const CatechistScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
+        const userString = localStorage.getItem("userLogin");
+        const user = userString ? JSON.parse(userString) : null;
+        const userId = user?.id;
+        if (!userId) {
+          console.error("User ID not found");
+          setLoading(false);
+          return;
+        }
         const response = await axios.get(
-          "https://sep490-backend-production.up.railway.app/api/v1/schedule/catechist/8"
+          `https://sep490-backend-production.up.railway.app/api/v1/schedule/catechist/${userId}`
         );
         setScheduleData(response.data.data);
         setSelectedYear(response.data.data.academicYear);
         const currentDate = new Date();
-        const currentWeek = response.data.data.schedule.find((week: WeekSchedule) => {
-          const startDate = new Date(week.startDate);
-          const endDate = new Date(week.endDate);
-          return currentDate >= startDate && currentDate <= endDate;
-        });
-        setSelectedWeek(currentWeek ? currentWeek.weekNumber : response.data.data.schedule[0].weekNumber);
+        const currentWeek = response.data.data.schedule.find(
+          (week: WeekSchedule) => {
+            const startDate = new Date(week.startDate);
+            const endDate = new Date(week.endDate);
+            return currentDate >= startDate && currentDate <= endDate;
+          }
+        );
+        setSelectedWeek(
+          currentWeek
+            ? currentWeek.weekNumber
+            : response.data.data.schedule[0].weekNumber
+        );
         setLoading(false);
       } catch (error) {
         console.error("Error fetching schedule:", error);
@@ -157,19 +173,26 @@ const CatechistScheduleScreen: React.FC = () => {
             <TimeCell>{time}</TimeCell>
             {days.map((day, index) => {
               const CellComponent = index === 6 ? SundayCell : CalendarCell;
+              const slot = timetable[day] && timetable[day][time];
               return (
-                <CellComponent key={`${day}-${time}`}>
-                  {timetable[day] && timetable[day][time] && (
+                <CellComponent
+                  key={`${day}-${time}`}
+                  onClick={() => handleCellClick(slot)}
+                  style={{ cursor: slot ? "pointer" : "default" }}
+                >
+                  {slot && (
                     <div className="flex flex-col">
                       <Text>Phòng: {classItem.roomNo}</Text>
-                      <strong>{timetable[day][time]?.name}</strong>
+                      <strong>{slot.name}</strong>
                     </div>
                   )}
                   {index === 6 && (
-                  <div className="mt-2">
-                    <Text strong>{`${classItem.className} - ${classItem.grade}`}</Text>
-                  </div>
-                )}
+                    <div className="mt-2">
+                      <Text
+                        strong
+                      >{`${classItem.className} - ${classItem.grade}`}</Text>
+                    </div>
+                  )}
                 </CellComponent>
               );
             })}
@@ -177,6 +200,12 @@ const CatechistScheduleScreen: React.FC = () => {
         ))}
       </CalendarGrid>
     );
+  };
+
+  const handleCellClick = (slot: Slot | null) => {
+    if (slot) {
+      navigate(`/schedule/attendance/${slot.timeTableId}`);
+    }
   };
 
   if (loading) {
@@ -230,10 +259,7 @@ const CatechistScheduleScreen: React.FC = () => {
           {currentWeek.classes.map((classItem, index) => {
             const timetable = createTimetable(classItem.slots);
             return (
-              <Card
-                key={index}
-                className="mb-4 mt-4"
-              >
+              <Card key={index} className="mb-4 mt-4">
                 {renderCalendar(timetable, classItem)}
               </Card>
             );
