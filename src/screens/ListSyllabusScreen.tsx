@@ -33,6 +33,7 @@ const ListSyllabusScreen: React.FC = () => {
   >([]);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -83,11 +84,11 @@ const ListSyllabusScreen: React.FC = () => {
 
   const fetchSyllabuses = useCallback(
     async (page: number = 1, pageSize: number = 10, gradeId: number = 0) => {
-      if (selectedYear === null) return;
       try {
         const yearId = `&yearId=${selectedYear}`;
+        const status = selectedStatus ? `status=${selectedStatus}` : '';
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=${page}&size=${pageSize}&gradeId=${gradeId}${yearId}`
+          `https://sep490-backend-production.up.railway.app/api/syllabus?${status}&page=${page}&size=${pageSize}&gradeId=${gradeId}${yearId}`
         );
         setSyllabuses(response.data.data);
         setPagination((prevPagination) => ({
@@ -102,7 +103,7 @@ const ListSyllabusScreen: React.FC = () => {
         setLoading(false);
       }
     },
-    [selectedYear]
+    [selectedYear, selectedStatus]
   );
 
   const handlePaginationChange = (page: number, pageSize?: number) => {
@@ -120,7 +121,7 @@ const ListSyllabusScreen: React.FC = () => {
     if (isLoggedIn && role === "ADMIN" && selectedYear !== null) {
       fetchSyllabuses(1, pagination.pageSize);
     }
-  }, [isLoggedIn, role, pagination.pageSize, fetchSyllabuses, selectedYear]);
+  }, [isLoggedIn, role, pagination.pageSize, fetchSyllabuses, selectedYear, selectedStatus]);
 
   const handleYearChange = (value: number | null) => {
     setSelectedYear(value);
@@ -225,6 +226,17 @@ const ListSyllabusScreen: React.FC = () => {
               </Select.Option>
             ))}
           </Select>
+          <Select
+  style={{ width: 200 }}
+  placeholder="Chọn trạng thái"
+  onChange={(value) => setSelectedStatus(value)}
+  value={selectedStatus}
+  allowClear
+  className="border rounded-md"
+>
+  <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+  <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
+</Select>
         </div>
         <Table
           columns={columns}

@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 const { Title } = Typography;
 
 interface Student {
-  id: number;
+  studentId: number;
   studentClassId: number;
   fullName: string;
   account: string;
@@ -24,7 +24,7 @@ interface Student {
 }
 
 interface ClassInfo {
-  id: number | null;
+  classId: number;
   className: string;
   students: Student[];
 }
@@ -34,6 +34,7 @@ const StudentListScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { setPageTitle } = usePageTitle();
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const navigate = useNavigate();
   const { classId } = useParams<{ classId: string }>();
 
@@ -51,10 +52,11 @@ const StudentListScreen: React.FC = () => {
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`
       );
-      if (response.status === 200 || response.status === 304) {
+      if (response.data.status === "success") {
         setClassInfo(response.data.data);
       } else {
         setClassInfo(null);
+        message.error(response.data.message || "Failed to fetch students");
       }
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -65,6 +67,7 @@ const StudentListScreen: React.FC = () => {
   }, [classId]);
 
   useEffect(() => {
+    console.log('Effect triggered:', { isLoggedIn, role, classId });
     if (isLoggedIn && role === "CATECHIST" && classId) {
       fetchStudents();
     }
@@ -74,21 +77,32 @@ const StudentListScreen: React.FC = () => {
     navigate("/classes");
   };
 
+  useEffect(() => {
+    const initializeComponent = async () => {
+      await checkAuthState();
+      setInitialLoading(false);
+    };
+    initializeComponent();
+  }, [checkAuthState]);
+  
+  if (initialLoading) {
+    return <div>Loading...</div>;
+  }
+
   const columns: ColumnsType<Student> = [
     { title: "STT", dataIndex: "studentClassId", key: "studentClassId" },
     { title: "Tên thiếu nhi", dataIndex: "fullName", key: "fullName" },
   ];
 
   const handleViewClassGrades = () => {
-    if (classInfo && classInfo.id) {
-      console.log(classInfo.id)
-      navigate(`/catechist-grade/${classInfo.id}`);
+    const id = classInfo?.classId || classId;
+    if (id) {
+      navigate(`/catechist-grade/${id}`);
     } else {
       console.error("Class ID is undefined");
       message.error("Unable to view grades. Class ID is missing.");
     }
   };
-
 
   if (!isLoggedIn || role !== "CATECHIST") {
     return <ForbiddenScreen />;
@@ -101,7 +115,7 @@ const StudentListScreen: React.FC = () => {
         onClick={handleBack}
         className="mb-4"
       >
-        Back to Class List
+        Quay về danh sách lớp
       </Button>
       <Title level={2} className="mb-6 text-center text-gray-800">
         Danh sách Thiếu Nhi
@@ -134,6 +148,7 @@ const StudentListScreen: React.FC = () => {
             showSizeChanger: true,
             showQuickJumper: true,
           }}
+          rowKey="studentId"
         />
       </div>
     </div>

@@ -114,7 +114,7 @@ const CatechistClassList: React.FC = () => {
   }, [fetchClasses]);
 
   const handleRowClick = (record: ClassData) => {
-    navigate(`/classes/${record.id}`);
+    navigate(`/classes-catechist/${record.id}`);
   };
 
   const handleTableChange = (newPagination: TablePaginationConfig) => {

@@ -80,7 +80,7 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/classes/:id"
+            path="/classes-catechist/:classId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <StudentListScreen />
@@ -88,7 +88,7 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/classes"
+            path="/classes-catechist"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <CatechistClassList />

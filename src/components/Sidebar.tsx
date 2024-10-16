@@ -48,7 +48,7 @@ const getMenuItems = (role: string): MenuItem[] => {
     ],
     CATECHIST: [
       {
-        key: "classes",
+        key: "classes-catechist",
         label: "Lớp học",
         icon: <TeamOutlined />,
       },
