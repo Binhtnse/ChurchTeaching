@@ -216,13 +216,16 @@ const CatechistClassGradeScreen: React.FC = () => {
   );
 
   const checkAllCellsFilled = useCallback(() => {
-    const allFilled = students.every((student) =>
+    const allFilledAndNonZero = students.every((student) =>
       gradeTemplate?.exams?.every(
-        (exam) => student.scores[exam.name] !== undefined
+        (exam) => {
+          const score = student.scores[exam.name]?.score;
+          return score !== undefined && score !== null && score !== 0;
+        }
       )
     );
-    setAllCellsFilled(allFilled);
-  }, [students, gradeTemplate]);
+    setAllCellsFilled(allFilledAndNonZero);
+  }, [students, gradeTemplate]);  
 
   useEffect(() => {
     checkAllCellsFilled();
