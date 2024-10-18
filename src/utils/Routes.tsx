@@ -21,6 +21,8 @@ import CatechistClassList from "../screens/CatechistClassList";
 import StudentScheduleScreen from "../screens/StudentScheduleScreen";
 import PolicyListScreen from "../screens/PolicyListScreen";
 import CatechistAttendanceScreen from "../screens/CatechistAttendanceScreen";
+import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
+import UserTransactionHistoryScreen from "../screens/UserTransactionHistoryScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -68,6 +70,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["PARENT", "STUDENT"]}>
                 <StudyGradesScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transaction-history-user"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT", "STUDENT"]}>
+                <UserTransactionHistoryScreen />
               </ProtectedRoute>
             }
           />
@@ -180,6 +190,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <ListSyllabusScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transaction-history"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <TransactionHistoryScreen />
               </ProtectedRoute>
             }
           />
