@@ -156,12 +156,12 @@ const CatechistClassGradeScreen: React.FC = () => {
             ...student,
             scores: {
               ...student.scores,
-              [`exam_${examId}`]: { examId, score: value === '' ? undefined : parseFloat(value) }
+              [examId]: { examId, score: value === '' ? undefined : parseFloat(value) }
             }
           }
         : student
     ));
-  }, []);  
+  }, []);    
 
   const checkAllCellsFilled = useCallback(() => {
     const allFilled = students.every((student) =>
@@ -198,7 +198,8 @@ const CatechistClassGradeScreen: React.FC = () => {
       value={value !== undefined ? value.toString() : ''}
       onChange={(e) => onChange(e.target.value)}
     />
-  ));   
+  ));
+     
    
   const classGradeColumns = [
     {
@@ -224,7 +225,7 @@ const CatechistClassGradeScreen: React.FC = () => {
           />
         ) : (
           scoreObj?.score ?? "-"
-        ),
+        ),      
     })) || []),
     
     {

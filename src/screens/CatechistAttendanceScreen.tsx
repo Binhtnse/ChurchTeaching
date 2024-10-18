@@ -46,8 +46,10 @@ const CatechistAttendanceScreen: React.FC = () => {
   const fetchAttendanceData = useCallback(async () => {
     setLoading(true);
     try {
+      const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/attendance/timetable/${timeTableId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/attendance/timetable/${timeTableId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       if (response.status === 200) {
         setAttendanceData(response.data.data);
@@ -60,7 +62,7 @@ const CatechistAttendanceScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [timeTableId]);
+  }, [timeTableId]);  
 
   useEffect(() => {
     if (isLoggedIn && role === "CATECHIST" && timeTableId) {
@@ -88,29 +90,52 @@ const CatechistAttendanceScreen: React.FC = () => {
 
   const handleSaveAttendance = async () => {
     try {
-      // Implement the API call to save attendance here
-      console.log("Saving attendance:", attendanceData);
-      message.success("Attendance saved successfully");
+      const accessToken = localStorage.getItem("accessToken");
+      const requestBody = {
+        timeTableId: Number(timeTableId),
+        studentAttendances: attendanceData?.attendanceRecords.map(record => ({
+          studentClassId: record.studentClass.id,
+          isAbsent: record.isAbsent
+        }))
+      };
+  
+      const response = await axios.put(
+        "https://sep490-backend-production.up.railway.app/api/v1/attendance",
+        requestBody,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+  
+      if (response.status === 200) {
+        message.success("Attendance saved successfully");
+      } else {
+        throw new Error("Failed to save attendance");
+      }
     } catch (error) {
       console.error("Error saving attendance:", error);
       message.error("Failed to save attendance");
     }
-  };
+  };  
 
   const columns: ColumnsType<AttendanceRecord> = [
     { title: "STT", dataIndex: ["studentClass", "id"], key: "id" },
     { title: "Tên thiếu nhi", dataIndex: ["studentClass", "name"], key: "name" },
     {
-      title: "Điểm danh",
+      title: "Trạng thái điểm danh",
       key: "attendance",
       render: (_, record) => (
-        <Checkbox
-          checked={record.isAbsent === "PRESENT"}
-          onChange={(e) => handleAttendanceChange(record.attendanceId, !e.target.checked)}
-        />
+        <div className="flex items-center">
+          <Checkbox
+            checked={record.isAbsent === "PRESENT"}
+            onChange={(e) => handleAttendanceChange(record.attendanceId, !e.target.checked)}
+            disabled={record.isAbsentWithPermission === "TRUE"}
+          />
+          {record.isAbsentWithPermission === "TRUE" && (
+            <span className="ml-2 text-gray-500">Vắng có phép</span>
+          )}
+        </div>
       ),
     },
-  ];
+  ];  
 
   if (!isLoggedIn || role !== "CATECHIST") {
     return <ForbiddenScreen />;
