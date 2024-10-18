@@ -64,15 +64,16 @@ const CatechistClassGradeScreen: React.FC = () => {
       const grades = response.data.data;
   
       const studentMap = new Map();
-      grades.forEach((grade: { studentName: string; account: string; score: number | null; examName: string }) => {
+      grades.forEach((grade: { studentName: string; account: string; score: number | null; examName: string; studentClassId: number }) => {
         if (!studentMap.has(grade.account)) {
           studentMap.set(grade.account, {
             fullName: grade.studentName,
             account: grade.account,
+            studentClassId: grade.studentClassId,
             scores: {},
           });
         }
-        studentMap.get(grade.account).scores[grade.examName] = grade.score;
+        studentMap.get(grade.account).scores[grade.examName] = { score: grade.score };
       });
   
       const students = Array.from(studentMap.values());
@@ -89,8 +90,7 @@ const CatechistClassGradeScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [classId]);
-  
+  }, [classId]);  
 
   const fetchGradeTemplate = useCallback(async () => {
     try {
@@ -127,10 +127,10 @@ const CatechistClassGradeScreen: React.FC = () => {
   
       const studentClassScores = students.map((student) => ({
         studentClassId: student.studentClassId,
-        exams: gradeTemplate?.exams?.map((exam) => ({
-          examId: exam.id,
-          score: student.scores[exam.name] || 0,
-        })) || [],
+        exams: Object.entries(student.scores).map(([, scoreObj]) => ({
+          examId: scoreObj.examId,
+          score: scoreObj.score ?? 0
+        }))
       }));
   
       await axios.put(
@@ -149,19 +149,23 @@ const CatechistClassGradeScreen: React.FC = () => {
     }
   };  
 
-  const handleScoreChange = useCallback((studentId: number, examId: number, value: string) => {
+  const handleScoreChange = useCallback((studentId: number, examName: string, value: string) => {
     setStudents(prevStudents => prevStudents.map(student => 
       student.studentClassId === studentId 
         ? {
             ...student,
             scores: {
               ...student.scores,
-              [examId]: { examId, score: value === '' ? undefined : parseFloat(value) }
+              [examName]: { 
+                examId: student.scores[examName]?.examId || 0, // Preserve or set a default examId
+                score: value === '' ? undefined : parseFloat(value)
+              }
             }
           }
         : student
     ));
-  }, []);    
+  }, []);
+    
 
   const checkAllCellsFilled = useCallback(() => {
     const allFilled = students.every((student) =>
@@ -191,15 +195,20 @@ const CatechistClassGradeScreen: React.FC = () => {
   };
 
   const EditableCell: React.FC<{
-    value: number | undefined;
+    value: number | undefined | null;
     onChange: (value: string) => void;
   }> = React.memo(({ value, onChange }) => (
     <Input
-      value={value !== undefined ? value.toString() : ''}
+      value={value !== null && value !== undefined ? value.toString() : ''}
       onChange={(e) => onChange(e.target.value)}
+      onBlur={(e) => {
+        const numValue = parseFloat(e.target.value);
+        if (!isNaN(numValue)) {
+          onChange(numValue.toString());
+        }
+      }}
     />
-  ));
-     
+  ));   
    
   const classGradeColumns = [
     {
@@ -214,30 +223,30 @@ const CatechistClassGradeScreen: React.FC = () => {
     },
     ...(gradeTemplate?.exams?.map((exam) => ({
       title: exam.name,
-      dataIndex: ["scores", `exam_${exam.id}`],
+      dataIndex: ["scores", exam.name],
       key: exam.name,
       render: (scoreObj: { score: number | undefined } | undefined, record: Student) =>
         isEditing ? (
           <EditableCell
-            key={`${record.studentClassId}-${exam.id}`}
+            key={`${record.studentClassId}-${exam.name}`}
             value={scoreObj?.score}
-            onChange={(value) => handleScoreChange(record.studentClassId, exam.id, value)}
+            onChange={(value) => handleScoreChange(record.studentClassId, exam.name, value)}
           />
         ) : (
           scoreObj?.score ?? "-"
-        ),      
-    })) || []),
-    
+        ),   
+    })) || []), 
     {
       title: "Tổng điểm",
       key: "totalScore",
-      render: (record: { scores?: Record<string, number> }) => {
+      render: (record: Student) => {
         const totalScore = gradeTemplate?.exams?.reduce((acc, exam) => {
-          return acc + (record.scores?.[exam.name] || 0) * (exam.weight || 0);
+          const score = record.scores[exam.name]?.score || 0;
+          return acc + score * (exam.weight || 0);
         }, 0);
-        return totalScore?.toFixed(2) || "-";
+        return totalScore !== undefined ? totalScore.toFixed(2) : "-";
       },
-    },
+    },    
   ];
 
   if (!isLoggedIn || role !== "CATECHIST") {
