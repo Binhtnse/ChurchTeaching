@@ -184,6 +184,7 @@ const CatechistScheduleScreen: React.FC = () => {
                     <div className="flex flex-col">
                       <Text>Phòng: {classItem.roomNo}</Text>
                       <strong>{slot.name}</strong>
+                      <Text>ID: {slot.timeTableId}</Text>
                     </div>
                   )}
                   {index === 6 && (

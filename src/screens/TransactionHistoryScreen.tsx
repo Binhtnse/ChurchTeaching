@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Spin, Select } from 'antd';
 import axios from 'axios';
 
@@ -54,12 +54,6 @@ const TransactionHistoryScreen: React.FC = () => {
     fetchGrades();
   }, []);
 
-  useEffect(() => {
-    if (selectedAcademicYear) {
-      fetchTransactions();
-    }
-  }, [selectedAcademicYear, selectedGrade]);
-
   const fetchAcademicYears = async () => {
     try {
       const response = await axios.get('https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE');
@@ -88,18 +82,28 @@ const TransactionHistoryScreen: React.FC = () => {
     }
   };
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
+    if (!selectedAcademicYear) return;
+    
     try {
+      setLoading(true);
+      const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
       const response = await axios.get<ApiResponse>(
-        'https://sep490-backend-production.up.railway.app/api/v1/tuition/admin/transactions?page=1&size=10'
+        `https://sep490-backend-production.up.railway.app/api/v1/tuition/admin/transactions?page=1&size=10&academicYearId=${selectedAcademicYear}${gradeParam}`
       );
       setTransactions(response.data.data);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching transactions:', error);
+    } finally {
       setLoading(false);
     }
-  };
+  }, [selectedAcademicYear, selectedGrade]);
+
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      fetchTransactions();
+    }
+  }, [fetchTransactions, selectedAcademicYear, selectedGrade]);
 
   const handleAcademicYearChange = (value: number) => {
     setSelectedAcademicYear(value);
@@ -158,7 +162,7 @@ const TransactionHistoryScreen: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Transaction History</h1>
+      <h1 className="text-2xl font-bold mb-4">Lịch sử giao dịch</h1>
       <div className="mb-4 flex space-x-4">
         <Select
           style={{ width: 200 }}

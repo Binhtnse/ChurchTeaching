@@ -10,22 +10,30 @@ import { useParams, useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
 
-interface Student {
-  id: number;
-  studentClassId: number;
-  fullName: string;
-  account: string;
-  status: string;
-  isPresent: boolean;
+interface AttendanceRecord {
+  attendanceId: number;
+  studentClass: {
+    id: number;
+    name: string;
+    account: string;
+  };
+  isAbsent: "PRESENT" | "ABSENT";
+  isAbsentWithPermission: "TRUE" | "FALSE";
+}
+
+interface AttendanceData {
+  timeTableId: number;
+  slotName: string;
+  attendanceRecords: AttendanceRecord[];
 }
 
 const CatechistAttendanceScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [loading, setLoading] = useState(false);
   const { setPageTitle } = usePageTitle();
-  const [students, setStudents] = useState<Student[]>([]);
+  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null);
   const navigate = useNavigate();
-  const { classId } = useParams<{ classId: string }>();
+  const { timeTableId } = useParams<{ timeTableId: string }>();
 
   useEffect(() => {
     setPageTitle("Điểm danh", "#4154f1");
@@ -35,52 +43,53 @@ const CatechistAttendanceScreen: React.FC = () => {
     checkAuthState();
   }, [checkAuthState]);
 
-  const fetchStudents = useCallback(async () => {
+  const fetchAttendanceData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/attendance/timetable/${timeTableId}`
       );
-      if (response.status === 200 || response.status === 304) {
-        const studentsWithAttendance = response.data.data.students.map((student: Student) => ({
-          ...student,
-          isPresent: false,
-        }));
-        setStudents(studentsWithAttendance);
+      if (response.status === 200) {
+        setAttendanceData(response.data.data);
       } else {
-        setStudents([]);
+        setAttendanceData(null);
       }
     } catch (error) {
-      console.error("Error fetching students:", error);
-      message.error("Failed to fetch students");
+      console.error("Error fetching attendance data:", error);
+      message.error("Failed to fetch attendance data");
     } finally {
       setLoading(false);
     }
-  }, [classId]);
+  }, [timeTableId]);
 
   useEffect(() => {
-    if (isLoggedIn && role === "CATECHIST" && classId) {
-      fetchStudents();
+    if (isLoggedIn && role === "CATECHIST" && timeTableId) {
+      fetchAttendanceData();
     }
-  }, [isLoggedIn, role, classId, fetchStudents]);
+  }, [isLoggedIn, role, timeTableId, fetchAttendanceData]);
 
   const handleBack = () => {
-    navigate("/classes");
+    navigate("/schedule");
   };
 
-  const handleAttendanceChange = (studentId: number, isPresent: boolean) => {
-    setStudents(prevStudents =>
-      prevStudents.map(student =>
-        student.id === studentId ? { ...student, isPresent } : student
-      )
-    );
+  const handleAttendanceChange = (attendanceId: number, isAbsent: boolean) => {
+    setAttendanceData(prevData => {
+      if (!prevData) return null;
+      return {
+        ...prevData,
+        attendanceRecords: prevData.attendanceRecords.map(record =>
+          record.attendanceId === attendanceId
+            ? { ...record, isAbsent: isAbsent ? "ABSENT" : "PRESENT" }
+            : record
+        )
+      };
+    });
   };
 
   const handleSaveAttendance = async () => {
     try {
       // Implement the API call to save attendance here
-      // For now, we'll just log the attendance data
-      console.log("Saving attendance:", students);
+      console.log("Saving attendance:", attendanceData);
       message.success("Attendance saved successfully");
     } catch (error) {
       console.error("Error saving attendance:", error);
@@ -88,16 +97,16 @@ const CatechistAttendanceScreen: React.FC = () => {
     }
   };
 
-  const columns: ColumnsType<Student> = [
-    { title: "STT", dataIndex: "studentClassId", key: "studentClassId" },
-    { title: "Tên thiếu nhi", dataIndex: "fullName", key: "fullName" },
+  const columns: ColumnsType<AttendanceRecord> = [
+    { title: "STT", dataIndex: ["studentClass", "id"], key: "id" },
+    { title: "Tên thiếu nhi", dataIndex: ["studentClass", "name"], key: "name" },
     {
       title: "Điểm danh",
       key: "attendance",
       render: (_, record) => (
         <Checkbox
-          checked={record.isPresent}
-          onChange={(e) => handleAttendanceChange(record.id, e.target.checked)}
+          checked={record.isAbsent === "PRESENT"}
+          onChange={(e) => handleAttendanceChange(record.attendanceId, !e.target.checked)}
         />
       ),
     },
@@ -114,19 +123,19 @@ const CatechistAttendanceScreen: React.FC = () => {
         onClick={handleBack}
         className="mb-4"
       >
-        Back to Class List
+        Quay lại lịch dạy
       </Button>
       <Title level={2} className="mb-6 text-center text-gray-800">
-        Điểm Danh Thiếu Nhi
+        Điểm Danh Thiếu Nhi - {attendanceData?.slotName}
       </Title>
       <div className="bg-white p-6 rounded-lg shadow-md">
         <Table
           columns={columns}
-          dataSource={students}
+          dataSource={attendanceData?.attendanceRecords}
           loading={loading}
           className="border border-gray-200 rounded-lg mb-6"
           pagination={false}
-          rowKey="id"
+          rowKey="attendanceId"
         />
         <div className="flex justify-end">
           <Button

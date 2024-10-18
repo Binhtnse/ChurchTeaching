@@ -114,7 +114,7 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/schedule/attendance/:slotId"
+            path="/schedule/attendance/:timeTableId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <CatechistAttendanceScreen />

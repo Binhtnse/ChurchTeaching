@@ -39,6 +39,8 @@ interface ApiResponse {
 const CatechistClassList: React.FC = () => {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
+  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string }[]
   >([]);
@@ -62,8 +64,29 @@ const CatechistClassList: React.FC = () => {
     }
   };
 
+  const fetchGrades = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.status === "success") {
+        setGrades(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+      message.error("An error occurred while fetching grades");
+    }
+  };
+
   useEffect(() => {
     fetchAcademicYears();
+    fetchGrades();
   }, []);
 
   const fetchClasses = useCallback(
@@ -80,8 +103,9 @@ const CatechistClassList: React.FC = () => {
           return;
         }
         const accessToken = localStorage.getItem("accessToken");
+        const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
         const response = await axios.get<ApiResponse>(
-          `https://sep490-backend-production.up.railway.app/api/v1/class/catechist/${userId}?page=${page}&size=${pageSize}`,
+          `https://sep490-backend-production.up.railway.app/api/v1/class/catechist/${userId}?page=${page}&size=${pageSize}&academicYearId=${selectedYear}${gradeParam}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -101,11 +125,16 @@ const CatechistClassList: React.FC = () => {
         setLoading(false);
       }
     },
-    [selectedYear]
+    [selectedYear, selectedGrade]
   );
 
   const handleYearChange = (value: number) => {
     setSelectedYear(value);
+    fetchClasses(1, pagination.pageSize);
+  };
+
+  const handleGradeChange = (value: number) => {
+    setSelectedGrade(value);
     fetchClasses(1, pagination.pageSize);
   };
 
@@ -160,6 +189,18 @@ const CatechistClassList: React.FC = () => {
           </Select.Option>
         ))}
       </Select>
+      <Select
+        style={{ width: 200, marginBottom: 16, marginLeft: 16 }}
+        placeholder="Chọn khối"
+        onChange={handleGradeChange}
+        value={selectedGrade}
+      >
+        {grades.map((grade) => (
+          <Select.Option key={grade.id} value={grade.id}>
+            {grade.name}
+          </Select.Option>
+        ))}
+      </Select>
       <Spin spinning={loading}>
         {selectedYear ? (
           <Table
@@ -171,7 +212,7 @@ const CatechistClassList: React.FC = () => {
             className="bg-white rounded-lg shadow"
             onRow={(record) => ({
               onClick: () => handleRowClick(record),
-              style: { cursor: 'pointer' }
+              style: { cursor: "pointer" },
             })}
           />
         ) : (
