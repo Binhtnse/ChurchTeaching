@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Table,
   Space,
   Button,
   message,
+  notification,
   Input,
   Select,
   Pagination,
@@ -375,6 +376,8 @@ const AdminClassListScreen: React.FC = () => {
           onChange={handleStatusFilter}
           allowClear
         >
+          <Option value="ACTIVE">Hoạt động</Option>
+          <Option value="INACTIVE">Không hoạt động</Option>
           <Option value="APPROVE">Đồng ý</Option>
           <Option value="PENDING">Đang chờ</Option>
           <Option value="REJECT">Từ chối</Option>
