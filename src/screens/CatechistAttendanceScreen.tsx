@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Button, message, Typography, Checkbox } from "antd";
+import { Table, Button, message, Typography, Checkbox, Spin } from "antd";
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuthState } from "../hooks/useAuthState";
@@ -31,7 +31,9 @@ const CatechistAttendanceScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [loading, setLoading] = useState(false);
   const { setPageTitle } = usePageTitle();
-  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null);
+  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(
+    null
+  );
   const navigate = useNavigate();
   const { timeTableId } = useParams<{ timeTableId: string }>();
 
@@ -62,7 +64,7 @@ const CatechistAttendanceScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [timeTableId]);  
+  }, [timeTableId]);
 
   useEffect(() => {
     if (isLoggedIn && role === "CATECHIST" && timeTableId) {
@@ -75,15 +77,15 @@ const CatechistAttendanceScreen: React.FC = () => {
   };
 
   const handleAttendanceChange = (attendanceId: number, isAbsent: boolean) => {
-    setAttendanceData(prevData => {
+    setAttendanceData((prevData) => {
       if (!prevData) return null;
       return {
         ...prevData,
-        attendanceRecords: prevData.attendanceRecords.map(record =>
+        attendanceRecords: prevData.attendanceRecords.map((record) =>
           record.attendanceId === attendanceId
             ? { ...record, isAbsent: isAbsent ? "ABSENT" : "PRESENT" }
             : record
-        )
+        ),
       };
     });
   };
@@ -93,18 +95,18 @@ const CatechistAttendanceScreen: React.FC = () => {
       const accessToken = localStorage.getItem("accessToken");
       const requestBody = {
         timeTableId: Number(timeTableId),
-        studentAttendances: attendanceData?.attendanceRecords.map(record => ({
+        studentAttendances: attendanceData?.attendanceRecords.map((record) => ({
           studentClassId: record.studentClass.id,
-          isAbsent: record.isAbsent
-        }))
+          isAbsent: record.isAbsent,
+        })),
       };
-  
+
       const response = await axios.put(
         "https://sep490-backend-production.up.railway.app/api/v1/attendance",
         requestBody,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-  
+
       if (response.status === 200) {
         message.success("Attendance saved successfully");
       } else {
@@ -114,19 +116,26 @@ const CatechistAttendanceScreen: React.FC = () => {
       console.error("Error saving attendance:", error);
       message.error("Failed to save attendance");
     }
-  };  
+  };
 
   const columns: ColumnsType<AttendanceRecord> = [
     { title: "STT", dataIndex: ["studentClass", "id"], key: "id" },
-    { title: "Tên thiếu nhi", dataIndex: ["studentClass", "name"], key: "name" },
+    {
+      title: "Tên thiếu nhi",
+      dataIndex: ["studentClass", "name"],
+      key: "name",
+    },
     {
       title: "Trạng thái điểm danh",
       key: "attendance",
+      className: "bg-gray-100 font-semibold",
       render: (_, record) => (
         <div className="flex items-center">
           <Checkbox
             checked={record.isAbsent === "PRESENT"}
-            onChange={(e) => handleAttendanceChange(record.attendanceId, !e.target.checked)}
+            onChange={(e) =>
+              handleAttendanceChange(record.attendanceId, !e.target.checked)
+            }
             disabled={record.isAbsentWithPermission === "TRUE"}
           />
           {record.isAbsentWithPermission === "TRUE" && (
@@ -135,38 +144,47 @@ const CatechistAttendanceScreen: React.FC = () => {
         </div>
       ),
     },
-  ];  
+  ];
 
   if (!isLoggedIn || role !== "CATECHIST") {
     return <ForbiddenScreen />;
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-gradient-to-br from-blue-100 to-indigo-100 min-h-screen">
       <Button
         icon={<ArrowLeftOutlined />}
         onClick={handleBack}
-        className="mb-4"
+        className="mb-4 bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
       >
         Quay lại lịch dạy
       </Button>
-      <Title level={2} className="mb-6 text-center text-gray-800">
+      <Title
+        level={2}
+        className="mb-6 text-center text-gray-800 font-bold text-3xl"
+      >
         Điểm Danh Thiếu Nhi - {attendanceData?.slotName}
       </Title>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <Table
-          columns={columns}
-          dataSource={attendanceData?.attendanceRecords}
-          loading={loading}
-          className="border border-gray-200 rounded-lg mb-6"
-          pagination={false}
-          rowKey="attendanceId"
-        />
+      <div className="bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={attendanceData?.attendanceRecords}
+            loading={loading}
+            className="border border-gray-200 rounded-lg mb-6"
+            pagination={false}
+            rowKey="attendanceId"
+          />
+        )}
         <div className="flex justify-end">
           <Button
             icon={<SaveOutlined />}
             onClick={handleSaveAttendance}
-            className="bg-green-500 text-white hover:bg-green-600"
+            className="bg-green-500 text-white hover:bg-green-600 font-bold py-2 px-4 rounded-full transition-colors duration-300"
           >
             Lưu điểm danh
           </Button>

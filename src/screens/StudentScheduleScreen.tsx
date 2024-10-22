@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select } from "antd";
+import { Card, Typography, Spin, Select, message } from "antd";
 import styled from "styled-components";
 
 const { Title, Text } = Typography;
@@ -51,15 +51,26 @@ interface ScheduleData {
 const CalendarGrid = styled.div`
   display: grid;
   grid-template-columns: auto repeat(6, 1fr) 2fr;
-  gap: 1px;
-  background-color: #f0f0f0;
+  gap: 2px;
+  background-color: #f0f2f5;
+  border-radius: 8px;
+  overflow: hidden;
 `;
 
 const CalendarCell = styled.div`
   background-color: white;
-  padding: 8px;
-  min-height: 100px;
-  border: 1px solid #f0f0f0;
+  padding: 12px;
+  min-height: 120px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.3s ease;
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+`;
+
+const SundayCell = styled(CalendarCell)`
+  grid-column: 8;
+  background-color: #f6f8fa;
 `;
 
 const TimeCell = styled(CalendarCell)`
@@ -67,16 +78,14 @@ const TimeCell = styled(CalendarCell)`
   display: flex;
   align-items: center;
   justify-content: center;
-`;
-
-const SundayCell = styled(CalendarCell)`
-  grid-column: 8;
-  background-color: #f9f9f9;
+  background-color: #e6f7ff;
 `;
 
 const DayCell = styled(CalendarCell)`
   font-weight: bold;
   text-align: center;
+  background-color: #1890ff;
+  color: white;
 `;
 
 const StudentScheduleScreen: React.FC = () => {
@@ -85,36 +94,62 @@ const StudentScheduleScreen: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
 
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      try {
-        const response = await axios.get(
-          "https://sep490-backend-production.up.railway.app/api/v1/schedule/student/76"
-        );
-        setScheduleData(response.data.data);
-        setSelectedYear(response.data.data.academicYear);
-        const currentDate = new Date();
-        const currentWeek = response.data.data.schedule.find((week: WeekSchedule) => {
+  const fetchSchedule = useCallback(async () => {
+    try {
+      const userString = localStorage.getItem("userLogin");
+      const user = userString ? JSON.parse(userString) : null;
+      const userId = user?.id;
+      if (!userId) {
+        console.error("User ID not found");
+        setLoading(false);
+        return;
+      }
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${userId}`
+      );
+      setScheduleData(response.data.data);
+      setSelectedYear(response.data.data.academicYear);
+      const currentDate = new Date();
+      const currentWeek = response.data.data.schedule.find(
+        (week: WeekSchedule) => {
           const startDate = new Date(week.startDate);
           const endDate = new Date(week.endDate);
           return currentDate >= startDate && currentDate <= endDate;
-        });
-        setSelectedWeek(currentWeek ? currentWeek.weekNumber : response.data.data.schedule[0].weekNumber);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching schedule:", error);
-        setLoading(false);
-      }
-    };
-  
+        }
+      );
+      setSelectedWeek(
+        currentWeek
+          ? currentWeek.weekNumber
+          : response.data.data.schedule[0].weekNumber
+      );
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching schedule:", error);
+      message.error("Failed to fetch schedule");
+      setLoading(false);
+    }
+  }, []); 
+
+  useEffect(() => {
     fetchSchedule();
-  }, []);  
+  }, [fetchSchedule]);
+
+  const createTimetable = (slots: Slot[]): { [key: string]: { [key: string]: Slot | null } } => {
+    const timetable: { [key: string]: { [key: string]: Slot | null } } = {};
+    slots.forEach((slot) => {
+      if (!timetable[slot.dayOfWeek]) {
+        timetable[slot.dayOfWeek] = {};
+      }
+      timetable[slot.dayOfWeek][slot.time] = slot;
+    });
+    return timetable;
+  };
 
   const currentWeek = scheduleData?.schedule.find(
     (week) => week.weekNumber === selectedWeek
   );
 
-  const renderCalendar = (classItem: Class) => {
+  const renderCalendar = (timetable: { [key: string]: { [key: string]: Slot | null } }, classItem: Class) => {
     const days = [
       "Thứ Hai",
       "Thứ Ba",
@@ -124,8 +159,10 @@ const StudentScheduleScreen: React.FC = () => {
       "Thứ Bảy",
       "Chủ Nhật",
     ];
-    const times = Array.from(new Set(classItem.slots.map(slot => slot.time))).sort();
-  
+    const times = Array.from(
+      new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
+    ).sort();
+
     return (
       <CalendarGrid>
         <CalendarCell />
@@ -137,21 +174,21 @@ const StudentScheduleScreen: React.FC = () => {
             <TimeCell>{time}</TimeCell>
             {days.map((day, index) => {
               const CellComponent = index === 6 ? SundayCell : CalendarCell;
-              const slot = classItem.slots.find(
-                (s) => s.dayOfWeek === day && s.time === time
-              );
+              const slot = timetable[day] && timetable[day][time];
               return (
                 <CellComponent key={`${day}-${time}`}>
                   {slot && (
-                    <div className="flex flex-col">
-                      <Text>Phòng: {classItem.roomNo}</Text>
-                      <strong>{slot.name}</strong>
-                      <Text>{slot.description}</Text>
+                    <div className="flex flex-col h-full">
+                      <Text className="text-gray-500 mb-1">Phòng: {classItem.roomNo}</Text>
+                      <strong className="text-blue-600 mb-1">{slot.name}</strong>
+                      <div className="mt-auto">
+                        <Text className="text-green-600">Chương: {slot.session.name}</Text>
+                      </div>
                     </div>
                   )}
                   {index === 6 && (
-                    <div className="mt-2">
-                      <Text strong>{`${classItem.className} - ${classItem.grade}`}</Text>
+                    <div className="mt-2 bg-gray-100 p-2 rounded">
+                      <Text strong className="text-indigo-600">{`${classItem.className} - ${classItem.grade}`}</Text>
                     </div>
                   )}
                 </CellComponent>
@@ -173,14 +210,15 @@ const StudentScheduleScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
-      <Title level={2}>Lịch Học</Title>
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <Title level={2} className="mb-6">Lịch Học</Title>
 
-      <div className="flex space-x-4 mb-4">
+      <div className="flex space-x-6 mb-6">
         <Select
-          style={{ width: 200 }}
+          style={{ width: 240 }}
           value={selectedYear}
           onChange={(value) => setSelectedYear(value)}
+          className="shadow-sm"
         >
           <Option value={scheduleData?.academicYear}>
             {scheduleData?.academicYear}
@@ -188,10 +226,11 @@ const StudentScheduleScreen: React.FC = () => {
         </Select>
 
         <Select
-          style={{ width: 200 }}
+          style={{ width: 240 }}
           value={selectedWeek}
           onChange={(value) => setSelectedWeek(value)}
           placeholder="Chọn tuần"
+          className="shadow-sm"
         >
           {scheduleData?.schedule.map((week) => (
             <Option key={week.weekNumber} value={week.weekNumber}>
@@ -201,23 +240,26 @@ const StudentScheduleScreen: React.FC = () => {
         </Select>
       </div>
 
-      <Text strong>Niên Khóa: {selectedYear}</Text>
-      <Text strong className="ml-4">
-        Tuần: {selectedWeek}
-      </Text>
+      <div className="mb-6">
+        <Text strong className="text-lg mr-6">Niên Khóa: {selectedYear}</Text>
+        <Text strong className="text-lg">Tuần: {selectedWeek}</Text>
+      </div>
 
       {currentWeek && (
         <div className="mt-4">
           <Text>
             Từ {currentWeek.startDate} đến {currentWeek.endDate}
           </Text>
-          {currentWeek.classes.map((classItem, index) => (
-            <Card key={index} className="mb-4 mt-4">
-              <Title level={4}>{`${classItem.className} - ${classItem.grade}`}</Title>
-              <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
-              {renderCalendar(classItem)}
-            </Card>
-          ))}
+          {currentWeek.classes.map((classItem, index) => {
+            const timetable = createTimetable(classItem.slots);
+            return (
+              <Card key={index} className="mb-4 mt-4">
+                <Title level={4}>{`${classItem.className} - ${classItem.grade}`}</Title>
+                <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
+                {renderCalendar(timetable, classItem)}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

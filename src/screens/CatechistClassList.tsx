@@ -156,32 +156,33 @@ const CatechistClassList: React.FC = () => {
 
   const columns = [
     {
-      title: "Tên lớp",
+      title: <span className="text-blue-600 font-semibold">Tên lớp</span>,
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "Khối",
+      title: <span className="text-blue-600 font-semibold">Khối</span>,
       dataIndex: "gradeName",
       key: "gradeName",
     },
     {
-      title: "Niên Khóa",
+      title: <span className="text-blue-600 font-semibold">Niên Khóa</span>,
       dataIndex: "academicYear",
       key: "academicYear",
     },
   ];
 
   return (
-    <div className="p-6">
-      <Title level={2} className="mb-6">
+    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen">
+      <Title level={2} className="mb-6 text-blue-600 text-center font-bold">
         Lớp của giáo lý viên
       </Title>
       <Select
-        style={{ width: 200, marginBottom: 16 }}
+        style={{ width: 200 }}
         placeholder="Chọn niên khóa"
         onChange={handleYearChange}
         value={selectedYear}
+        className="border border-blue-300 rounded-md shadow-sm"
       >
         {academicYears.map((year) => (
           <Select.Option key={year.id} value={year.id}>
@@ -194,6 +195,7 @@ const CatechistClassList: React.FC = () => {
         placeholder="Chọn khối"
         onChange={handleGradeChange}
         value={selectedGrade}
+        className="border border-blue-300 rounded-md shadow-sm"
       >
         {grades.map((grade) => (
           <Select.Option key={grade.id} value={grade.id}>
@@ -209,7 +211,10 @@ const CatechistClassList: React.FC = () => {
             rowKey="id"
             pagination={pagination}
             onChange={handleTableChange}
-            className="bg-white rounded-lg shadow"
+            className="bg-white rounded-lg shadow-md overflow-hidden"
+            rowClassName={() =>
+              "hover:bg-gray-50 transition-colors duration-200"
+            }
             onRow={(record) => ({
               onClick: () => handleRowClick(record),
               style: { cursor: "pointer" },

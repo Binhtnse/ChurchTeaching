@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Spin, Select } from 'antd';
-import axios from 'axios';
+import React, { useState, useEffect, useCallback } from "react";
+import { Table, Spin, Select } from "antd";
+import axios from "axios";
 
 const { Option } = Select;
 
@@ -44,9 +44,13 @@ interface ApiResponse {
 const TransactionHistoryScreen: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [academicYears, setAcademicYears] = useState<{ id: number; year: string }[]>([]);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string }[]
+  >([]);
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState<number | null>(null);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<
+    number | null
+  >(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
 
   useEffect(() => {
@@ -56,35 +60,37 @@ const TransactionHistoryScreen: React.FC = () => {
 
   const fetchAcademicYears = async () => {
     try {
-      const response = await axios.get('https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE');
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
       setAcademicYears(response.data);
     } catch (error) {
-      console.error('Error fetching academic years:', error);
+      console.error("Error fetching academic years:", error);
     }
   };
 
   const fetchGrades = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        'https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10',
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      if (response.data.status === 'success') {
+      if (response.data.status === "success") {
         setGrades(response.data.data);
       }
     } catch (error) {
-      console.error('Error fetching grades:', error);
+      console.error("Error fetching grades:", error);
     }
   };
 
   const fetchTransactions = useCallback(async () => {
     if (!selectedAcademicYear) return;
-    
+
     try {
       setLoading(true);
       const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
@@ -93,7 +99,7 @@ const TransactionHistoryScreen: React.FC = () => {
       );
       setTransactions(response.data.data);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
     } finally {
       setLoading(false);
     }
@@ -115,95 +121,108 @@ const TransactionHistoryScreen: React.FC = () => {
 
   const columns = [
     {
-      title: 'STT',
-      dataIndex: 'tuitionId',
-      key: 'tuitionId',
+      title: "STT",
+      dataIndex: "tuitionId",
+      key: "tuitionId",
     },
     {
-      title: 'Tên lớp',
-      dataIndex: 'className',
-      key: 'className',
+      title: "Tên lớp",
+      dataIndex: "className",
+      key: "className",
     },
     {
-      title: 'Tổng thanh toán',
-      dataIndex: 'amount',
-      key: 'amount',
+      title: "Tổng thanh toán",
+      dataIndex: "amount",
+      key: "amount",
       render: (amount: number) => `${amount.toFixed(2)} VNĐ`,
     },
     {
-      title: 'Đóng góp thêm',
-      dataIndex: 'donate',
-      key: 'donate',
-      render: (donate: number | null) => (donate ? `${donate.toFixed(2)} VNĐ` : '-'),
+      title: "Đóng góp thêm",
+      dataIndex: "donate",
+      key: "donate",
+      render: (donate: number | null) =>
+        donate ? `${donate.toFixed(2)} VNĐ` : "-",
     },
     {
-      title: 'Ngày thanh toán',
-      dataIndex: 'transactionDate',
-      key: 'transactionDate',
+      title: "Ngày thanh toán",
+      dataIndex: "transactionDate",
+      key: "transactionDate",
     },
     {
-      title: 'Niên khóa',
-      dataIndex: 'academicYear',
-      key: 'academicYear',
+      title: "Niên khóa",
+      dataIndex: "academicYear",
+      key: "academicYear",
     },
     {
-      title: 'Thiếu nhi',
-      dataIndex: 'student',
-      key: 'student',
-      render: (student: Transaction['student']) => student.fullNameStudent,
+      title: "Thiếu nhi",
+      dataIndex: "student",
+      key: "student",
+      render: (student: Transaction["student"]) => student.fullNameStudent,
     },
     {
-      title: 'Người thanh toán',
-      dataIndex: 'payer',
-      key: 'payer',
-      render: (payer: Transaction['payer']) => payer.fullNamePayer,
+      title: "Người thanh toán",
+      dataIndex: "payer",
+      key: "payer",
+      render: (payer: Transaction["payer"]) => payer.fullNamePayer,
     },
-  ];
+  ].map((column) => ({
+    ...column,
+    className: "px-4 py-2",
+    headerClassName: "bg-blue-500 text-white font-bold",
+  }));
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Lịch sử giao dịch</h1>
-      <div className="mb-4 flex space-x-4">
-        <Select
-          style={{ width: 200 }}
-          placeholder="Select Academic Year"
-          onChange={handleAcademicYearChange}
-        >
-          {academicYears.map((year) => (
-            <Option key={year.id} value={year.id}>
-              {year.year}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          style={{ width: 200 }}
-          placeholder="Select Grade"
-          onChange={handleGradeChange}
-          allowClear
-        >
-          {grades.map((grade) => (
-            <Option key={grade.id} value={grade.id}>
-              {grade.name}
-            </Option>
-          ))}
-        </Select>
-      </div>
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Spin size="large" />
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4 text-blue-600 pb-2 border-b-2 border-blue-400">
+          Lịch sử giao dịch
+        </h1>
+        <div className="mb-4 flex space-x-4">
+          <Select
+            style={{ width: 200 }}
+            placeholder="Chọn niên khóa"
+            onChange={handleAcademicYearChange}
+            className="border border-gray-300 rounded-md shadow-sm"
+          >
+            {academicYears.map((year) => (
+              <Option key={year.id} value={year.id}>
+                {year.year}
+              </Option>
+            ))}
+          </Select>
+          <Select
+            style={{ width: 200 }}
+            placeholder="Chọn khối"
+            onChange={handleGradeChange}
+            allowClear
+            className="border border-gray-300 rounded-md shadow-sm"
+          >
+            {grades.map((grade) => (
+              <Option key={grade.id} value={grade.id}>
+                {grade.name}
+              </Option>
+            ))}
+          </Select>
         </div>
-      ) : (
-        <Table
-          dataSource={transactions}
-          columns={columns}
-          rowKey="tuitionId"
-          className="shadow-md"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: false,
-          }}
-        />
-      )}
+        {loading ? (
+          <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-md">
+            <Spin size="large" tip="Đang tải dữ liệu..." />
+          </div>
+        ) : (
+          <Table
+            dataSource={transactions}
+            columns={columns}
+            rowKey="tuitionId"
+            className="shadow-lg bg-white rounded-lg overflow-hidden"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: false,
+              className: "bg-gray-50 p-4",
+            }}
+            rowClassName="hover:bg-gray-50 transition-colors duration-200"
+          />
+        )}
+      </div>
     </div>
   );
 };

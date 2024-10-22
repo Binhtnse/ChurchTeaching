@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback} from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import {
@@ -66,7 +66,7 @@ const CatechistClassGradeScreen: React.FC = () => {
     setLoading(true);
     try {
       const accessToken = localStorage.getItem("accessToken");
-      
+
       const [studentsResponse, gradesResponse] = await Promise.all([
         axios.get(
           `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`,
@@ -75,30 +75,38 @@ const CatechistClassGradeScreen: React.FC = () => {
         axios.get(
           `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=1&size=1000`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
-        )
+        ),
       ]);
-  
+
       const students = studentsResponse.data.data.students;
       const grades = gradesResponse.data.data;
-  
+
       console.log("Raw grades data:", grades);
-  
+
       const combinedStudents = students.map((student: Student) => {
         const scores = {};
         gradeTemplate?.exams.forEach((exam) => {
-          const grade = grades.find((g: Grade) => g.account === student.account && g.examName === exam.name);
-          (scores as Record<string, { examId: number; score: number | undefined }>)[exam.name] = {
+          const grade = grades.find(
+            (g: Grade) =>
+              g.account === student.account && g.examName === exam.name
+          );
+          (
+            scores as Record<
+              string,
+              { examId: number; score: number | undefined }
+            >
+          )[exam.name] = {
             examId: exam.id,
-            score: grade ? grade.score : undefined
+            score: grade ? grade.score : undefined,
           };
         });
         return { ...student, scores };
       });
-  
+
       console.log("Combined students with scores:", combinedStudents);
-  
+
       setStudents(combinedStudents);
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         current: 1,
         pageSize: combinedStudents.length,
@@ -110,7 +118,7 @@ const CatechistClassGradeScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [classId, gradeTemplate]);  
+  }, [classId, gradeTemplate]);
 
   const fetchGradeTemplate = useCallback(async () => {
     try {
@@ -125,7 +133,7 @@ const CatechistClassGradeScreen: React.FC = () => {
       console.error("Failed to fetch grade template:", error);
       message.error("Failed to fetch grade template");
     }
-  }, []);   
+  }, []);
 
   useEffect(() => {
     if (isLoggedIn && role === "CATECHIST" && classId) {
@@ -150,10 +158,12 @@ const CatechistClassGradeScreen: React.FC = () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-  
+
       const changedScores = students
-        .filter(student => 
-          Object.values(student.scores).some(score => score.score !== undefined)
+        .filter((student) =>
+          Object.values(student.scores).some(
+            (score) => score.score !== undefined
+          )
         )
         .map((student) => ({
           studentClassId: student.studentClassId,
@@ -164,21 +174,23 @@ const CatechistClassGradeScreen: React.FC = () => {
               score: score.score,
             })),
         }));
-  
-      console.log("Data to be sent for saveGrades:", { studentClassScores: changedScores });
-  
+
+      console.log("Data to be sent for saveGrades:", {
+        studentClassScores: changedScores,
+      });
+
       if (changedScores.length > 0) {
         await axios.put(
           "https://sep490-backend-production.up.railway.app/api/v1/student-grade",
           { studentClassScores: changedScores },
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-  
+
         message.success("Thay đổi thành công");
       } else {
         message.info("No changes to save");
       }
-  
+
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save grades:", error);
@@ -186,7 +198,7 @@ const CatechistClassGradeScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };   
+  };
 
   const handleScoreChange = useCallback(
     (
@@ -217,15 +229,13 @@ const CatechistClassGradeScreen: React.FC = () => {
 
   const checkAllCellsFilled = useCallback(() => {
     const allFilledAndNonZero = students.every((student) =>
-      gradeTemplate?.exams?.every(
-        (exam) => {
-          const score = student.scores[exam.name]?.score;
-          return score !== undefined && score !== null && score !== 0;
-        }
-      )
+      gradeTemplate?.exams?.every((exam) => {
+        const score = student.scores[exam.name]?.score;
+        return score !== undefined && score !== null && score !== 0;
+      })
     );
     setAllCellsFilled(allFilledAndNonZero);
-  }, [students, gradeTemplate]);  
+  }, [students, gradeTemplate]);
 
   useEffect(() => {
     checkAllCellsFilled();
@@ -302,7 +312,7 @@ const CatechistClassGradeScreen: React.FC = () => {
         ) : (
           scoreObj?.score ?? "-"
         ),
-    })) || []),    
+    })) || []),
     {
       title: "Tổng điểm",
       key: "totalScore",
@@ -321,19 +331,25 @@ const CatechistClassGradeScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
-      <Title level={2} className="mb-6">
+    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen">
+      <Title
+        level={2}
+        className="mb-6 text-indigo-700 pb-2 border-b-2 border-indigo-200"
+      >
         Danh sách điểm số
       </Title>
-      <Spin spinning={loading}>
+      <Spin spinning={loading} tip="Đang tải...">
         <Button
           onClick={isEditing ? saveGrades : toggleEditing}
-          style={{ marginBottom: 16 }}
+          className="mb-4 mr-4 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           {isEditing ? "Lưu thay đổi" : "Ghi nhận điểm"}
         </Button>
         {allCellsFilled && (
-          <Button onClick={handleFinalize} style={{ marginBottom: 16 }}>
+          <Button
+            onClick={handleFinalize}
+            className="mb-4 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
             Tổng kết
           </Button>
         )}
@@ -342,7 +358,7 @@ const CatechistClassGradeScreen: React.FC = () => {
           dataSource={students}
           rowKey="studentClassId"
           pagination={false}
-          className="bg-white shadow-md rounded-lg"
+          className="bg-white shadow-lg rounded-lg overflow-hidden"
         />
         <Pagination
           current={pagination.current}
@@ -351,8 +367,8 @@ const CatechistClassGradeScreen: React.FC = () => {
           onChange={handlePaginationChange}
           showSizeChanger
           showQuickJumper
-          showTotal={(total) => `Total ${total} items`}
-          className="mt-4 text-right"
+          showTotal={(total) => `Tổng ${total} mục`}
+          className="mt-6 text-right"
         />
       </Spin>
     </div>

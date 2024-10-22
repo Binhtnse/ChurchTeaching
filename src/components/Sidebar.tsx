@@ -47,6 +47,11 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "study-attendance", label: "Xem điểm danh" },
         ],
       },
+      {
+        key: "transaction-history-user",
+        label: "Lịch sử giao dịch",
+        icon: <AccountBookOutlined />,
+      },
     ],
     CATECHIST: [
       {
