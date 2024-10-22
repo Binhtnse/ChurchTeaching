@@ -78,7 +78,7 @@ const PolicyListScreen: React.FC = () => {
               : "bg-red-100 text-red-800"
           }`}
         >
-          {status}
+          {status === "ACTIVE" ? "Đang áp dụng" : "Chưa áp dụng"}
         </span>
       ),
     },

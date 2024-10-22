@@ -88,7 +88,7 @@ const AdminUserListScreen: React.FC = () => {
         setLoading(true);
         try {
           const accessToken = localStorage.getItem("accessToken");
-          const roleParam = roleFilter ? `&role=${roleFilter}` : '';
+          const roleParam = roleFilter ? `&role=${roleFilter}` : "";
           const response = await axios.get(
             `https://sep490-backend-production.up.railway.app/api/v1/user/list?page=${page}&size=${pageSize}${roleParam}&fullName=${searchTerm}`,
             {
@@ -293,20 +293,24 @@ const AdminUserListScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Danh sách tài khoản</h1>
-      <div className="flex justify-between items-center mb-4">
+    <div className="p-8 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">
+        Danh sách tài khoản
+      </h1>
+      <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow">
         <div className="flex space-x-4">
           <Input
             placeholder="Tìm kiếm theo tên"
-            prefix={<SearchOutlined />}
+            prefix={<SearchOutlined className="text-gray-400" />}
             onChange={(e) => handleSearch(e.target.value)}
-            onPressEnter={(e) => handleSearch((e.target as HTMLInputElement).value)}
-            style={{ width: 200 }}
+            onPressEnter={(e) =>
+              handleSearch((e.target as HTMLInputElement).value)
+            }
+            className="w-64"
           />
           <Dropdown overlay={roleFilterMenu}>
             <Button>
-              Lọc theo vai trò <DownOutlined />
+              Lọc theo vai trò <DownOutlined className="ml-2" />
             </Button>
           </Dropdown>
         </div>
@@ -322,8 +326,8 @@ const AdminUserListScreen: React.FC = () => {
             </Menu>
           }
         >
-          <Button>
-            Tùy chọn <DownOutlined />
+          <Button className="flex items-center">
+            Tùy chọn <DownOutlined className="ml-2" />
           </Button>
         </Dropdown>
       </div>
@@ -332,7 +336,7 @@ const AdminUserListScreen: React.FC = () => {
         dataSource={users}
         rowKey="id"
         loading={loading}
-        className="w-full"
+        className="w-full bg-white rounded-lg shadow"
         pagination={false}
       />
       <Pagination
@@ -342,11 +346,15 @@ const AdminUserListScreen: React.FC = () => {
         onChange={handlePaginationChange}
         showSizeChanger
         showQuickJumper
-        showTotal={(total) => `Total ${total} items`}
-        className="mt-4 text-right"
+        showTotal={(total) => `Tổng ${total} mục`}
+        className="mt-6 text-right"
       />
       <Modal
-        title="Tải template người dùng lên"
+        title={
+          <h2 className="text-2xl font-semibold">
+            Tải template người dùng lên
+          </h2>
+        }
         visible={isModalVisible}
         onOk={handleImportUsers}
         onCancel={() => setIsModalVisible(false)}
@@ -355,11 +363,13 @@ const AdminUserListScreen: React.FC = () => {
         width={1000}
         style={{ top: 20 }}
         bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
+        className="rounded-lg"
       >
         <Dragger
           name="file"
           multiple={false}
           showUploadList={false}
+          className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8"
           customRequest={({ file, onSuccess, onError }) => {
             if (file instanceof File && file.name.endsWith(".xlsx")) {
               handleUploadTemplate(file);
@@ -379,15 +389,15 @@ const AdminUserListScreen: React.FC = () => {
             }
           }}
         >
-          <p className="ant-upload-drag-icon">
+          <p className="ant-upload-drag-icon text-4xl text-blue-500">
             <InboxOutlined />
           </p>
-          <p className="ant-upload-text">
-            Click or drag file to this area to upload
+          <p className="ant-upload-text text-lg font-semibold mt-4">
+            Click hoặc kéo file vào đây để tải lên
           </p>
-          <p className="ant-upload-hint">
-            Support for a single upload. Strictly prohibited from uploading
-            company data or other banned files.
+          <p className="ant-upload-hint text-gray-500 mt-2">
+            Hỗ trợ tải lên một file duy nhất. Nghiêm cấm tải lên dữ liệu công ty
+            hoặc các file bị cấm khác.
           </p>
         </Dragger>
         {(validRecords.length > 0 || invalidRecords.length > 0) && (
