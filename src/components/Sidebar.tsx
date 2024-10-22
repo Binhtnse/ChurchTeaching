@@ -12,7 +12,8 @@ import {
   AccountBookOutlined,
   SafetyOutlined,
   UsergroupAddOutlined,
-  SnippetsOutlined
+  SnippetsOutlined,
+  CreditCardOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -50,6 +51,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         ],
       },
       {
+        key: "transaction-pay",
+        label: "Đóng học phí",
+        icon: <CreditCardOutlined />,
+      },
+      {
         key: "transaction-history-user",
         label: "Lịch sử giao dịch",
         icon: <AccountBookOutlined />,
@@ -81,6 +87,11 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "study-grades", label: "Xem điểm" },
           { key: "study-attendance", label: "Xem điểm danh" },
         ],
+      },
+      {
+        key: "transaction-pay",
+        label: "Đóng học phí",
+        icon: <CreditCardOutlined />,
       },
       {
         key: "transaction-history-user",
