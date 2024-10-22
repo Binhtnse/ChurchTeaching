@@ -16,6 +16,7 @@ import {
   Divider,
   List,
   Tag,
+  Space,
 } from "antd";
 import {
   PlusOutlined,
@@ -28,6 +29,7 @@ import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import CloudinaryUploadWidget from "../components/CloudinaryUploadWidget";
+import './AddSyllabusScreen.css';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -67,38 +69,49 @@ const SyllabusPreview: React.FC<{
   grades: Grade[];
 }> = ({ formValues, grades }) => {
   return (
-    <div>
-      <Title level={4}>{formValues.name}</Title>
-      <Text>Thời lượng: {formValues.duration}</Text>
-      <br />
-      <Text>Khối: {grades.find((g) => g.id === formValues.grade)?.name}</Text>
+    <div className="syllabus-preview">
+      <Title level={3}>{formValues.name}</Title>
+      <Space direction="vertical" size="small" className="mb-4">
+        <Text strong>
+          Thời lượng: <Text>{formValues.duration}</Text>
+        </Text>
+        <Text strong>
+          Khối:{" "}
+          <Text>{grades.find((g) => g.id === formValues.grade)?.name}</Text>
+        </Text>
+      </Space>
 
-      <Title level={5} className="mt-4">
+      <Title level={4} className="mt-6 mb-4">
         Chương
       </Title>
       <List
+        itemLayout="vertical"
         dataSource={formValues.sessions}
         renderItem={(session, index: number) => (
-          <List.Item>
-            <List.Item.Meta
-              title={`Chương ${index + 1}: ${session.name}`}
-              description={session.description}
-            />
-            <div>
-              <Text strong>Số buổi học: {session.slotCount}</Text>
+          <List.Item className="mb-6">
+            <Card
+              title={
+                <Text strong>{`Chương ${index + 1}: ${session.name}`}</Text>
+              }
+              extra={<Tag color="blue">{`${session.slotCount} buổi học`}</Tag>}
+            >
+              <Text>{session.description}</Text>
+              <Divider orientation="left">Buổi học</Divider>
               <List
                 dataSource={session.slots}
                 renderItem={(slot, slotIndex: number) => (
                   <List.Item>
-                    <List.Item.Meta
-                      title={`Buổi ${slotIndex + 1}: ${slot.name}`}
-                      description={slot.description}
-                    />
-                    <Tag color="blue">{slot.type}</Tag>
+                    <Space direction="vertical" size="small">
+                      <Text strong>{`Buổi ${slotIndex + 1}: ${
+                        slot.name
+                      }`}</Text>
+                      <Text>{slot.description}</Text>
+                      <Tag color="green">{slot.type}</Tag>
+                    </Space>
                   </List.Item>
                 )}
               />
-            </div>
+            </Card>
           </List.Item>
         )}
       />
@@ -125,7 +138,22 @@ const AddSyllabusScreen: React.FC = () => {
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string }[]
   >([]);
-  const [formValues, setFormValues] = useState({});
+  const [formValues, setFormValues] = useState<{
+    name: string;
+    duration: string;
+    grade: number;
+    sessions: Array<{
+      name: string;
+      description: string;
+      slotCount: number;
+      slots: Array<{ name: string; description: string; type: string }>;
+    }>;
+  }>({
+    name: '',
+    duration: '',
+    grade: 0,
+    sessions: []
+  });
   const [previewVisible, setPreviewVisible] = useState(false);
   const navigate = useNavigate();
 
@@ -493,7 +521,10 @@ const AddSyllabusScreen: React.FC = () => {
                                 [sessionIndex]: {
                                   slots: {
                                     [slotIndex]: {
-                                      materialLinks: [...currentLinks, uploadInfo.secure_url],
+                                      materialLinks: [
+                                        ...currentLinks,
+                                        uploadInfo.secure_url,
+                                      ],
                                     },
                                   },
                                 },
@@ -539,7 +570,7 @@ const AddSyllabusScreen: React.FC = () => {
       title: "Review",
       content: (
         <Card title="Xem trước giáo trình">
-          <SyllabusPreview formValues={form.getFieldsValue()} grades={grades} />
+          <SyllabusPreview formValues={formValues} grades={grades} />
         </Card>
       ),
     },
@@ -547,14 +578,24 @@ const AddSyllabusScreen: React.FC = () => {
 
   const next = () => {
     form.validateFields().then((values) => {
-      setFormValues((prevValues) => ({ ...prevValues, ...values }));
+      setFormValues(values);
       setCurrentStep(currentStep + 1);
     });
-  };
+  };  
 
   const prev = () => {
     setCurrentStep(currentStep - 1);
   };
+
+  useEffect(() => {
+    const currentValues = form.getFieldsValue();
+    setFormValues({
+      name: currentValues.name || '',
+      duration: currentValues.duration || '',
+      grade: currentValues.grade || 0,
+      sessions: currentValues.sessions || []
+    });
+  }, [form]);
 
   if (!isLoggedIn || role !== "ADMIN") {
     return <ForbiddenScreen />;

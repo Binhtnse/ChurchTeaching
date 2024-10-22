@@ -10,7 +10,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   AccountBookOutlined,
-  SafetyOutlined
+  SafetyOutlined,
+  UsergroupAddOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -119,7 +120,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       {
         key: "admin-student-list",
         label: "Quản lý danh sách thiếu nhi",
-        icon: <SolutionOutlined />,
+        icon: <UsergroupAddOutlined />,
       },
       {
         key: "transaction-history",
