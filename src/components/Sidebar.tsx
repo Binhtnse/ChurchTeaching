@@ -11,7 +11,8 @@ import {
   MenuUnfoldOutlined,
   AccountBookOutlined,
   SafetyOutlined,
-  UsergroupAddOutlined
+  UsergroupAddOutlined,
+  SnippetsOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -101,7 +102,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       {
         key: "enroll-list",
         label: "Danh sách đăng ký học",
-        icon: <TeamOutlined />,
+        icon: <SnippetsOutlined />,
       },
       {
         key: "class-list",
