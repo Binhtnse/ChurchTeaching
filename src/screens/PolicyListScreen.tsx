@@ -19,7 +19,7 @@ const PolicyListScreen: React.FC = () => {
   const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
-    setPageTitle("Church Teachings Policy", "#4154f1");
+    setPageTitle("Danh sách quy định", "#4154f1");
     fetchPolicies();
   }, [setPageTitle]);
 
@@ -46,7 +46,7 @@ const PolicyListScreen: React.FC = () => {
       key: 'id',
     },
     {
-      title: 'Số ngày nghỉ tối đa',
+      title: 'Số ngày nghỉ không phép tối đa',
       dataIndex: 'absenceLimit',
       key: 'absenceLimit',
     },
@@ -56,7 +56,7 @@ const PolicyListScreen: React.FC = () => {
       key: 'numberOfMember',
     },
     {
-      title: 'Absence With Permission Limit',
+      title: 'Số ngày nghỉ có phép tối đa',
       dataIndex: 'absenceWithPermissionLimit',
       key: 'absenceWithPermissionLimit',
       render: (value: number | null) => value ?? 'N/A',
@@ -70,7 +70,7 @@ const PolicyListScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <Title level={2} className="mb-6 text-blue-600">Church Teachings Policy</Title>
+      <Title level={2} className="mb-6 text-blue-600">Quy định giảng dạy giáo lý</Title>
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <Spin size="large" />

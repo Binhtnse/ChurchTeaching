@@ -9,7 +9,8 @@ import {
   SolutionOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  AccountBookOutlined
+  AccountBookOutlined,
+  SafetyOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -123,7 +124,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       {
         key: "policy",
         label: "Quản lý các quy định",
-        icon: <SolutionOutlined />,
+        icon: <SafetyOutlined />,
         children: [
           { key: "policy-list", label: "Xem tất cả quy định" },
           { key: "add-policy", label: "Thêm quy định" },

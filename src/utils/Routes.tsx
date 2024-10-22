@@ -23,6 +23,7 @@ import PolicyListScreen from "../screens/PolicyListScreen";
 import CatechistAttendanceScreen from "../screens/CatechistAttendanceScreen";
 import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
 import UserTransactionHistoryScreen from "../screens/UserTransactionHistoryScreen";
+import AddPolicyScreen from "../screens/AddPolicyScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -214,6 +215,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <PolicyListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-policy"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AddPolicyScreen />
               </ProtectedRoute>
             }
           />
