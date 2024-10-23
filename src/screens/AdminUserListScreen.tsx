@@ -11,12 +11,14 @@ import {
   Modal,
   Upload,
   Tabs,
+  Space,
 } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import { SearchOutlined, DownOutlined, InboxOutlined } from "@ant-design/icons";
 import usePageTitle from "../hooks/usePageTitle";
+import { useNavigate } from "react-router-dom";
 
 const { Dragger } = Upload;
 
@@ -66,6 +68,7 @@ const AdminUserListScreen: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [validRecords, setValidRecords] = useState<UserImportData[]>([]);
   const [invalidRecords, setInvalidRecords] = useState<UserImportData[]>([]);
+  const navigate = useNavigate();
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -226,6 +229,25 @@ const AdminUserListScreen: React.FC = () => {
     }
   };
 
+  const handleDelete = async (userId: number) => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.delete(
+        `https://sep490-backend-production.up.railway.app/api/v1/user?id=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      message.success("Xóa người dùng thành công");
+      fetchUsers(pagination.current, pagination.pageSize);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      message.error("Không thể xóa người dùng");
+    }
+  };
+
   const columns = [
     {
       title: "STT",
@@ -286,6 +308,17 @@ const AdminUserListScreen: React.FC = () => {
         return <Tag color={color}>{status}</Tag>;
       },
     },
+    {
+      title: "Thao tác",
+      key: "actions",
+      render: (_: unknown, record: User) => (
+        <Space>
+          <Button danger onClick={() => handleDelete(record.id)}>
+            Xóa
+          </Button>
+        </Space>
+      ),
+    },
   ];
 
   if (!isLoggedIn || role !== "ADMIN") {
@@ -338,6 +371,10 @@ const AdminUserListScreen: React.FC = () => {
         loading={loading}
         className="w-full bg-white rounded-lg shadow"
         pagination={false}
+        onRow={(record) => ({
+          onClick: () => navigate(`/account/${record.id}`),
+          style: { cursor: 'pointer' }
+        })}
       />
       <Pagination
         current={pagination.current}

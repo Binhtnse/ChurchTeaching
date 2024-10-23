@@ -75,8 +75,8 @@ const getMenuItems = (role: string): MenuItem[] => {
     ],
     PARENT: [
       {
-        key: "timetable",
-        label: "Thời khóa biểu",
+        key: "parent-schedule",
+        label: "Lịch học của con",
         icon: <CalendarOutlined />,
       },
       {

@@ -25,17 +25,21 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
         navigate("/login");
       } catch (error) {
         console.error("Logout failed:", error);
-        // You might want to show an error message to the user here
       }
+    }else if (e.key === "account") {
+      navigate("/account");
     }
   };
 
   const menu = (
     <Menu onClick={handleMenuClick}>
       {isLoggedIn ? (
-        <Menu.Item key="logout">Logout</Menu.Item>
+        <>
+        <Menu.Item key="account">Thông tin tài khoản</Menu.Item>
+        <Menu.Item key="logout">Đăng xuất</Menu.Item>
+      </>
       ) : (
-        <Menu.Item key="login">Login</Menu.Item>
+        <Menu.Item key="login">Đăng nhập</Menu.Item>
       )}
     </Menu>
   );
