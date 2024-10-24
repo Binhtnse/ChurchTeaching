@@ -51,7 +51,7 @@ const getMenuItems = (role: string): MenuItem[] => {
         ],
       },
       {
-        key: "transaction-pay",
+        key: "transaction-pay-children",
         label: "Đóng học phí",
         icon: <CreditCardOutlined />,
       },
@@ -89,7 +89,7 @@ const getMenuItems = (role: string): MenuItem[] => {
         ],
       },
       {
-        key: "transaction-pay",
+        key: "transaction-pay-parent",
         label: "Đóng học phí",
         icon: <CreditCardOutlined />,
       },

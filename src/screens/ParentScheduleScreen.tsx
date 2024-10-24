@@ -1,10 +1,26 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message } from "antd";
+import {
+  Button,
+  Modal,
+  Form,
+  Input,
+  Typography,
+  Card,
+  Select,
+  message,
+  Spin,
+} from "antd";
+import { EllipsisOutlined } from "@ant-design/icons";
 import styled from "styled-components";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+
+interface AbsenceStats {
+  authorizedAbsences: number;
+  unauthorizedAbsences: number;
+}
 
 interface Student {
   id: number;
@@ -70,7 +86,7 @@ const CalendarCell = styled.div`
   border: 1px solid #e8e8e8;
   transition: all 0.3s ease;
   &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 `;
 
@@ -101,6 +117,14 @@ const ParentScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [absenceStats] = useState<AbsenceStats>({
+    authorizedAbsences: 0,
+    unauthorizedAbsences: 0,
+  });
+  const [form] = Form.useForm();
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -143,7 +167,7 @@ const ParentScheduleScreen: React.FC = () => {
       );
       setScheduleData(response.data.data);
       setSelectedYear(response.data.data.academicYear);
-      
+
       const currentDate = new Date();
       const currentWeek = response.data.data.schedule.find(
         (week: WeekSchedule) => {
@@ -152,7 +176,11 @@ const ParentScheduleScreen: React.FC = () => {
           return currentDate >= startDate && currentDate <= endDate;
         }
       );
-      setSelectedWeek(currentWeek ? currentWeek.weekNumber : response.data.data.schedule[0].weekNumber);
+      setSelectedWeek(
+        currentWeek
+          ? currentWeek.weekNumber
+          : response.data.data.schedule[0].weekNumber
+      );
     } catch (error) {
       console.error("Error fetching schedule:", error);
       message.error("Không thể lấy lịch học");
@@ -166,7 +194,9 @@ const ParentScheduleScreen: React.FC = () => {
     fetchSchedule(studentId);
   };
 
-  const createTimetable = (slots: Slot[]): { [key: string]: { [key: string]: Slot | null } } => {
+  const createTimetable = (
+    slots: Slot[]
+  ): { [key: string]: { [key: string]: Slot | null } } => {
     const timetable: { [key: string]: { [key: string]: Slot | null } } = {};
     slots.forEach((slot) => {
       if (!timetable[slot.dayOfWeek]) {
@@ -177,8 +207,19 @@ const ParentScheduleScreen: React.FC = () => {
     return timetable;
   };
 
-  const renderCalendar = (timetable: { [key: string]: { [key: string]: Slot | null } }, classItem: Class) => {
-    const days = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
+  const renderCalendar = (
+    timetable: { [key: string]: { [key: string]: Slot | null } },
+    classItem: Class
+  ) => {
+    const days = [
+      "Thứ Hai",
+      "Thứ Ba",
+      "Thứ Tư",
+      "Thứ Năm",
+      "Thứ Sáu",
+      "Thứ Bảy",
+      "Chủ Nhật",
+    ];
     const times = Array.from(
       new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
     ).sort();
@@ -198,17 +239,32 @@ const ParentScheduleScreen: React.FC = () => {
               return (
                 <CellComponent key={`${day}-${time}`}>
                   {slot && (
-                    <div className="flex flex-col h-full">
-                      <Text className="text-gray-500 mb-1">Phòng: {classItem.roomNo}</Text>
-                      <strong className="text-blue-600 mb-1">{slot.name}</strong>
+                    <div className="flex flex-col h-full relative">
+                      <Text className="text-gray-500 mb-1">
+                        Phòng: {classItem.roomNo}
+                      </Text>
+                      <strong className="text-blue-600 mb-1">
+                        {slot.name}
+                      </strong>
                       <div className="mt-auto">
-                        <Text className="text-green-600">Chương: {slot.session.name}</Text>
+                        <Text className="text-green-600">
+                          Chương: {slot.session.name}
+                        </Text>
                       </div>
-                    </div>
-                  )}
-                  {index === 6 && (
-                    <div className="mt-2 bg-gray-100 p-2 rounded">
-                      <Text strong className="text-indigo-600">{`${classItem.className} - ${classItem.grade}`}</Text>
+                      <Button
+                        type="text"
+                        icon={<EllipsisOutlined />}
+                        size="small"
+                        className="absolute top-2 right-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSlot(slot);
+                          setSelectedClass(classItem);
+                          setIsModalVisible(true);
+                        }}
+                      >
+                        Xin nghỉ
+                      </Button>
                     </div>
                   )}
                 </CellComponent>
@@ -225,12 +281,93 @@ const ParentScheduleScreen: React.FC = () => {
   );
 
   if (loading) {
-    return <Spin size="large" className="flex justify-center items-center h-screen" />;
+    return (
+      <Spin
+        size="large"
+        className="flex justify-center items-center h-screen"
+      />
+    );
   }
 
+  const AbsenceRequestModal = () => {
+    const selectedStudentObj = students.find((s) => s.id === selectedStudent);
+    const userString = localStorage.getItem("userLogin");
+    const user = userString ? JSON.parse(userString) : null;
+
+    return (
+      <Modal
+        title="Đơn Xin Nghỉ Học"
+        open={isModalVisible}
+        onOk={() => form.submit()}
+        onCancel={() => setIsModalVisible(false)}
+        width={600}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={(values) => {
+            console.log(values);
+            message.success("Đã gửi đơn xin nghỉ");
+            setIsModalVisible(false);
+          }}
+        >
+          <div className="mb-4">
+            <Text strong>Học sinh: </Text>
+            <Text>{selectedStudentObj?.fullName}</Text>
+          </div>
+
+          <div className="mb-4">
+            <Text strong>Ngày nghỉ: </Text>
+            <Text>
+              {selectedSlot?.dayOfWeek} - {selectedSlot?.time}
+            </Text>
+          </div>
+
+          <div className="mb-4">
+            <Text strong>Lớp: </Text>
+            <Text>
+              {selectedClass?.className} - {selectedClass?.grade}
+            </Text>
+          </div>
+
+          <div className="mb-4">
+            <Text strong>Số ngày nghỉ có phép: </Text>
+            <Text>{absenceStats.authorizedAbsences}</Text>
+          </div>
+
+          <div className="mb-4">
+            <Text strong>Số ngày nghỉ không phép: </Text>
+            <Text>{absenceStats.unauthorizedAbsences}</Text>
+          </div>
+
+          <div className="mb-4">
+            <Text strong>Số điện thoại phụ huynh: </Text>
+            <Text>{user?.phone || "Chưa cập nhật"}</Text>
+          </div>
+
+          <div className="mb-4">
+            <Text strong>Email phụ huynh: </Text>
+            <Text>{user?.email || "Chưa cập nhật"}</Text>
+          </div>
+
+          <Form.Item
+            name="reason"
+            label="Lý do xin nghỉ"
+            rules={[
+              { required: true, message: "Vui lòng nhập lý do xin nghỉ" },
+            ]}
+          >
+            <Input.TextArea rows={4} />
+          </Form.Item>
+        </Form>
+      </Modal>
+    );
+  };
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <Title level={2} className="mb-6">Lịch Học Của Con</Title>
+      <Title level={2} className="mb-6">
+        Lịch Học Của Con
+      </Title>
 
       <div className="flex flex-col space-y-6 mb-6">
         <Select
@@ -277,8 +414,12 @@ const ParentScheduleScreen: React.FC = () => {
             </div>
 
             <div className="mb-6">
-              <Text strong className="text-lg mr-6">Niên Khóa: {selectedYear}</Text>
-              <Text strong className="text-lg">Tuần: {selectedWeek}</Text>
+              <Text strong className="text-lg mr-6">
+                Niên Khóa: {selectedYear}
+              </Text>
+              <Text strong className="text-lg">
+                Tuần: {selectedWeek}
+              </Text>
             </div>
           </>
         )}
@@ -286,9 +427,12 @@ const ParentScheduleScreen: React.FC = () => {
 
       {!selectedStudent && (
         <div className="text-center mt-8">
-          <Text className="text-gray-500">Vui lòng chọn học sinh để xem lịch học</Text>
+          <Text className="text-gray-500">
+            Vui lòng chọn học sinh để xem lịch học
+          </Text>
         </div>
       )}
+      <AbsenceRequestModal />
 
       {currentWeek && (
         <div className="mt-4">
@@ -299,7 +443,9 @@ const ParentScheduleScreen: React.FC = () => {
             const timetable = createTimetable(classItem.slots);
             return (
               <Card key={index} className="mb-4 mt-4">
-                <Title level={4}>{`${classItem.className} - ${classItem.grade}`}</Title>
+                <Title
+                  level={4}
+                >{`${classItem.className} - ${classItem.grade}`}</Title>
                 <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
                 {renderCalendar(timetable, classItem)}
               </Card>
