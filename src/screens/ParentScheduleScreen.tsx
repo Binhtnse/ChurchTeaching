@@ -255,7 +255,7 @@ const ParentScheduleScreen: React.FC = () => {
                         type="text"
                         icon={<EllipsisOutlined />}
                         size="small"
-                        className="absolute top-2 right-2"
+                        className="absolute top-0 right-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedSlot(slot);

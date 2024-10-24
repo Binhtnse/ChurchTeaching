@@ -25,6 +25,7 @@ import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
 import UserTransactionHistoryScreen from "../screens/UserTransactionHistoryScreen";
 import AddPolicyScreen from "../screens/AddPolicyScreen";
 import ParentScheduleScreen from "../screens/ParentScheduleScreen";
+import ParentTransactionScreen from "../screens/ParentTransactionScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -96,6 +97,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["PARENT"]}>
                 <ParentScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transaction-pay-parent"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentTransactionScreen />
               </ProtectedRoute>
             }
           />
