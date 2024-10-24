@@ -118,8 +118,13 @@ const ParentScheduleScreen: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [parentDetails, setParentDetails] = useState<{
+    email: string;
+    phoneNumber: string;
+  } | null>(null);
   const [absenceStats] = useState<AbsenceStats>({
     authorizedAbsences: 0,
     unauthorizedAbsences: 0,
@@ -189,6 +194,28 @@ const ParentScheduleScreen: React.FC = () => {
     }
   }, []);
 
+  const fetchParentDetails = async (parentId: number) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/user?id=${parentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const parentData = response.data.data;
+      setParentDetails({
+        email: parentData.email,
+        phoneNumber: parentData.phoneNumber,
+      });
+    } catch (error) {
+      console.error("Error fetching parent details:", error);
+      message.error("Không thể lấy thông tin liên hệ phụ huynh");
+    }
+  };
+
   const handleStudentChange = (studentId: number) => {
     setSelectedStudent(studentId);
     fetchSchedule(studentId);
@@ -205,6 +232,18 @@ const ParentScheduleScreen: React.FC = () => {
       timetable[slot.dayOfWeek][slot.time] = slot;
     });
     return timetable;
+  };
+
+  const showModal = (slot: Slot, classItem: Class) => {
+    setSelectedSlot(slot);
+    setSelectedClass(classItem);
+    setIsModalVisible(true);
+
+    const userString = localStorage.getItem("userLogin");
+    const user = userString ? JSON.parse(userString) : null;
+    if (user?.id) {
+      fetchParentDetails(user.id);
+    }
   };
 
   const renderCalendar = (
@@ -256,11 +295,9 @@ const ParentScheduleScreen: React.FC = () => {
                         icon={<EllipsisOutlined />}
                         size="small"
                         className="absolute top-0 right-0"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
-                          setSelectedSlot(slot);
-                          setSelectedClass(classItem);
-                          setIsModalVisible(true);
+                          showModal(slot, classItem);
                         }}
                       >
                         Xin nghỉ
@@ -289,75 +326,145 @@ const ParentScheduleScreen: React.FC = () => {
     );
   }
 
+  const handleSubmitLeaveRequest = async (values: { reason: string }) => {
+    setSubmitting(true);
+    try {
+      const userString = localStorage.getItem("userLogin");
+      const user = userString ? JSON.parse(userString) : null;
+      const parentId = user?.id;
+
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/class/student/${selectedStudent}`
+      );
+      const studentClassId = response.data.data;
+
+      const payload = {
+        parentId: parentId,
+        studentClassId: studentClassId,
+        timeTableId: selectedSlot?.timeTableId,
+        reason: values.reason,
+      };
+
+      await axios.post(
+        "https://sep490-backend-production.up.railway.app/api/v1/leave-requests",
+        payload
+      );
+
+      message.success("Đã gửi đơn xin nghỉ thành công");
+      setIsModalVisible(false);
+      form.resetFields();
+    } catch (error) {
+      console.error("Error submitting leave request:", error);
+      message.error("Không thể gửi đơn xin nghỉ");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const AbsenceRequestModal = () => {
     const selectedStudentObj = students.find((s) => s.id === selectedStudent);
-    const userString = localStorage.getItem("userLogin");
-    const user = userString ? JSON.parse(userString) : null;
-
     return (
       <Modal
-        title="Đơn Xin Nghỉ Học"
+        title={
+          <div className="text-xl font-bold text-blue-600 mb-4">
+            Đơn Xin Nghỉ Học
+          </div>
+        }
         open={isModalVisible}
         onOk={() => form.submit()}
         onCancel={() => setIsModalVisible(false)}
         width={600}
+        confirmLoading={submitting}
+        okText="Gửi đơn"
+        cancelText="Hủy"
+        className="custom-modal"
+        okButtonProps={{
+          className: "bg-blue-600 hover:bg-blue-700",
+          size: "large",
+        }}
+        cancelButtonProps={{ size: "large" }}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={(values) => {
-            console.log(values);
-            message.success("Đã gửi đơn xin nghỉ");
-            setIsModalVisible(false);
-          }}
-        >
-          <div className="mb-4">
-            <Text strong>Học sinh: </Text>
-            <Text>{selectedStudentObj?.fullName}</Text>
+        <Form form={form} layout="vertical" onFinish={handleSubmitLeaveRequest}>
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Text strong className="w-32">
+                    Học sinh:
+                  </Text>
+                  <Text className="text-blue-600">
+                    {selectedStudentObj?.fullName}
+                  </Text>
+                </div>
+                <div className="flex items-center">
+                  <Text strong className="w-32">
+                    Ngày nghỉ:
+                  </Text>
+                  <Text>
+                    {selectedSlot?.dayOfWeek} - {selectedSlot?.time}
+                  </Text>
+                </div>
+                <div className="flex items-center">
+                  <Text strong className="w-32">
+                    Lớp:
+                  </Text>
+                  <Text>
+                    {selectedClass?.className} - {selectedClass?.grade}
+                  </Text>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Text strong className="w-48">
+                    Số ngày nghỉ có phép:
+                  </Text>
+                  <Text className="text-green-600">
+                    {absenceStats.authorizedAbsences}
+                  </Text>
+                </div>
+                <div className="flex items-center">
+                  <Text strong className="w-48">
+                    Số ngày nghỉ không phép:
+                  </Text>
+                  <Text className="text-red-600">
+                    {absenceStats.unauthorizedAbsences}
+                  </Text>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="mb-4">
-            <Text strong>Ngày nghỉ: </Text>
-            <Text>
-              {selectedSlot?.dayOfWeek} - {selectedSlot?.time}
-            </Text>
-          </div>
-
-          <div className="mb-4">
-            <Text strong>Lớp: </Text>
-            <Text>
-              {selectedClass?.className} - {selectedClass?.grade}
-            </Text>
-          </div>
-
-          <div className="mb-4">
-            <Text strong>Số ngày nghỉ có phép: </Text>
-            <Text>{absenceStats.authorizedAbsences}</Text>
-          </div>
-
-          <div className="mb-4">
-            <Text strong>Số ngày nghỉ không phép: </Text>
-            <Text>{absenceStats.unauthorizedAbsences}</Text>
-          </div>
-
-          <div className="mb-4">
-            <Text strong>Số điện thoại phụ huynh: </Text>
-            <Text>{user?.phone || "Chưa cập nhật"}</Text>
-          </div>
-
-          <div className="mb-4">
-            <Text strong>Email phụ huynh: </Text>
-            <Text>{user?.email || "Chưa cập nhật"}</Text>
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <Text strong className="w-48">
+                  Số điện thoại phụ huynh:
+                </Text>
+                <Text>{parentDetails?.phoneNumber || "Đang tải..."}</Text>
+              </div>
+              <div className="flex items-center">
+                <Text strong className="w-48">
+                  Email phụ huynh:
+                </Text>
+                <Text>{parentDetails?.email || "Đang tải..."}</Text>
+              </div>
+            </div>
           </div>
 
           <Form.Item
             name="reason"
-            label="Lý do xin nghỉ"
+            label={
+              <span className="text-base font-medium">Lý do xin nghỉ</span>
+            }
             rules={[
               { required: true, message: "Vui lòng nhập lý do xin nghỉ" },
             ]}
           >
-            <Input.TextArea rows={4} />
+            <Input.TextArea
+              rows={4}
+              className="rounded-lg"
+              placeholder="Nhập lý do xin nghỉ..."
+            />
           </Form.Item>
         </Form>
       </Modal>
@@ -428,7 +535,7 @@ const ParentScheduleScreen: React.FC = () => {
       {!selectedStudent && (
         <div className="text-center mt-8">
           <Text className="text-gray-500">
-            Vui lòng chọn học sinh để xem lịch học
+            Vui lòng chọn thiếu nhi để xem lịch học
           </Text>
         </div>
       )}
