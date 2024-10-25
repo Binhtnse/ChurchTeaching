@@ -6,6 +6,7 @@ import { PlusOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import EditorComponent from "../components/EditorComponent";
+import { ColumnsType } from "antd/es/table/interface";
 
 const { Search } = Input;
 interface Post {
@@ -15,6 +16,10 @@ interface Post {
   content: string;
   customCSS: string;
   categoryId: number;
+  user: User; 
+}
+interface User {
+  fullName: string;
 }
 
 interface Category {
@@ -120,7 +125,7 @@ const AdminPostScreen: React.FC = () => {
     }
   };
 
-  const columns = [
+  const columns: ColumnsType<Post> = [
     {
       title: "Title",
       dataIndex: "title",
@@ -140,14 +145,14 @@ const AdminPostScreen: React.FC = () => {
     },
     {
       title: "Create By",
-      dataIndex: "fullName",
-      key: "fullName",
-      render: (_: any, record: { user: { fullName: any; }; }) => record.user.fullName,
+      dataIndex: "user",
+      key: "user",
+      render: (_: any, record: Post) => record.user.fullName,
     },
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: Post) => (
+      render: (_: string, record: Post) => (
         <Button
           type="primary"
           onClick={() => {
