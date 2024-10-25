@@ -105,6 +105,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         ],
       },
       {
+        key: "post",
+        label: "Quản lý Post",
+        icon: <BookOutlined />,
+      },
+      {
         key: "admin-student-list",
         label: "Quản lý danh sách thiếu nhi",
         icon: <SolutionOutlined />,
@@ -145,7 +150,7 @@ const Sidebar: React.FC<{ role: string }> = ({ role }) => {
   };
 
   const onClick: MenuProps["onClick"] = async (e) => {
-      navigate(`/${e.key}`);
+    navigate(`/${e.key}`);
   };
   const items = getMenuItems(role);
 

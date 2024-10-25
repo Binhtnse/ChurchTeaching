@@ -20,7 +20,7 @@ import CatechistScheduleScreen from "../screens/CatechistScheduleScreen";
 import CatechistClassList from "../screens/CatechistClassList";
 import StudentScheduleScreen from "../screens/StudentScheduleScreen";
 import PolicyListScreen from "../screens/PolicyListScreen";
-import CatechistAttendanceScreen from "../screens/CatechistAttendanceScreen";
+import AdminPostScreen from "../screens/AdminPostScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -104,14 +104,6 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/schedule/attendance/:slotId"
-            element={
-              <ProtectedRoute allowedRoles={["CATECHIST"]}>
-                <CatechistAttendanceScreen />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/catechist-grade/:classId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
@@ -124,6 +116,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <EnrollDetailScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/post"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminPostScreen />
               </ProtectedRoute>
             }
           />
