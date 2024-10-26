@@ -125,6 +125,19 @@ const AdminClassListScreen: React.FC = () => {
           `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}${statusParam}`
         );
         const { data } = response.data;
+        
+        // Handle empty data case
+        if (!data || data.length === 0) {
+          setAllData([]);
+          setDataSource([]);
+          setPagination((prevPagination) => ({
+            ...prevPagination,
+            total: 0,
+            current: 1,
+          }));
+          return;
+        }
+  
         const formattedData = data.map((item: DataType) => ({
           key: item.id,
           id: item.id,
@@ -134,6 +147,7 @@ const AdminClassListScreen: React.FC = () => {
           academicYear: item.academicYear,
           numberOfCatechist: item.numberOfCatechist,
         }));
+        
         setAllData(formattedData);
         setDataSource(formattedData);
         setPagination((prevPagination) => ({
@@ -144,12 +158,20 @@ const AdminClassListScreen: React.FC = () => {
         }));
       } catch (error) {
         console.error("Error fetching data:", error);
+        // Clear data on error
+        setAllData([]);
+        setDataSource([]);
+        setPagination((prevPagination) => ({
+          ...prevPagination,
+          total: 0,
+          current: 1,
+        }));
       } finally {
         setLoading(false);
       }
     },
     [isLoggedIn, role, selectedAcademicYear, selectedGrade, statusFilter]
-  );
+  );  
 
   useEffect(() => {
     if (selectedAcademicYear && isLoggedIn && role === "ADMIN") {
