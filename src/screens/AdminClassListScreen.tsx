@@ -265,13 +265,17 @@ const AdminClassListScreen: React.FC = () => {
         let icon = null;
 
         switch (status) {
-          case "APPROVE":
+          case "ACTIVE":
             color = "success";
             icon = <CheckCircleOutlined />;
             break;
           case "PENDING":
             color = "processing";
             icon = <ClockCircleOutlined />;
+            break;
+          case "INACTIVE":
+            color = "default";
+            icon = <CloseCircleOutlined />;
             break;
           case "REJECTED":
             color = "error";
@@ -375,9 +379,10 @@ const AdminClassListScreen: React.FC = () => {
           onChange={handleStatusFilter}
           allowClear
         >
-          <Option value="APPROVE">Đồng ý</Option>
+          <Option value="ACTIVE">Hoạt động</Option>
           <Option value="PENDING">Đang chờ</Option>
-          <Option value="REJECT">Từ chối</Option>
+          <Option value="INACTIVE">Không hoạt động</Option>
+          <Option value="REJECTED">Từ chối</Option>
         </Select>
       </div>
 
