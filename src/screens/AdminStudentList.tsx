@@ -16,18 +16,27 @@ interface StudentData {
 
 interface ApiResponse {
   status: string;
-  message: string | null;
+  message: string;
   timestamp: string;
-  pageResponse: {
-    currentPage: number;
-    totalPage: number;
-    pageSize: number;
-    nextPage: number | null;
-    previousPage: number | null;
-    totalElements: number | null;
+  data: {
+    content: Array<{
+      student: {
+        id: number;
+        fullName: string;
+        saintName: string;
+        dob: string;
+        address: string | null;
+        phoneNumber: string | null;
+      };
+      studyStatus: string;
+    }>;
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
   };
-  data: StudentData[];
 }
+
 
 const AdminStudentList: React.FC = () => {
   const [students, setStudents] = useState<StudentData[]>([]);
@@ -88,10 +97,22 @@ const AdminStudentList: React.FC = () => {
           },
         }
       );
-      setStudents(response.data.data);
+  
+      // Transform the data to match the expected structure
+      const transformedStudents = response.data.data.content.map(item => ({
+        id: item.student.id,
+        fullName: item.student.fullName,
+        holyName: item.student.saintName,
+        dateOfBirth: item.student.dob,
+        address: item.student.address || 'N/A',
+        phoneNumber: item.student.phoneNumber || 'N/A',
+        status: item.studyStatus
+      }));
+  
+      setStudents(transformedStudents);
       setPagination(prev => ({
         ...prev,
-        total: response.data.pageResponse.totalElements || 0,
+        total: response.data.data.totalElements,
         current: page,
         pageSize: pageSize,
       }));
@@ -101,7 +122,32 @@ const AdminStudentList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedYear, selectedGrade]);
+  }, [selectedYear, selectedGrade]);  
+
+  const handleAutoAssignStudents = async () => {
+    if (!selectedYear || !selectedGrade) {
+      message.warning("Vui lòng chọn niên khóa và khối");
+      return;
+    }
+  
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.post(
+        `https://sep490-backend-production.up.railway.app/api/student-grade-year/auto-assign-student-to-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      message.success("Xếp lớp thành công");
+      fetchStudents(pagination.current, pagination.pageSize);
+    } catch (error) {
+      console.log(error)
+      message.error("Xếp lớp thất bại");
+    }
+  };
 
   useEffect(() => {
     fetchAcademicYears();
@@ -112,7 +158,8 @@ const AdminStudentList: React.FC = () => {
     if (selectedYear && selectedGrade) {
       fetchStudents(pagination.current, pagination.pageSize);
     }
-  }, [fetchStudents, selectedYear, selectedGrade, pagination]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchStudents, selectedYear, selectedGrade]);
 
   const handleYearChange = (value: number) => {
     setSelectedYear(value);
@@ -190,6 +237,13 @@ const AdminStudentList: React.FC = () => {
             </Select.Option>
           ))}
         </Select>
+
+        <button
+    onClick={handleAutoAssignStudents}
+    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+  >
+    Xếp thiếu nhi vào lớp
+  </button>
       </div>
 
       <Spin spinning={loading}>

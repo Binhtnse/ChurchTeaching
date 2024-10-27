@@ -26,6 +26,7 @@ import UserTransactionHistoryScreen from "../screens/UserTransactionHistoryScree
 import AddPolicyScreen from "../screens/AddPolicyScreen";
 import ParentScheduleScreen from "../screens/ParentScheduleScreen";
 import ParentTransactionScreen from "../screens/ParentTransactionScreen";
+import AdminStudentList from "../screens/AdminStudentList";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -225,6 +226,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <TransactionHistoryScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin-student-list"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminStudentList />
               </ProtectedRoute>
             }
           />

@@ -24,6 +24,12 @@ interface Slot {
     description: string;
   };
   materials: Material[];
+  attendance: Attendance;
+}
+
+interface Attendance {
+  isAbsent: string;
+  isAbsentWithPermission: string;
 }
 
 interface Class {
@@ -64,7 +70,7 @@ const CalendarCell = styled.div`
   border: 1px solid #e8e8e8;
   transition: all 0.3s ease;
   &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 `;
 
@@ -128,13 +134,15 @@ const StudentScheduleScreen: React.FC = () => {
       message.error("Failed to fetch schedule");
       setLoading(false);
     }
-  }, []); 
+  }, []);
 
   useEffect(() => {
     fetchSchedule();
   }, [fetchSchedule]);
 
-  const createTimetable = (slots: Slot[]): { [key: string]: { [key: string]: Slot | null } } => {
+  const createTimetable = (
+    slots: Slot[]
+  ): { [key: string]: { [key: string]: Slot | null } } => {
     const timetable: { [key: string]: { [key: string]: Slot | null } } = {};
     slots.forEach((slot) => {
       if (!timetable[slot.dayOfWeek]) {
@@ -149,7 +157,10 @@ const StudentScheduleScreen: React.FC = () => {
     (week) => week.weekNumber === selectedWeek
   );
 
-  const renderCalendar = (timetable: { [key: string]: { [key: string]: Slot | null } }, classItem: Class) => {
+  const renderCalendar = (
+    timetable: { [key: string]: { [key: string]: Slot | null } },
+    classItem: Class
+  ) => {
     const days = [
       "Thứ Hai",
       "Thứ Ba",
@@ -179,16 +190,69 @@ const StudentScheduleScreen: React.FC = () => {
                 <CellComponent key={`${day}-${time}`}>
                   {slot && (
                     <div className="flex flex-col h-full">
-                      <Text className="text-gray-500 mb-1">Phòng: {classItem.roomNo}</Text>
-                      <strong className="text-blue-600 mb-1">{slot.name}</strong>
+                      <Text className="text-gray-500 mb-1">
+                        Phòng: {classItem.roomNo}
+                      </Text>
+                      <strong className="text-blue-600 mb-1">
+                        {slot.name}
+                      </strong>
                       <div className="mt-auto">
-                        <Text className="text-green-600">Chương: {slot.session.name}</Text>
+                        <Text className="text-green-600">
+                          Chương: {slot.session.name}
+                        </Text>
+                        {slot.materials && slot.materials.length > 0 && (
+                          <div className="mt-2">
+                            <Text className="text-purple-600 font-medium">
+                              Tài liệu:
+                            </Text>
+                            <ul className="list-disc pl-4">
+                              {slot.materials.map((material, index) => (
+                                <li key={index}>
+                                  <a
+                                    href={material.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 hover:text-blue-700 underline"
+                                  >
+                                    {material.name}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {slot.attendance &&
+                          slot.attendance.isAbsent !== "FUTURE" && (
+                            <div className="mt-2 pt-2 border-t border-gray-200">
+                              <Text
+                                className={`${
+                                  slot.attendance.isAbsent === "TRUE"
+                                    ? slot.attendance.isAbsentWithPermission ===
+                                      "TRUE"
+                                      ? "text-yellow-600"
+                                      : "text-red-600"
+                                    : "text-green-600"
+                                } font-medium`}
+                              >
+                                Trạng thái điểm danh:
+                                {slot.attendance.isAbsent === "TRUE"
+                                  ? slot.attendance.isAbsentWithPermission ===
+                                    "TRUE"
+                                    ? " Vắng có phép"
+                                    : " Vắng không phép"
+                                  : " Có mặt"}
+                              </Text>
+                            </div>
+                          )}
                       </div>
                     </div>
                   )}
                   {index === 6 && (
                     <div className="mt-2 bg-gray-100 p-2 rounded">
-                      <Text strong className="text-indigo-600">{`${classItem.className} - ${classItem.grade}`}</Text>
+                      <Text
+                        strong
+                        className="text-indigo-600"
+                      >{`${classItem.className} - ${classItem.grade}`}</Text>
                     </div>
                   )}
                 </CellComponent>
@@ -198,7 +262,7 @@ const StudentScheduleScreen: React.FC = () => {
         ))}
       </CalendarGrid>
     );
-  };  
+  };
 
   if (loading) {
     return (
@@ -211,7 +275,9 @@ const StudentScheduleScreen: React.FC = () => {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <Title level={2} className="mb-6">Lịch Học</Title>
+      <Title level={2} className="mb-6">
+        Lịch Học
+      </Title>
 
       <div className="flex space-x-6 mb-6">
         <Select
@@ -241,8 +307,12 @@ const StudentScheduleScreen: React.FC = () => {
       </div>
 
       <div className="mb-6">
-        <Text strong className="text-lg mr-6">Niên Khóa: {selectedYear}</Text>
-        <Text strong className="text-lg">Tuần: {selectedWeek}</Text>
+        <Text strong className="text-lg mr-6">
+          Niên Khóa: {selectedYear}
+        </Text>
+        <Text strong className="text-lg">
+          Tuần: {selectedWeek}
+        </Text>
       </div>
 
       {currentWeek && (
@@ -254,7 +324,9 @@ const StudentScheduleScreen: React.FC = () => {
             const timetable = createTimetable(classItem.slots);
             return (
               <Card key={index} className="mb-4 mt-4">
-                <Title level={4}>{`${classItem.className} - ${classItem.grade}`}</Title>
+                <Title
+                  level={4}
+                >{`${classItem.className} - ${classItem.grade}`}</Title>
                 <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
                 {renderCalendar(timetable, classItem)}
               </Card>

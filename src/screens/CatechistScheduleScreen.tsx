@@ -190,14 +190,33 @@ const CatechistScheduleScreen: React.FC = () => {
                   style={{ cursor: slot ? "pointer" : "default" }}
                 >
                   {slot && (
-                    <div className="flex flex-col h-full">
-                    <Text className="text-gray-500 mb-1">Phòng: {classItem.roomNo}</Text>
-                    <strong className="text-blue-600 mb-1">{slot.name}</strong>
-                    <div className="mt-auto">
-                      <Text className="text-green-600">Chương: {slot.session.name}</Text>
-                    </div>
-                  </div>
-                  )}
+  <div className="flex flex-col h-full">
+    <Text className="text-gray-500 mb-1">Phòng: {classItem.roomNo}</Text>
+    <strong className="text-blue-600 mb-1">{slot.name}</strong>
+    <div className="mt-auto">
+      <Text className="text-green-600">Chương: {slot.session.name}</Text>
+      {slot.materials && slot.materials.length > 0 && (
+        <div className="mt-2">
+          <Text className="text-purple-600 font-medium">Tài liệu:</Text>
+          <ul className="list-disc pl-4">
+            {slot.materials.map((material, index) => (
+              <li key={index}>
+                <a 
+                  href={material.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-700 underline"
+                >
+                  {material.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  </div>
+)}
                   {index === 6 && (
                     <div className="mt-2 bg-gray-100 p-2 rounded">
                     <Text strong className="text-indigo-600">{`${classItem.className} - ${classItem.grade}`}</Text>

@@ -47,6 +47,7 @@ interface UserImportData {
   firstCommunionChurch: string;
   confirmationDate: string;
   confirmationBishop: string;
+  gradeName: string;
   error?: string;
 }
 
@@ -209,7 +210,10 @@ const AdminUserListScreen: React.FC = () => {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/user/import",
-        validRecords,
+        validRecords.map(record => ({
+          ...record,
+          gradeName: record.gradeName || "" // Ensure gradeName is included
+        })),
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

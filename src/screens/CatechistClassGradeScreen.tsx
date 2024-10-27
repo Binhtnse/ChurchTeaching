@@ -9,6 +9,7 @@ import {
   Button,
   Input,
   Pagination,
+  Select,
 } from "antd";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -46,6 +47,16 @@ interface Grade {
   score: number;
 }
 
+interface AcademicYear {
+  id: number;
+  year: string;
+}
+
+interface Grades {
+  id: number;
+  name: string;
+}
+
 const CatechistClassGradeScreen: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
   const { isLoggedIn, role } = useAuthState();
@@ -53,6 +64,10 @@ const CatechistClassGradeScreen: React.FC = () => {
   const [gradeTemplate, setGradeTemplate] = useState<GradeTemplate | null>(
     null
   );
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+const [grades, setGrades] = useState<Grades[]>([]);
+const [selectedYear, setSelectedYear] = useState<number | null>(null);
+const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [allCellsFilled, setAllCellsFilled] = useState(false);
@@ -62,7 +77,47 @@ const CatechistClassGradeScreen: React.FC = () => {
     total: 0,
   });
 
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+      setAcademicYears(response.data);
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+      message.error("Failed to fetch academic years");
+    }
+  };
+  
+  const fetchGrades = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.status === "success") {
+        setGrades(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+      message.error("An error occurred while fetching grades");
+    }
+  };  
+
+  useEffect(() => {
+    if (isLoggedIn && role === "CATECHIST") {
+      fetchAcademicYears();
+      fetchGrades();
+    }
+  }, [isLoggedIn, role]);
+
   const fetchClassGrades = useCallback(async () => {
+    if (!selectedYear || !selectedGrade) return;
     setLoading(true);
     try {
       const accessToken = localStorage.getItem("accessToken");
@@ -73,7 +128,7 @@ const CatechistClassGradeScreen: React.FC = () => {
           { headers: { Authorization: `Bearer ${accessToken}` } }
         ),
         axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=1&size=1000`,
+          `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=1&size=1000&academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         ),
       ]);
@@ -118,7 +173,7 @@ const CatechistClassGradeScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [classId, gradeTemplate]);
+  }, [classId, gradeTemplate, selectedYear, selectedGrade]);
 
   const fetchGradeTemplate = useCallback(async () => {
     try {
@@ -353,6 +408,35 @@ const CatechistClassGradeScreen: React.FC = () => {
             Tổng kết
           </Button>
         )}
+        <div className="mb-6 flex gap-4">
+  <Select
+    style={{ width: 200 }}
+    placeholder="Chọn niên khóa"
+    onChange={(value) => setSelectedYear(value)}
+    value={selectedYear}
+    className="border border-blue-300 rounded-md shadow-sm"
+  >
+    {academicYears.map((year) => (
+      <Select.Option key={year.id} value={year.id}>
+        {year.year}
+      </Select.Option>
+    ))}
+  </Select>
+
+  <Select
+    style={{ width: 200 }}
+    placeholder="Chọn khối"
+    onChange={(value) => setSelectedGrade(value)}
+    value={selectedGrade}
+    className="border border-blue-300 rounded-md shadow-sm"
+  >
+    {grades.map((grade) => (
+      <Select.Option key={grade.id} value={grade.id}>
+        {grade.name}
+      </Select.Option>
+    ))}
+  </Select>
+</div>
         <Table
           columns={classGradeColumns}
           dataSource={students}
