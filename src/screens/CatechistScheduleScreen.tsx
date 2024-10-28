@@ -72,7 +72,7 @@ const CalendarCell = styled.div`
   border: 1px solid #e8e8e8;
   transition: all 0.3s ease;
   &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 `;
 
@@ -157,6 +157,10 @@ const CatechistScheduleScreen: React.FC = () => {
     (week) => week.weekNumber === selectedWeek
   );
 
+  const handleMaterialClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // This prevents the click from bubbling up to the cell
+  };
+
   const renderCalendar = (timetable: Timetable, classItem: Class) => {
     const days = [
       "Thứ Hai",
@@ -190,37 +194,49 @@ const CatechistScheduleScreen: React.FC = () => {
                   style={{ cursor: slot ? "pointer" : "default" }}
                 >
                   {slot && (
-  <div className="flex flex-col h-full">
-    <Text className="text-gray-500 mb-1">Phòng: {classItem.roomNo}</Text>
-    <strong className="text-blue-600 mb-1">{slot.name}</strong>
-    <div className="mt-auto">
-      <Text className="text-green-600">Chương: {slot.session.name}</Text>
-      {slot.materials && slot.materials.length > 0 && (
-        <div className="mt-2">
-          <Text className="text-purple-600 font-medium">Tài liệu:</Text>
-          <ul className="list-disc pl-4">
-            {slot.materials.map((material, index) => (
-              <li key={index}>
-                <a 
-                  href={material.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-700 underline"
-                >
-                  {material.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  </div>
-)}
+                    <div className="flex flex-col h-full">
+                      <Text className="text-gray-500 mb-1">
+                        Phòng: {classItem.roomNo}
+                      </Text>
+                      <strong className="text-blue-600 mb-1">
+                        {slot.name}
+                      </strong>
+                      <div className="mt-auto">
+                        <Text className="text-green-600">
+                          Chương: {slot.session.name}
+                        </Text>
+                        {slot.materials && slot.materials.length > 0 && (
+                          <div className="mt-2">
+                            <Text className="text-purple-600 font-medium">
+                              Tài liệu:
+                            </Text>
+                            <ul className="list-disc pl-4">
+                              {slot.materials.map((material, index) => (
+                                <li key={index}>
+                                  <a
+                                    href={material.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 hover:text-blue-700 underline"
+                                    onClick={handleMaterialClick} // Add this line
+                                  >
+                                    {material.name}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {index === 6 && (
                     <div className="mt-2 bg-gray-100 p-2 rounded">
-                    <Text strong className="text-indigo-600">{`${classItem.className} - ${classItem.grade}`}</Text>
-                  </div>
+                      <Text
+                        strong
+                        className="text-indigo-600"
+                      >{`${classItem.className} - ${classItem.grade}`}</Text>
+                    </div>
                   )}
                 </CellComponent>
               );
@@ -248,7 +264,9 @@ const CatechistScheduleScreen: React.FC = () => {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <Title level={2} className="mb-6">Lịch Giảng Dạy</Title>
+      <Title level={2} className="mb-6">
+        Lịch Giảng Dạy
+      </Title>
 
       <div className="flex space-x-6 mb-6">
         <Select
@@ -278,9 +296,13 @@ const CatechistScheduleScreen: React.FC = () => {
       </div>
 
       <div className="mb-6">
-      <Text strong className="text-lg mr-6">Niên Khóa: {selectedYear}</Text>
-      <Text strong className="text-lg">Tuần: {selectedWeek}</Text>
-    </div>
+        <Text strong className="text-lg mr-6">
+          Niên Khóa: {selectedYear}
+        </Text>
+        <Text strong className="text-lg">
+          Tuần: {selectedWeek}
+        </Text>
+      </div>
 
       {currentWeek && (
         <div className="mt-4">

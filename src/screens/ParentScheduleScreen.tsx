@@ -46,6 +46,12 @@ interface Slot {
     description: string;
   };
   materials: Material[];
+  attendance: Attendance;
+}
+
+interface Attendance {
+  isAbsent: string;
+  isAbsentWithPermission: string;
 }
 
 interface Class {
@@ -278,7 +284,7 @@ const ParentScheduleScreen: React.FC = () => {
               return (
                 <CellComponent key={`${day}-${time}`}>
                   {slot && (
-                    <div className="flex flex-col h-full relative">
+                    <div className="flex flex-col h-full">
                       <Text className="text-gray-500 mb-1">
                         Phòng: {classItem.roomNo}
                       </Text>
@@ -289,19 +295,65 @@ const ParentScheduleScreen: React.FC = () => {
                         <Text className="text-green-600">
                           Chương: {slot.session.name}
                         </Text>
+                        {slot.materials && slot.materials.length > 0 && (
+                          <div className="mt-2">
+                            <Text className="text-purple-600 font-medium">
+                              Tài liệu:
+                            </Text>
+                            <ul className="list-disc pl-4">
+                              {slot.materials.map((material, index) => (
+                                <li key={index}>
+                                  <a
+                                    href={material.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 hover:text-blue-700 underline"
+                                  >
+                                    {material.name}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {slot.attendance &&
+                          slot.attendance.isAbsent !== "FUTURE" && (
+                            <div className="mt-2 pt-2 border-t border-gray-200">
+                              <Text
+                                className={`${
+                                  slot.attendance.isAbsent === "TRUE"
+                                    ? slot.attendance.isAbsentWithPermission ===
+                                      "TRUE"
+                                      ? "text-yellow-600"
+                                      : "text-red-600"
+                                    : "text-green-600"
+                                } font-medium`}
+                              >
+                                Trạng thái điểm danh:
+                                {slot.attendance.isAbsent === "TRUE"
+                                  ? slot.attendance.isAbsentWithPermission ===
+                                    "TRUE"
+                                    ? " Vắng có phép"
+                                    : " Vắng không phép"
+                                  : " Có mặt"}
+                              </Text>
+                            </div>
+                          )}
+                        <div className="mt-2">
+                          <Button
+                            type="primary"
+                            icon={<EllipsisOutlined />}
+                            size="middle"
+                            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              showModal(slot, classItem);
+                            }}
+                          >
+                            Xin nghỉ
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        type="text"
-                        icon={<EllipsisOutlined />}
-                        size="small"
-                        className="absolute top-0 right-0"
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          showModal(slot, classItem);
-                        }}
-                      >
-                        Xin nghỉ
-                      </Button>
                     </div>
                   )}
                 </CellComponent>
