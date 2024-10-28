@@ -84,8 +84,8 @@ const getMenuItems = (role: string): MenuItem[] => {
         label: "Tiến độ học tập",
         icon: <HistoryOutlined />,
         children: [
-          { key: "study-grades", label: "Xem điểm" },
-          { key: "study-attendance", label: "Xem điểm danh" },
+          { key: "study-grades-parent", label: "Xem điểm" },
+          { key: "study-attendance-parent", label: "Xem điểm danh" },
         ],
       },
       {

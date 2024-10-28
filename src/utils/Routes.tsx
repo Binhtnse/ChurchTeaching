@@ -27,6 +27,7 @@ import AddPolicyScreen from "../screens/AddPolicyScreen";
 import ParentScheduleScreen from "../screens/ParentScheduleScreen";
 import ParentTransactionScreen from "../screens/ParentTransactionScreen";
 import AdminStudentList from "../screens/AdminStudentList";
+import ParentGradesProgressScreen from "../screens/ParentGradesProgressScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -106,6 +107,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["PARENT"]}>
                 <ParentTransactionScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/study-grades-parent"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentGradesProgressScreen />
               </ProtectedRoute>
             }
           />
