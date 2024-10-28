@@ -5,12 +5,6 @@ import axios from "axios";
 const { Title } = Typography;
 const { Option } = Select;
 
-interface Student {
-  id: number;
-  fullName: string;
-  account: string;
-}
-
 interface Grade {
   id: number;
   studentName: string;
@@ -39,44 +33,26 @@ interface GradeTemplate {
   }[];
 }
 
-const ParentGradesProgressScreen: React.FC = () => {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
+const StudentGradesProgressScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
-  const [gradeTemplate, setGradeTemplate] = useState<GradeTemplate | null>(
-    null
-  );
+  const [gradeTemplate, setGradeTemplate] = useState<GradeTemplate | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState<
-    number | null
-  >(null);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<number | null>(
+    null
+  );
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [gradeData, setGradeData] = useState<Grade[]>([]);
 
-  const fetchStudents = useCallback(async () => {
-    try {
-      const userString = localStorage.getItem("userLogin");
-      const user = userString ? JSON.parse(userString) : null;
-      const parentId = user?.id;
-      const token = localStorage.getItem("accessToken");
-
-      const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setStudents(response.data.data);
-    } catch (error) {
-      console.log(error);
-      message.error("Không thể lấy danh sách học sinh");
-    }
-  }, []);
+  const getCurrentStudentId = () => {
+    const userString = localStorage.getItem("userLogin");
+    const user = userString ? JSON.parse(userString) : null;
+    return user?.id;
+  };
 
   const fetchAcademicYears = async () => {
     try {
@@ -136,18 +112,14 @@ const ParentGradesProgressScreen: React.FC = () => {
   }, []);
 
   const fetchGradeData = useCallback(async () => {
-    if (
-      !selectedStudent ||
-      !selectedClass ||
-      !selectedAcademicYear ||
-      !selectedGrade
-    )
+    const studentId = getCurrentStudentId();
+    if (!studentId || !selectedClass || !selectedAcademicYear || !selectedGrade)
       return;
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/student-grade/student/${selectedStudent}/class/${selectedClass}?page=1&size=10&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`,
+        `https://sep490-backend-production.up.railway.app/api/v1/student-grade/student/${studentId}/class/${selectedClass}?page=1&size=10&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -164,13 +136,12 @@ const ParentGradesProgressScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedStudent, selectedClass, selectedAcademicYear, selectedGrade]);
+  }, [selectedClass, selectedAcademicYear, selectedGrade]);
 
   useEffect(() => {
-    fetchStudents();
     fetchAcademicYears();
     fetchGrades();
-  }, [fetchStudents]);
+  }, []);
 
   useEffect(() => {
     fetchGradeTemplate();
@@ -183,10 +154,10 @@ const ParentGradesProgressScreen: React.FC = () => {
   }, [selectedAcademicYear, selectedGrade, fetchClasses]);
 
   useEffect(() => {
-    if (selectedStudent && selectedClass) {
+    if (selectedClass) {
       fetchGradeData();
     }
-  }, [selectedStudent, selectedClass, fetchGradeData]);
+  }, [selectedClass, fetchGradeData]);
 
   const columns = [
     {
@@ -250,7 +221,7 @@ const ParentGradesProgressScreen: React.FC = () => {
       </Title>
 
       <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-600">
               Niên khóa
@@ -285,29 +256,6 @@ const ParentGradesProgressScreen: React.FC = () => {
               {grades.map((grade) => (
                 <Option key={grade.id} value={grade.id}>
                   {grade.name}
-                </Option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600">
-              Thiếu nhi
-            </label>
-            <Select
-              className="w-full"
-              placeholder="Chọn thiếu nhi"
-              onChange={(value) => setSelectedStudent(value)}
-              value={selectedStudent}
-            >
-              {students.map((student) => (
-                <Option key={student.id} value={student.id}>
-                  <div className="flex items-center">
-                    <span>{student.fullName}</span>
-                    <span className="text-gray-400 text-sm ml-2">
-                      ({student.account})
-                    </span>
-                  </div>
                 </Option>
               ))}
             </Select>
@@ -400,4 +348,4 @@ const ParentGradesProgressScreen: React.FC = () => {
   );
 };
 
-export default ParentGradesProgressScreen;
+export default StudentGradesProgressScreen;
