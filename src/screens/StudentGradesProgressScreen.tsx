@@ -36,14 +36,16 @@ interface GradeTemplate {
 const StudentGradesProgressScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
-  const [gradeTemplate, setGradeTemplate] = useState<GradeTemplate | null>(null);
+  const [gradeTemplate, setGradeTemplate] = useState<GradeTemplate | null>(
+    null
+  );
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState<number | null>(
-    null
-  );
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<
+    number | null
+  >(null);
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [gradeData, setGradeData] = useState<Grade[]>([]);
@@ -90,9 +92,18 @@ const StudentGradesProgressScreen: React.FC = () => {
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`
       );
+      // Handle empty data case
+      if (!response.data.data || response.data.data.length === 0) {
+        setClasses([]);
+        message.info(
+          "Không tìm thấy lớp học nào cho khối và niên khóa đã chọn"
+        );
+        return;
+      }
       setClasses(response.data.data);
     } catch (error) {
       console.log(error);
+      setClasses([]); // Reset classes array
       message.error("Không thể lấy danh sách lớp");
     }
   }, [selectedAcademicYear, selectedGrade]);
@@ -251,7 +262,7 @@ const StudentGradesProgressScreen: React.FC = () => {
               onChange={(value) => setSelectedAcademicYear(value)}
               dropdownClassName="rounded-lg shadow-lg"
             >
-              {academicYears.map((year) => (
+              {academicYears?.map((year) => (
                 <Option key={year.id} value={year.id}>
                   {year.year}{" "}
                   {year.timeStatus === "NOW" && (

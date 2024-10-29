@@ -114,9 +114,18 @@ const ParentGradesProgressScreen: React.FC = () => {
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`
       );
+      // Handle empty data case
+      if (!response.data.data || response.data.data.length === 0) {
+        setClasses([]);
+        message.info(
+          "Không tìm thấy lớp học nào cho khối và niên khóa đã chọn"
+        );
+        return;
+      }
       setClasses(response.data.data);
     } catch (error) {
       console.log(error);
+      setClasses([]); // Reset classes array
       message.error("Không thể lấy danh sách lớp");
     }
   }, [selectedAcademicYear, selectedGrade]);
