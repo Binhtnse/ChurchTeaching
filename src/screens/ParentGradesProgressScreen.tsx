@@ -188,6 +188,25 @@ const ParentGradesProgressScreen: React.FC = () => {
     }
   }, [selectedStudent, selectedClass, fetchGradeData]);
 
+  const calculateTotalScore = () => {
+    if (!gradeTemplate || !gradeData.length) return null;
+
+    let totalWeightedScore = 0;
+    let totalWeight = 0;
+
+    gradeData.forEach((grade) => {
+      const exam = gradeTemplate.exams.find((e) => e.name === grade.examName);
+      if (exam) {
+        totalWeightedScore += grade.score * exam.weight;
+        totalWeight += exam.weight;
+      }
+    });
+
+    return totalWeight > 0
+      ? (totalWeightedScore / totalWeight).toFixed(2)
+      : null;
+  };
+
   const columns = [
     {
       title: "STT",
@@ -383,6 +402,28 @@ const ParentGradesProgressScreen: React.FC = () => {
                 className="border rounded-lg"
                 rowClassName="hover:bg-blue-50 transition-colors"
               />
+              <div className="mt-6 p-4 bg-indigo-50 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <div className="text-lg font-medium text-indigo-700">
+                    Điểm tổng kết
+                  </div>
+                  <div className="text-3xl font-bold">
+                    {calculateTotalScore() ? (
+                      <span
+                        className={
+                          Number(calculateTotalScore()) >= 5
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        {calculateTotalScore()}
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                  </div>
+                </div>
+              </div>
             </>
           ) : (
             <div className="text-center py-12">
