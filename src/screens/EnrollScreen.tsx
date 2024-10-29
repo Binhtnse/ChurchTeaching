@@ -494,7 +494,7 @@ const EnrollScreen: React.FC = () => {
             {currentGroup === questionGroups.length - 1 && (
               <>
                 <Button onClick={addAnotherChild}>
-                  Register Another Child
+                  Đăng ký thêm thiếu nhi
                 </Button>
                 <Button type="primary" onClick={handleSubmit} loading={loading}>
                   Đăng ký

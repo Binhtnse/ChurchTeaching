@@ -209,25 +209,29 @@ const EnrollListScreen: React.FC = () => {
       render: (status: string) => {
         let color = "default";
         let icon = null;
-
+        let text = "";
+    
         switch (status) {
           case "APPROVE":
             color = "success";
             icon = <CheckCircleOutlined />;
+            text = "Đã đồng ý";
             break;
           case "PENDING":
             color = "processing";
             icon = <ClockCircleOutlined />;
+            text = "Đang chờ";
             break;
           case "REJECTED":
             color = "error";
             icon = <CloseCircleOutlined />;
+            text = "Đã từ chối";
             break;
         }
-
+    
         return (
           <Tag icon={icon} color={color}>
-            {status === "REJECTED" ? "REJECT" : status.toUpperCase()}
+            {text}
           </Tag>
         );
       },
@@ -246,12 +250,13 @@ const EnrollListScreen: React.FC = () => {
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: 16 }}>
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <div className="flex flex-wrap items-center gap-4 mb-6">
         <Select
-          style={{ width: 200, marginRight: 16 }}
+          className="w-48"
           placeholder="Chọn niên khóa"
           onChange={handleAcademicYearChange}
+          allowClear
         >
           {academicYears.map((year) => (
             <Option key={year.id} value={year.id}>
@@ -260,10 +265,11 @@ const EnrollListScreen: React.FC = () => {
           ))}
         </Select>
         <Select
-          style={{ width: 200, marginRight: 16 }}
+          className="w-48"
           placeholder="Chọn khối"
           onChange={handleGradeChange}
           value={selectedGrade}
+          allowClear
         >
           {grades.map((grade) => (
             <Option key={grade.id} value={grade.id}>
@@ -274,11 +280,11 @@ const EnrollListScreen: React.FC = () => {
         <Search
           placeholder="Tìm theo tên"
           onSearch={handleSearch}
-          style={{ width: 200, marginRight: 16 }}
+          className="w-64"
           onChange={(e) => handleSearch(e.target.value)}
         />
         <Select
-          style={{ width: 120 }}
+          className="w-48"
           placeholder="Lọc theo trạng thái"
           onChange={handleStatusFilter}
           allowClear
@@ -296,6 +302,8 @@ const EnrollListScreen: React.FC = () => {
             bordered
             loading={loading}
             pagination={false}
+            className="mb-4 overflow-x-auto"
+            rowClassName="hover:bg-gray-50"
           />
           <Pagination
             current={pagination.current}
@@ -304,12 +312,17 @@ const EnrollListScreen: React.FC = () => {
             onChange={handlePaginationChange}
             showSizeChanger
             showQuickJumper
-            showTotal={(total) => `Total ${total} items`}
+            showTotal={(total) => `Tổng ${total} mục`}
             className="mt-4 text-right"
           />
         </>
       ) : (
-        <div>Vui lòng chọn niên khóa</div>
+        <div className="text-center text-gray-500 py-8">
+          <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
+          <p className="text-sm">
+            Chọn một niên khóa để xem danh sách đơn đăng ký
+          </p>
+        </div>
       )}
     </div>
   );

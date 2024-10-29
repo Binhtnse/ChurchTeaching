@@ -9,6 +9,11 @@ import {
   SolutionOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  AccountBookOutlined,
+  SafetyOutlined,
+  UsergroupAddOutlined,
+  SnippetsOutlined,
+  CreditCardOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -45,10 +50,20 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "study-attendance", label: "Xem điểm danh" },
         ],
       },
+      {
+        key: "transaction-pay-children",
+        label: "Đóng học phí",
+        icon: <CreditCardOutlined />,
+      },
+      {
+        key: "transaction-history-user",
+        label: "Lịch sử giao dịch",
+        icon: <AccountBookOutlined />,
+      },
     ],
     CATECHIST: [
       {
-        key: "classes",
+        key: "classes-catechist",
         label: "Lớp học",
         icon: <TeamOutlined />,
       },
@@ -60,8 +75,8 @@ const getMenuItems = (role: string): MenuItem[] => {
     ],
     PARENT: [
       {
-        key: "timetable",
-        label: "Thời khóa biểu",
+        key: "parent-schedule",
+        label: "Lịch học của con",
         icon: <CalendarOutlined />,
       },
       {
@@ -69,9 +84,19 @@ const getMenuItems = (role: string): MenuItem[] => {
         label: "Tiến độ học tập",
         icon: <HistoryOutlined />,
         children: [
-          { key: "study-grades", label: "Xem điểm" },
-          { key: "study-attendance", label: "Xem điểm danh" },
+          { key: "study-grades-parent", label: "Xem điểm" },
+          { key: "study-attendance-parent", label: "Xem điểm danh" },
         ],
+      },
+      {
+        key: "transaction-pay-parent",
+        label: "Đóng học phí",
+        icon: <CreditCardOutlined />,
+      },
+      {
+        key: "transaction-history-user",
+        label: "Lịch sử giao dịch",
+        icon: <AccountBookOutlined />,
       },
       {
         key: "enroll",
@@ -88,7 +113,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       {
         key: "enroll-list",
         label: "Danh sách đăng ký học",
-        icon: <TeamOutlined />,
+        icon: <SnippetsOutlined />,
       },
       {
         key: "class-list",
@@ -112,12 +137,17 @@ const getMenuItems = (role: string): MenuItem[] => {
       {
         key: "admin-student-list",
         label: "Quản lý danh sách thiếu nhi",
-        icon: <SolutionOutlined />,
+        icon: <UsergroupAddOutlined />,
+      },
+      {
+        key: "transaction-history",
+        label: "Lịch sử giao dịch",
+        icon: <AccountBookOutlined />,
       },
       {
         key: "policy",
         label: "Quản lý các quy định",
-        icon: <SolutionOutlined />,
+        icon: <SafetyOutlined />,
         children: [
           { key: "policy-list", label: "Xem tất cả quy định" },
           { key: "add-policy", label: "Thêm quy định" },

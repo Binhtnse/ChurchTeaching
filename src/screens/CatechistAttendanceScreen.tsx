@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Button, message, Typography, Checkbox } from "antd";
+import { Table, Button, message, Typography, Checkbox, Spin } from "antd";
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuthState } from "../hooks/useAuthState";
@@ -10,22 +10,32 @@ import { useParams, useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
 
-interface Student {
-  id: number;
-  studentClassId: number;
-  fullName: string;
-  account: string;
-  status: string;
-  isPresent: boolean;
+interface AttendanceRecord {
+  attendanceId: number;
+  studentClass: {
+    id: number;
+    name: string;
+    account: string;
+  };
+  isAbsent: "PRESENT" | "ABSENT";
+  isAbsentWithPermission: "TRUE" | "FALSE";
+}
+
+interface AttendanceData {
+  timeTableId: number;
+  slotName: string;
+  attendanceRecords: AttendanceRecord[];
 }
 
 const CatechistAttendanceScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [loading, setLoading] = useState(false);
   const { setPageTitle } = usePageTitle();
-  const [students, setStudents] = useState<Student[]>([]);
+  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(
+    null
+  );
   const navigate = useNavigate();
-  const { classId } = useParams<{ classId: string }>();
+  const { timeTableId } = useParams<{ timeTableId: string }>();
 
   useEffect(() => {
     setPageTitle("Điểm danh", "#4154f1");
@@ -35,70 +45,103 @@ const CatechistAttendanceScreen: React.FC = () => {
     checkAuthState();
   }, [checkAuthState]);
 
-  const fetchStudents = useCallback(async () => {
+  const fetchAttendanceData = useCallback(async () => {
     setLoading(true);
     try {
+      const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/attendance/timetable/${timeTableId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      if (response.status === 200 || response.status === 304) {
-        const studentsWithAttendance = response.data.data.students.map((student: Student) => ({
-          ...student,
-          isPresent: false,
-        }));
-        setStudents(studentsWithAttendance);
+      if (response.status === 200) {
+        setAttendanceData(response.data.data);
       } else {
-        setStudents([]);
+        setAttendanceData(null);
       }
     } catch (error) {
-      console.error("Error fetching students:", error);
-      message.error("Failed to fetch students");
+      console.error("Error fetching attendance data:", error);
+      message.error("Failed to fetch attendance data");
     } finally {
       setLoading(false);
     }
-  }, [classId]);
+  }, [timeTableId]);
 
   useEffect(() => {
-    if (isLoggedIn && role === "CATECHIST" && classId) {
-      fetchStudents();
+    if (isLoggedIn && role === "CATECHIST" && timeTableId) {
+      fetchAttendanceData();
     }
-  }, [isLoggedIn, role, classId, fetchStudents]);
+  }, [isLoggedIn, role, timeTableId, fetchAttendanceData]);
 
   const handleBack = () => {
-    navigate("/classes");
+    navigate("/schedule");
   };
 
-  const handleAttendanceChange = (studentId: number, isPresent: boolean) => {
-    setStudents(prevStudents =>
-      prevStudents.map(student =>
-        student.id === studentId ? { ...student, isPresent } : student
-      )
-    );
+  const handleAttendanceChange = (attendanceId: number, isAbsent: boolean) => {
+    setAttendanceData((prevData) => {
+      if (!prevData) return null;
+      return {
+        ...prevData,
+        attendanceRecords: prevData.attendanceRecords.map((record) =>
+          record.attendanceId === attendanceId
+            ? { ...record, isAbsent: isAbsent ? "ABSENT" : "PRESENT" }
+            : record
+        ),
+      };
+    });
   };
 
   const handleSaveAttendance = async () => {
     try {
-      // Implement the API call to save attendance here
-      // For now, we'll just log the attendance data
-      console.log("Saving attendance:", students);
-      message.success("Attendance saved successfully");
+      const accessToken = localStorage.getItem("accessToken");
+      const requestBody = {
+        timeTableId: Number(timeTableId),
+        studentAttendances: attendanceData?.attendanceRecords.map((record) => ({
+          studentClassId: record.studentClass.id,
+          isAbsent: record.isAbsent,
+        })),
+      };
+
+      const response = await axios.put(
+        "https://sep490-backend-production.up.railway.app/api/v1/attendance",
+        requestBody,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      if (response.status === 200) {
+        message.success("Attendance saved successfully");
+      } else {
+        throw new Error("Failed to save attendance");
+      }
     } catch (error) {
       console.error("Error saving attendance:", error);
       message.error("Failed to save attendance");
     }
   };
 
-  const columns: ColumnsType<Student> = [
-    { title: "STT", dataIndex: "studentClassId", key: "studentClassId" },
-    { title: "Tên thiếu nhi", dataIndex: "fullName", key: "fullName" },
+  const columns: ColumnsType<AttendanceRecord> = [
+    { title: "STT", dataIndex: ["studentClass", "id"], key: "id" },
     {
-      title: "Điểm danh",
+      title: "Tên thiếu nhi",
+      dataIndex: ["studentClass", "name"],
+      key: "name",
+    },
+    {
+      title: "Trạng thái điểm danh",
       key: "attendance",
+      className: "bg-gray-100 font-semibold",
       render: (_, record) => (
-        <Checkbox
-          checked={record.isPresent}
-          onChange={(e) => handleAttendanceChange(record.id, e.target.checked)}
-        />
+        <div className="flex items-center">
+          <Checkbox
+            checked={record.isAbsent === "PRESENT"}
+            onChange={(e) =>
+              handleAttendanceChange(record.attendanceId, !e.target.checked)
+            }
+            disabled={record.isAbsentWithPermission === "TRUE"}
+          />
+          {record.isAbsentWithPermission === "TRUE" && (
+            <span className="ml-2 text-gray-500">Vắng có phép</span>
+          )}
+        </div>
       ),
     },
   ];
@@ -108,31 +151,40 @@ const CatechistAttendanceScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-gradient-to-br from-blue-100 to-indigo-100 min-h-screen">
       <Button
         icon={<ArrowLeftOutlined />}
         onClick={handleBack}
-        className="mb-4"
+        className="mb-4 bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
       >
-        Back to Class List
+        Quay lại lịch dạy
       </Button>
-      <Title level={2} className="mb-6 text-center text-gray-800">
-        Điểm Danh Thiếu Nhi
+      <Title
+        level={2}
+        className="mb-6 text-center text-gray-800 font-bold text-3xl"
+      >
+        Điểm Danh Thiếu Nhi - {attendanceData?.slotName}
       </Title>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <Table
-          columns={columns}
-          dataSource={students}
-          loading={loading}
-          className="border border-gray-200 rounded-lg mb-6"
-          pagination={false}
-          rowKey="id"
-        />
+      <div className="bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={attendanceData?.attendanceRecords}
+            loading={loading}
+            className="border border-gray-200 rounded-lg mb-6"
+            pagination={false}
+            rowKey="attendanceId"
+          />
+        )}
         <div className="flex justify-end">
           <Button
             icon={<SaveOutlined />}
             onClick={handleSaveAttendance}
-            className="bg-green-500 text-white hover:bg-green-600"
+            className="bg-green-500 text-white hover:bg-green-600 font-bold py-2 px-4 rounded-full transition-colors duration-300"
           >
             Lưu điểm danh
           </Button>
