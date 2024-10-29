@@ -4,7 +4,6 @@ import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
 import EnrollScreen from "../screens/EnrollScreen";
 import EnrollListScreen from "../screens/EnrollListScreen";
-import StudyGradesScreen from "../screens/StudyGradesScreen";
 import EnrollDetailScreen from "../screens/EnrollDetailScreen";
 import StudyAttendanceScreen from "../screens/StudyAttendanceScreen";
 import StudentListScreen from "../screens/StudentListScreen";
@@ -21,6 +20,15 @@ import CatechistClassList from "../screens/CatechistClassList";
 import StudentScheduleScreen from "../screens/StudentScheduleScreen";
 import PolicyListScreen from "../screens/PolicyListScreen";
 import AdminPostScreen from "../screens/AdminPostScreen";
+import CatechistAttendanceScreen from "../screens/CatechistAttendanceScreen";
+import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
+import UserTransactionHistoryScreen from "../screens/UserTransactionHistoryScreen";
+import AddPolicyScreen from "../screens/AddPolicyScreen";
+import ParentScheduleScreen from "../screens/ParentScheduleScreen";
+import ParentTransactionScreen from "../screens/ParentTransactionScreen";
+import AdminStudentList from "../screens/AdminStudentList";
+import ParentGradesProgressScreen from "../screens/ParentGradesProgressScreen";
+import StudentGradesProgressScreen from "../screens/StudentGradesProgressScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -64,10 +72,10 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/study-grades"
+            path="/transaction-history-user"
             element={
               <ProtectedRoute allowedRoles={["PARENT", "STUDENT"]}>
-                <StudyGradesScreen />
+                <UserTransactionHistoryScreen />
               </ProtectedRoute>
             }
           />
@@ -80,7 +88,31 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/classes/:id"
+            path="/parent-schedule"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transaction-pay-parent"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentTransactionScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/study-grades-parent"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentGradesProgressScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/classes-catechist/:classId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <StudentListScreen />
@@ -88,7 +120,7 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/classes"
+            path="/classes-catechist"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <CatechistClassList />
@@ -144,7 +176,23 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/study-grades"
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT"]}>
+                <StudentGradesProgressScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/user-list"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminUserListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account/:id"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminUserListScreen />
@@ -184,6 +232,22 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/transaction-history"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <TransactionHistoryScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin-student-list"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminStudentList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/syllabus-detail/:id"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
@@ -196,6 +260,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <PolicyListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-policy"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AddPolicyScreen />
               </ProtectedRoute>
             }
           />

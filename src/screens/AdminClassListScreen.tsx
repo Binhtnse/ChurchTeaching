@@ -125,6 +125,19 @@ const AdminClassListScreen: React.FC = () => {
           `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}${statusParam}`
         );
         const { data } = response.data;
+        
+        // Handle empty data case
+        if (!data || data.length === 0) {
+          setAllData([]);
+          setDataSource([]);
+          setPagination((prevPagination) => ({
+            ...prevPagination,
+            total: 0,
+            current: 1,
+          }));
+          return;
+        }
+  
         const formattedData = data.map((item: DataType) => ({
           key: item.id,
           id: item.id,
@@ -134,6 +147,7 @@ const AdminClassListScreen: React.FC = () => {
           academicYear: item.academicYear,
           numberOfCatechist: item.numberOfCatechist,
         }));
+        
         setAllData(formattedData);
         setDataSource(formattedData);
         setPagination((prevPagination) => ({
@@ -144,12 +158,20 @@ const AdminClassListScreen: React.FC = () => {
         }));
       } catch (error) {
         console.error("Error fetching data:", error);
+        // Clear data on error
+        setAllData([]);
+        setDataSource([]);
+        setPagination((prevPagination) => ({
+          ...prevPagination,
+          total: 0,
+          current: 1,
+        }));
       } finally {
         setLoading(false);
       }
     },
     [isLoggedIn, role, selectedAcademicYear, selectedGrade, statusFilter]
-  );
+  );  
 
   useEffect(() => {
     if (selectedAcademicYear && isLoggedIn && role === "ADMIN") {
@@ -265,13 +287,17 @@ const AdminClassListScreen: React.FC = () => {
         let icon = null;
 
         switch (status) {
-          case "APPROVE":
+          case "ACTIVE":
             color = "success";
             icon = <CheckCircleOutlined />;
             break;
           case "PENDING":
             color = "processing";
             icon = <ClockCircleOutlined />;
+            break;
+          case "INACTIVE":
+            color = "default";
+            icon = <CloseCircleOutlined />;
             break;
           case "REJECTED":
             color = "error";
@@ -376,10 +402,9 @@ const AdminClassListScreen: React.FC = () => {
           allowClear
         >
           <Option value="ACTIVE">Hoạt động</Option>
-          <Option value="INACTIVE">Không hoạt động</Option>
-          <Option value="APPROVE">Đồng ý</Option>
           <Option value="PENDING">Đang chờ</Option>
-          <Option value="REJECT">Từ chối</Option>
+          <Option value="INACTIVE">Không hoạt động</Option>
+          <Option value="REJECTED">Từ chối</Option>
         </Select>
       </div>
 

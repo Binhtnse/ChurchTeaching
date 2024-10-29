@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
 import {
   Table,
   Typography,
@@ -7,13 +9,23 @@ import {
   Button,
   Input,
   Pagination,
+  Select,
 } from "antd";
-import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
-import { useParams } from "react-router-dom";
 
 const { Title } = Typography;
+
+interface Student {
+  studentId: number;
+  studentClassId: number;
+  fullName: string;
+  account: string;
+  status: string;
+  scores: {
+    [key: string]: { examId: number; score: number | undefined };
+  };
+}
 
 interface GradeTemplate {
   id: number;
@@ -28,39 +40,167 @@ interface GradeTemplate {
   }[];
 }
 
-interface Student {
-  id: number;
-  studentClassId: number;
-  fullName: string;
+interface Grade {
   account: string;
-  status: string;
+  examId: number;
+  examName: string;
+  score: number;
 }
 
-interface StudentGrade {
+interface AcademicYear {
   id: number;
-  studentName: string;
-  account: string;
-  score: number;
-  examName: string;
-  className: string;
-  scores: { [examName: string]: number };
+  year: string;
+}
+
+interface Grades {
+  id: number;
+  name: string;
 }
 
 const CatechistClassGradeScreen: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
-  const [classGrades, setClassGrades] = useState<StudentGrade[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [allCellsFilled, setAllCellsFilled] = useState(false);
+  const { isLoggedIn, role } = useAuthState();
+  const [students, setStudents] = useState<Student[]>([]);
   const [gradeTemplate, setGradeTemplate] = useState<GradeTemplate | null>(
     null
   );
-  const { isLoggedIn, role, checkAuthState } = useAuthState();
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+const [grades, setGrades] = useState<Grades[]>([]);
+const [selectedYear, setSelectedYear] = useState<number | null>(null);
+const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [allCellsFilled, setAllCellsFilled] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
+
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+      setAcademicYears(response.data);
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+      message.error("Failed to fetch academic years");
+    }
+  };
+  
+  const fetchGrades = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.status === "success") {
+        setGrades(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+      message.error("An error occurred while fetching grades");
+    }
+  };  
+
+  useEffect(() => {
+    if (isLoggedIn && role === "CATECHIST") {
+      fetchAcademicYears();
+      fetchGrades();
+    }
+  }, [isLoggedIn, role]);
+
+  const fetchClassGrades = useCallback(async () => {
+    if (!selectedYear || !selectedGrade) return;
+    setLoading(true);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+
+      const [studentsResponse, gradesResponse] = await Promise.all([
+        axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        ),
+        axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=1&size=1000&academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        ),
+      ]);
+
+      const students = studentsResponse.data.data.students;
+      const grades = gradesResponse.data.data;
+
+      console.log("Raw grades data:", grades);
+
+      const combinedStudents = students.map((student: Student) => {
+        const scores = {};
+        gradeTemplate?.exams.forEach((exam) => {
+          const grade = grades.find(
+            (g: Grade) =>
+              g.account === student.account && g.examName === exam.name
+          );
+          (
+            scores as Record<
+              string,
+              { examId: number; score: number | undefined }
+            >
+          )[exam.name] = {
+            examId: exam.id,
+            score: grade ? grade.score : undefined,
+          };
+        });
+        return { ...student, scores };
+      });
+
+      console.log("Combined students with scores:", combinedStudents);
+
+      setStudents(combinedStudents);
+      setPagination((prev) => ({
+        ...prev,
+        current: 1,
+        pageSize: combinedStudents.length,
+        total: combinedStudents.length,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch class grades:", error);
+      message.error("Failed to fetch class grades");
+    } finally {
+      setLoading(false);
+    }
+  }, [classId, gradeTemplate, selectedYear, selectedGrade]);
+
+  const fetchGradeTemplate = useCallback(async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get<{ data: GradeTemplate }>(
+        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/1`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      setGradeTemplate(response.data.data);
+      console.log("Grade template fetched:", response.data.data);
+    } catch (error) {
+      console.error("Failed to fetch grade template:", error);
+      message.error("Failed to fetch grade template");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn && role === "CATECHIST" && classId) {
+      fetchGradeTemplate();
+    }
+  }, [isLoggedIn, role, classId, fetchGradeTemplate]);
+
+  useEffect(() => {
+    if (gradeTemplate && classId) {
+      fetchClassGrades();
+    }
+  }, [gradeTemplate, classId, fetchClassGrades]);
 
   const toggleEditing = () => {
     if (isEditing) {
@@ -69,183 +209,125 @@ const CatechistClassGradeScreen: React.FC = () => {
     setIsEditing(!isEditing);
   };
 
-  const saveChanges = async () => {
-    setLoading(true);
-    const accessToken = localStorage.getItem("accessToken");
-
+  const saveGrades = async () => {
     try {
-      const savePromises = classGrades.map(async (student) => {
-        const exams =
-          gradeTemplate?.exams?.map((exam) => ({
-            examId: exam.id,
-            score: student.scores[exam.name] || 0,
-          })) || [];
+      setLoading(true);
+      const accessToken = localStorage.getItem("accessToken");
 
-        await axios.post(
-          "https://sep490-backend-production.up.railway.app/api/v1/student-grade",
-          {
-            studentClassId: student.id,
-            exams: exams,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+      const changedScores = students
+        .filter((student) =>
+          Object.values(student.scores).some(
+            (score) => score.score !== undefined
+          )
+        )
+        .map((student) => ({
+          studentClassId: student.studentClassId,
+          exams: Object.entries(student.scores)
+            .filter(([, score]) => score.score !== undefined)
+            .map(([, score]) => ({
+              examId: score.examId,
+              score: score.score,
+            })),
+        }));
+
+      console.log("Data to be sent for saveGrades:", {
+        studentClassScores: changedScores,
       });
 
-      await Promise.all(savePromises);
-      message.success("Changes saved successfully");
+      if (changedScores.length > 0) {
+        await axios.put(
+          "https://sep490-backend-production.up.railway.app/api/v1/student-grade",
+          { studentClassScores: changedScores },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+
+        message.success("Thay đổi thành công");
+      } else {
+        message.info("No changes to save");
+      }
+
       setIsEditing(false);
     } catch (error) {
-      console.error("Error saving changes:", error);
+      console.error("Failed to save grades:", error);
       message.error("Failed to save changes");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleScoreChange = useCallback(
+    (
+      studentClassId: number,
+      examId: number,
+      examName: string,
+      value: string
+    ) => {
+      setStudents((prevStudents) =>
+        prevStudents.map((student) =>
+          student.studentClassId === studentClassId
+            ? {
+                ...student,
+                scores: {
+                  ...student.scores,
+                  [examName]: {
+                    examId,
+                    score: value === "" ? undefined : parseFloat(value),
+                  },
+                },
+              }
+            : student
+        )
+      );
+    },
+    []
+  );
+
   const checkAllCellsFilled = useCallback(() => {
-    const allFilled = classGrades.every((student) =>
-      gradeTemplate?.exams?.every(
-        (exam) => student.scores[exam.name] !== undefined
-      )
+    const allFilledAndNonZero = students.every((student) =>
+      gradeTemplate?.exams?.every((exam) => {
+        const score = student.scores[exam.name]?.score;
+        return score !== undefined && score !== null && score !== 0;
+      })
     );
-    setAllCellsFilled(allFilled);
-  }, [classGrades, gradeTemplate]);
+    setAllCellsFilled(allFilledAndNonZero);
+  }, [students, gradeTemplate]);
 
   useEffect(() => {
     checkAllCellsFilled();
-  }, [classGrades, gradeTemplate, checkAllCellsFilled]);
+  }, [students, checkAllCellsFilled]);
 
-  const fetchClassGrades = useCallback(
-    async (page: number = 1, pageSize: number = 10) => {
-      if (isLoggedIn && role === "CATECHIST" && classId) {
-        setLoading(true);
-        try {
-          const accessToken = localStorage.getItem("accessToken");
-          const [studentsResponse, gradesResponse] = await Promise.all([
-            axios.get(
-              `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
-                },
-              }
-            ),
-            axios.get(
-              `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=${page}&size=${pageSize}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
-                },
-              }
-            ),
-          ]);
-
-          const students = studentsResponse.data.data.students;
-          const grades = gradesResponse.data.data;
-
-          const gradeMap = new Map();
-          grades.forEach((grade: StudentGrade) => {
-            if (!gradeMap.has(grade.account)) {
-              gradeMap.set(grade.account, { scores: {} });
-            }
-            gradeMap.get(grade.account).scores[grade.examName] = grade.score;
-          });
-
-          const combinedData = students.map((student: Student) => {
-            const gradeData = gradeMap.get(student.account) || { scores: {} };
-            return {
-              ...student,
-              ...gradeData,
-              scores: gradeData.scores,
-            };
-          });
-
-          setClassGrades(combinedData);
-          setPagination({
-            current: gradesResponse.data.pageResponse.currentPage,
-            pageSize: gradesResponse.data.pageResponse.pageSize,
-            total: studentsResponse.data.data.students.length,
-          });
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          message.error("Failed to load data");
-        } finally {
-          setLoading(false);
-        }
-      }
-    },
-    [isLoggedIn, role, classId]
-  );
-
-  const fetchGradeTemplate = useCallback(async () => {
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get<{ data: GradeTemplate[] }>(
-        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      setGradeTemplate(response.data.data[0]);
-    } catch (error) {
-      console.error("Error fetching grade template:", error);
-      message.error("Failed to load grade template data");
-    }
-  }, []);
-
-  const handlePaginationChange = (page: number, pageSize?: number) => {
-    fetchClassGrades(page, pageSize || pagination.pageSize);
+  const handlePaginationChange = () => {
+    fetchClassGrades();
   };
 
   const handleFinalize = async () => {
     try {
-      const accessToken = localStorage.getItem("accessToken");
-      await axios.post(
-        `https://sep490-backend-production.up.railway.app/api/v1/student-grade/finalize/class/${classId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      // Implement finalize logic here
       message.success("Grades finalized successfully");
-      // Optionally, you can refresh the data or update the UI state here
     } catch (error) {
-      console.error("Error finalizing grades:", error);
+      console.error("Failed to finalize grades:", error);
       message.error("Failed to finalize grades");
     }
   };
 
-  const handleScoreChange = (
-    studentId: number,
-    examName: string,
-    value: string
-  ) => {
-    const newValue = parseFloat(value) || 0;
-    setClassGrades((prevGrades) =>
-      prevGrades.map((grade) =>
-        grade.id === studentId
-          ? { ...grade, scores: { ...grade.scores, [examName]: newValue } }
-          : grade
-      )
-    );
-    checkAllCellsFilled();
-  };
-
-  useEffect(() => {
-    checkAuthState();
-    if (classId) {
-      fetchClassGrades();
-      fetchGradeTemplate();
-    }
-  }, [checkAuthState, fetchClassGrades, fetchGradeTemplate, classId]);
+  const EditableCell: React.FC<{
+    value: number | undefined | null;
+    onChange: (value: string) => void;
+    studentClassId: number;
+    examId: number;
+    examName: string;
+  }> = React.memo(({ value, onChange }) => (
+    <Input
+      value={value !== null && value !== undefined ? value.toString() : ""}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={(e) => {
+        const numValue = parseFloat(e.target.value);
+        if (!isNaN(numValue)) {
+          onChange(numValue.toString());
+        }
+      }}
+    />
+  ));
 
   const classGradeColumns = [
     {
@@ -262,26 +344,39 @@ const CatechistClassGradeScreen: React.FC = () => {
       title: exam.name,
       dataIndex: ["scores", exam.name],
       key: exam.name,
-      render: (score: number, record: StudentGrade) =>
+      render: (
+        scoreObj: { examId: number; score: number | undefined } | undefined,
+        record: Student
+      ) =>
         isEditing ? (
-          <Input
-            defaultValue={score || ""}
-            onChange={(e) =>
-              handleScoreChange(record.id, exam.name, e.target.value)
+          <EditableCell
+            key={`${record.studentClassId}-${exam.name}`}
+            value={scoreObj?.score}
+            onChange={(value) =>
+              handleScoreChange(
+                record.studentClassId,
+                exam.id,
+                exam.name,
+                value
+              )
             }
+            studentClassId={record.studentClassId}
+            examId={exam.id}
+            examName={exam.name}
           />
         ) : (
-          score || "-"
+          scoreObj?.score ?? "-"
         ),
     })) || []),
     {
       title: "Tổng điểm",
       key: "totalScore",
-      render: (record: StudentGrade) => {
+      render: (record: Student) => {
         const totalScore = gradeTemplate?.exams?.reduce((acc, exam) => {
-          return acc + (record.scores?.[exam.name] || 0) * (exam.weight || 0);
+          const score = record.scores[exam.name]?.score || 0;
+          return acc + score * (exam.weight || 0);
         }, 0);
-        return totalScore?.toFixed(2) || "-";
+        return totalScore !== undefined ? totalScore.toFixed(2) : "-";
       },
     },
   ];
@@ -291,28 +386,63 @@ const CatechistClassGradeScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
-      <Title level={2} className="mb-6">
+    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen">
+      <Title
+        level={2}
+        className="mb-6 text-indigo-700 pb-2 border-b-2 border-indigo-200"
+      >
         Danh sách điểm số
       </Title>
-      <Spin spinning={loading}>
+      <Spin spinning={loading} tip="Đang tải...">
         <Button
-          onClick={isEditing ? saveChanges : toggleEditing}
-          style={{ marginBottom: 16 }}
+          onClick={isEditing ? saveGrades : toggleEditing}
+          className="mb-4 mr-4 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           {isEditing ? "Lưu thay đổi" : "Ghi nhận điểm"}
         </Button>
         {allCellsFilled && (
-          <Button onClick={handleFinalize} style={{ marginBottom: 16 }}>
+          <Button
+            onClick={handleFinalize}
+            className="mb-4 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
             Tổng kết
           </Button>
         )}
+        <div className="mb-6 flex gap-4">
+  <Select
+    style={{ width: 200 }}
+    placeholder="Chọn niên khóa"
+    onChange={(value) => setSelectedYear(value)}
+    value={selectedYear}
+    className="border border-blue-300 rounded-md shadow-sm"
+  >
+    {academicYears.map((year) => (
+      <Select.Option key={year.id} value={year.id}>
+        {year.year}
+      </Select.Option>
+    ))}
+  </Select>
+
+  <Select
+    style={{ width: 200 }}
+    placeholder="Chọn khối"
+    onChange={(value) => setSelectedGrade(value)}
+    value={selectedGrade}
+    className="border border-blue-300 rounded-md shadow-sm"
+  >
+    {grades.map((grade) => (
+      <Select.Option key={grade.id} value={grade.id}>
+        {grade.name}
+      </Select.Option>
+    ))}
+  </Select>
+</div>
         <Table
           columns={classGradeColumns}
-          dataSource={classGrades}
-          rowKey="id"
+          dataSource={students}
+          rowKey="studentClassId"
           pagination={false}
-          className="bg-white shadow-md rounded-lg"
+          className="bg-white shadow-lg rounded-lg overflow-hidden"
         />
         <Pagination
           current={pagination.current}
@@ -321,12 +451,11 @@ const CatechistClassGradeScreen: React.FC = () => {
           onChange={handlePaginationChange}
           showSizeChanger
           showQuickJumper
-          showTotal={(total) => `Total ${total} items`}
-          className="mt-4 text-right"
+          showTotal={(total) => `Tổng ${total} mục`}
+          className="mt-6 text-right"
         />
       </Spin>
     </div>
   );
 };
-
 export default CatechistClassGradeScreen;

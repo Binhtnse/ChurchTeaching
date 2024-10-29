@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button, Flex, message, Modal, Input } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import usePageTitle from "../hooks/usePageTitle";
@@ -66,7 +67,7 @@ const EnrollDetailScreen: React.FC = () => {
         );
         console.log("Approval response:", response.data);
         message.success("Enrollment approved successfully");
-        navigate('/enroll-list');
+        navigate("/enroll-list");
       } else if (action === "reject") {
         setIsRejectModalVisible(true);
       }
@@ -84,7 +85,7 @@ const EnrollDetailScreen: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        Loading...
+        Đang tải...
       </div>
     );
   }
@@ -118,6 +119,13 @@ const EnrollDetailScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <Button
+        icon={<ArrowLeftOutlined />}
+        onClick={() => navigate(-1)}
+        className="mb-4"
+      >
+        Quay lại
+      </Button>
       <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="px-6 py-4 bg-blue-600 text-white">
           <h1 className="text-2xl font-bold">Thông tin đăng ký học giáo lý</h1>
