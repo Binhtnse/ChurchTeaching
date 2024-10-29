@@ -9,17 +9,15 @@ import EditorComponent from "../components/EditorComponent";
 import { ColumnsType } from "antd/es/table/interface";
 
 const { Search } = Input;
-interface Post {
+
+interface PostDTO {
   id: number;
   title: string;
-  linkImage: string;
+  linkImage: string[];
   content: string;
   customCSS: string;
   categoryId: number;
-  user: User; 
-}
-interface User {
-  fullName: string;
+  userId: number;
 }
 
 interface Category {
@@ -28,21 +26,21 @@ interface Category {
 }
 
 const AdminPostScreen: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostDTO[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isEditorModalVisible, setIsEditorModalVisible] = useState(false);
-  const [htmlContent, setHtmlContent] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isEditorModalVisible, setIsEditorModalVisible] = useState<boolean>(false);
+  const [htmlContent, setHtmlContent] = useState<string>("");
   const { isLoggedIn, role } = useAuthState();
   const [form] = Form.useForm();
-  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState<boolean>(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
+  const [editingPost, setEditingPost] = useState<PostDTO | null>(null);
+  const [searchText, setSearchText] = useState<string>("");
+  const [filteredPosts, setFilteredPosts] = useState<PostDTO[]>([]);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState<boolean>(false);
+  const [postToDelete, setPostToDelete] = useState<PostDTO | null>(null);
 
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [searchText, setSearchText] = useState("");
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
-
-  // Add this function after other function declarations
   useEffect(() => {
     const filtered = posts.filter(
       (post) =>
@@ -51,6 +49,7 @@ const AdminPostScreen: React.FC = () => {
     );
     setFilteredPosts(filtered);
   }, [posts, searchText]);
+
   useEffect(() => {
     if (isLoggedIn && role === "ADMIN") {
       fetchPosts();
@@ -61,7 +60,7 @@ const AdminPostScreen: React.FC = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
+      const response = await axios.get<PostDTO[]>(
         "https://sep490-backend-production.up.railway.app/api/posts"
       );
       setPosts(response.data);
@@ -75,7 +74,7 @@ const AdminPostScreen: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(
+      const response = await axios.get<Category[]>(
         "https://sep490-backend-production.up.railway.app/api/categories"
       );
       setCategories(response.data);
@@ -93,14 +92,15 @@ const AdminPostScreen: React.FC = () => {
     setSubmitLoading(true);
     try {
       const userLogin = JSON.parse(localStorage.getItem("userLogin") || "{}");
-      const postData = {
+      const postData: PostDTO = {
         ...values,
         content: htmlContent,
-        linkImage: "",
+        linkImage: [], // Assuming an empty array for demonstration; adjust as necessary
         customCSS: "",
         userId: userLogin.id,
+        id: 0, // ID will be set by the backend
       };
-      const response = await axios.post(
+      const response = await axios.post<PostDTO>(
         "https://sep490-backend-production.up.railway.app/api/posts",
         postData,
         {
@@ -125,7 +125,63 @@ const AdminPostScreen: React.FC = () => {
     }
   };
 
-  const columns: ColumnsType<Post> = [
+  const handleEditPost = async (values: any) => {
+    if (editingPost) {
+      setSubmitLoading(true);
+      try {
+        const userLogin = JSON.parse(localStorage.getItem("userLogin") || "{}");
+        const postData: PostDTO = {
+          ...values,
+          content: htmlContent,
+          linkImage: editingPost.linkImage,
+          customCSS: editingPost.customCSS,
+          userId: userLogin.id,
+          id: editingPost.id,
+        };
+        const response = await axios.put<PostDTO>(
+          `https://sep490-backend-production.up.railway.app/api/posts/${editingPost.id}`,
+          postData
+        );
+        if (response.status === 200) {
+          message.success("Post updated successfully");
+          setIsEditModalVisible(false);
+          fetchPosts();
+          form.resetFields();
+          setHtmlContent("");
+          setEditingPost(null);
+        }
+      } catch (error) {
+        console.error("Error updating post:", error);
+        message.error("Failed to update post");
+      } finally {
+        setSubmitLoading(false);
+      }
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (postToDelete) {
+      setLoading(true);
+      try {
+        const response = await axios.delete(
+          `https://sep490-backend-production.up.railway.app/api/posts/${postToDelete.id}`
+        );
+        if (response.status === 200) {
+          message.success("Post deleted successfully");
+          setIsDeleteModalVisible(false);
+          setPostToDelete(null);
+          await fetchPosts(); // Reload the post list
+        }
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        message.error("Failed to delete post");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const columns: ColumnsType<PostDTO> = [
     {
       title: "Title",
       dataIndex: "title",
@@ -144,37 +200,38 @@ const AdminPostScreen: React.FC = () => {
       ),
     },
     {
-      title: "Create By",
-      dataIndex: "user",
-      key: "user",
-      render: (_: any, record: Post) => record.user.fullName,
-    },
-    {
       title: "Actions",
       key: "actions",
-      render: (_: string, record: Post) => (
-        <Button
-          type="primary"
-          onClick={() => {
-            setEditingPost(record);
-            setIsEditModalVisible(true);
-            setHtmlContent(record.content);
-            form.setFieldsValue({
-              title: record.title,
-              categoryId: record.categoryId,
-            });
-          }}
-        >
-          Chỉnh sửa
-        </Button>
+      render: (_: string, record: PostDTO) => (
+        <div>
+          <Button
+            type="primary"
+            onClick={() => {
+              setEditingPost(record);
+              setIsEditModalVisible(true);
+              setHtmlContent(record.content);
+              form.setFieldsValue({
+                title: record.title,
+                categoryId: record.categoryId,
+              });
+            }}
+          >
+            Chỉnh sửa
+          </Button>
+          <Button
+           
+            onClick={() => {
+              setPostToDelete(record);
+              setIsDeleteModalVisible(true);
+            }}
+            className="ml-2"
+          >
+            Xóa
+          </Button>
+        </div>
       ),
     },
   ];
-
-  const handleEditPost = (post: Post) => {
-    // Implement edit functionality
-    console.log("Editing post:", post);
-  };
 
   return (
     <div className="p-6">
@@ -202,6 +259,7 @@ const AdminPostScreen: React.FC = () => {
         loading={loading}
         rowKey="id"
       />
+
       <Modal
         title="Chỉnh sửa bài viết"
         open={isEditModalVisible}
@@ -220,36 +278,7 @@ const AdminPostScreen: React.FC = () => {
       >
         <Form
           form={form}
-          onFinish={async (values) => {
-            try {
-              const userLogin = JSON.parse(
-                localStorage.getItem("userLogin") || "{}"
-              );
-              const postData = {
-                ...values,
-                content: htmlContent,
-                linkImage: editingPost?.linkImage || "",
-                customCSS: editingPost?.customCSS || "",
-                userId: userLogin.id,
-              };
-
-              const response = await axios.put(
-                `https://sep490-backend-production.up.railway.app/api/posts/${editingPost?.id}`,
-                postData
-              );
-
-              if (response.status === 200) {
-                message.success("Cập nhật bài viết thành công");
-                setIsEditModalVisible(false);
-                fetchPosts();
-                form.resetFields();
-                setHtmlContent("");
-                setEditingPost(null);
-              }
-            } catch (error) {
-              message.error("Cập nhật bài viết thất bại");
-            }
-          }}
+          onFinish={handleEditPost}
           layout="vertical"
           className="p-4"
         >
@@ -258,7 +287,7 @@ const AdminPostScreen: React.FC = () => {
             label="Tiêu đề"
             rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}
           >
-            <Input />
+            <Input placeholder="Nhập tiêu đề bài viết" />
           </Form.Item>
 
           <Form.Item
@@ -266,7 +295,7 @@ const AdminPostScreen: React.FC = () => {
             label="Danh mục"
             rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
           >
-            <Select>
+            <Select placeholder="Chọn danh mục">
               {categories.map((category) => (
                 <Select.Option key={category.id} value={category.id}>
                   {category.name}
@@ -295,12 +324,13 @@ const AdminPostScreen: React.FC = () => {
             >
               Hủy
             </Button>
-            <Button type="primary" htmlType="submit">
+            <Button type="primary" htmlType="submit" loading={submitLoading}>
               Cập nhật
             </Button>
           </Form.Item>
         </Form>
       </Modal>
+
       <Modal
         title="Thêm bài viết mới"
         open={isEditorModalVisible}
@@ -372,6 +402,25 @@ const AdminPostScreen: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Xóa bài viết"
+        open={isDeleteModalVisible}
+        onCancel={() => {
+          setIsDeleteModalVisible(false);
+          setPostToDelete(null);
+        }}
+        footer={[
+          <Button key="cancel" onClick={() => setIsDeleteModalVisible(false)}>
+            Hủy
+          </Button>,
+          <Button key="delete"  onClick={handleDeletePost}>
+            Xóa
+          </Button>,
+        ]}
+      >
+        <p>Bạn có chắc chắn muốn xóa bài viết này không?</p>
       </Modal>
     </div>
   );
