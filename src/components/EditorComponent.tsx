@@ -102,6 +102,7 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
 
   const handleEditorChange = (event: any, editor: any) => {
     const data = editor.getData();
+    console.log(event)
     console.log(data);
     setEditorData(data);
     onChange(data);

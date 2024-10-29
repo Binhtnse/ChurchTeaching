@@ -5,7 +5,6 @@ import HomeScreen from "../screens/HomeScreen";
 import EnrollScreen from "../screens/EnrollScreen";
 import EnrollListScreen from "../screens/EnrollListScreen";
 import EnrollDetailScreen from "../screens/EnrollDetailScreen";
-import StudyAttendanceScreen from "../screens/StudyAttendanceScreen";
 import StudentListScreen from "../screens/StudentListScreen";
 import AccountDetailScreen from "../screens/AccountDetailScreen";
 import AdminUserListScreen from "../screens/AdminUserListScreen";
@@ -29,6 +28,8 @@ import ParentTransactionScreen from "../screens/ParentTransactionScreen";
 import AdminStudentList from "../screens/AdminStudentList";
 import ParentGradesProgressScreen from "../screens/ParentGradesProgressScreen";
 import StudentGradesProgressScreen from "../screens/StudentGradesProgressScreen";
+import ParentAttendanceProgressScreen from "../screens/ParentAttendanceProgressScreen";
+import StudentAttendanceProgressScreen from "../screens/StudentAttendanceProgressScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -80,14 +81,6 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
-            path="/study-attendance"
-            element={
-              <ProtectedRoute allowedRoles={["PARENT", "STUDENT"]}>
-                <StudyAttendanceScreen />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/parent-schedule"
             element={
               <ProtectedRoute allowedRoles={["PARENT"]}>
@@ -112,6 +105,14 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/study-attendance-parent"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentAttendanceProgressScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/classes-catechist/:classId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
@@ -132,6 +133,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <CatechistScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/schedule/attendance/:timeTableId"
+            element={
+              <ProtectedRoute allowedRoles={["CATECHIST"]}>
+                <CatechistAttendanceScreen />
               </ProtectedRoute>
             }
           />
@@ -180,6 +189,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["STUDENT"]}>
                 <StudentGradesProgressScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/study-attendance"
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT"]}>
+                <StudentAttendanceProgressScreen />
               </ProtectedRoute>
             }
           />
