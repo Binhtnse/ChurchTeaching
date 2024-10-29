@@ -171,11 +171,6 @@ const AdminPostScreen: React.FC = () => {
     },
   ];
 
-  const handleEditPost = (post: Post) => {
-    // Implement edit functionality
-    console.log("Editing post:", post);
-  };
-
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
