@@ -53,7 +53,9 @@ export const PostDetail: React.FC = () => {
 
     return post ? <Card style={{ width: '70%', margin: '0 auto', textAlign: 'center' }}>
         <h1 className="my-5">{post.title}</h1>
-        <img src={post.linkImage} alt={post.title} style={{ width: '100%', height: 'auto' }} />
+        <div style={{display: 'flex', justifyContent: 'center'}}>
+        <img src={post.linkImage} alt={post.title} style={{ width: '300px', height: '300px' }} />
+        </div>
         <div dangerouslySetInnerHTML={{ __html: post.content }} style={{ marginTop: '16px' }} />
     </Card> : null;
 };

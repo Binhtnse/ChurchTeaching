@@ -34,8 +34,10 @@ const HomeScreen: React.FC = () => {
       );
       const fetchedPosts = response.data;
       setSpotLightPosts(fetchedPosts.filter((post) => post.category.id === 3))
+
       setGridPosts(fetchedPosts.filter((post) => post.category.id === 4));
-      setLatestPosts(fetchedPosts.slice(-3));
+
+      setLatestPosts(fetchedPosts.slice(0,5));
 
       // setPosts(fetchedPosts);
     } catch (error) {
@@ -55,28 +57,17 @@ const HomeScreen: React.FC = () => {
             {spotlightPosts.map((post, index) => (
               <div key={index}>
                 <Card
-                  className='text-center'
-                  title="Tiêu Điểm"
                   onClick={() => window.location.href = `/post/${post.id}`}
                   hoverable
+                  cover={<img src={post.linkImage} alt={post.title} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />}
                 >
-                  <img
-                    src={post.linkImage}
-                    alt={post.title}
-                    style={{ width: '100%', height: '200px', objectFit: 'cover', marginBottom: '16px' }}
-                  />
-                  <Card.Meta
-                    title={<div style={{ marginBottom: '8px' }}>{post.title}</div>}
-                    description={<div
-                      dangerouslySetInnerHTML={{ __html: post.content }}
-                    />}
-                  />
+                  <Card.Meta title={post.title} description={<div dangerouslySetInnerHTML={{ __html: post.content }} />} />
                 </Card>
               </div>
             ))}
           </Carousel>
         </Col>
-        <Col span={8}>
+        <Col span={8}  style={{ maxHeight: '300px', overflowY: 'auto' }}>
           <List
             header={<h2><b>Bài Viết Mới Nhất</b></h2>}
             className='text-center'
@@ -124,6 +115,13 @@ const HomeScreen: React.FC = () => {
                   title={item.title}
                 >
                   <div
+                    style={{
+                      display: '-webkit-box',
+                      WebkitBoxOrient: 'vertical',
+                      WebkitLineClamp: 4,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
                     dangerouslySetInnerHTML={{ __html: item.content }}
                   />
                 </Card>
@@ -138,3 +136,4 @@ const HomeScreen: React.FC = () => {
 };
 
 export default HomeScreen;
+
