@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Routes, Route, createBrowserRouter, useParams } from "react-router-dom";
+import { Routes, Route, createBrowserRouter} from "react-router-dom";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
 import EnrollScreen from "../screens/EnrollScreen";

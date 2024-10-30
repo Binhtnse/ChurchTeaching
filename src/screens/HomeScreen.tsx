@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Carousel, List, Card, message, Spin } from 'antd';
 import axios from 'axios';
@@ -38,6 +39,7 @@ const HomeScreen: React.FC = () => {
 
       // setPosts(fetchedPosts);
     } catch (error) {
+      console.log(error);
       message.error("Failed to fetch posts");
     } finally {
       setLoading(false);
