@@ -112,6 +112,16 @@ const CatechistClassList: React.FC = () => {
             },
           }
         );
+        if (!response.data.data || response.data.data.length === 0) {
+          setClasses([]);
+          setPagination((prev) => ({
+            ...prev,
+            total: 0,
+            current: 1
+          }));
+          message.info("Không tìm thấy lớp học nào");
+          return;
+        }
         setClasses(response.data.data);
         setPagination((prev) => ({
           ...prev,
@@ -121,6 +131,13 @@ const CatechistClassList: React.FC = () => {
         }));
       } catch (error) {
         console.error("Error fetching classes:", error);
+        message.error("Không thể tải danh sách lớp học");
+        setClasses([]);
+        setPagination((prev) => ({
+          ...prev,
+          total: 0,
+          current: 1
+        }));
       } finally {
         setLoading(false);
       }

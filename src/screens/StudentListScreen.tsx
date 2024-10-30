@@ -21,6 +21,9 @@ interface Student {
   fullName: string;
   account: string;
   status: string;
+  gender?: string;
+  email?: string;
+  phoneNumber?: string;
 }
 
 interface ClassInfo {
@@ -29,12 +32,34 @@ interface ClassInfo {
   students: Student[];
 }
 
+interface ClassDetails {
+  classId: number;
+  className: string;
+  numberOfCatechist: number;
+  gradeName: string;
+  academicYear: string;
+  status: string;
+  mainTeachers: {
+    id: number;
+    name: string;
+    account: string;
+    isMain: boolean;
+  }[];
+  assistantTeachers: {
+    id: number;
+    name: string;
+    account: string;
+    isMain: boolean;
+  }[];
+}
+
 const StudentListScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [loading, setLoading] = useState(false);
   const { setPageTitle } = usePageTitle();
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [classDetails, setClassDetails] = useState<ClassDetails | null>(null);
   const navigate = useNavigate();
   const { classId } = useParams<{ classId: string }>();
 
@@ -49,11 +74,36 @@ const StudentListScreen: React.FC = () => {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`
       );
       if (response.data.status === "success") {
-        setClassInfo(response.data.data);
+        const studentsWithDetails = await Promise.all(
+          response.data.data.students.map(async (student: Student) => {
+            const detailsResponse = await axios.get(
+              `https://sep490-backend-production.up.railway.app/api/v1/user?id=${student.studentId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            if (detailsResponse.data.status === "success") {
+              return {
+                ...student,
+                gender: detailsResponse.data.data.gender,
+                email: detailsResponse.data.data.email,
+                phoneNumber: detailsResponse.data.data.phoneNumber,
+              };
+            }
+            return student;
+          })
+        );
+        setClassInfo({
+          ...response.data.data,
+          students: studentsWithDetails,
+        });
       } else {
         setClassInfo(null);
         message.error(response.data.message || "Failed to fetch students");
@@ -64,14 +114,28 @@ const StudentListScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  }, [classId]);  
+
+  const fetchClassDetails = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/class/${classId}`
+      );
+      if (response.data.status === "success") {
+        setClassDetails(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching class details:", error);
+      message.error("Failed to fetch class details");
+    }
   }, [classId]);
 
   useEffect(() => {
-    console.log("Effect triggered:", { isLoggedIn, role, classId });
     if (isLoggedIn && role === "CATECHIST" && classId) {
+      fetchClassDetails();
       fetchStudents();
     }
-  }, [isLoggedIn, role, classId, fetchStudents]);
+  }, [isLoggedIn, role, classId, fetchClassDetails, fetchStudents]);
 
   const handleBack = () => {
     navigate("/classes");
@@ -92,7 +156,15 @@ const StudentListScreen: React.FC = () => {
   const columns: ColumnsType<Student> = [
     { title: "STT", dataIndex: "studentClassId", key: "studentClassId" },
     { title: "Tên thiếu nhi", dataIndex: "fullName", key: "fullName" },
-  ];
+    { 
+      title: "Giới tính", 
+      dataIndex: "gender", 
+      key: "gender",
+      render: (gender: string) => gender === "MALE" ? "Nam" : "Nữ"
+    },
+    { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Số điện thoại", dataIndex: "phoneNumber", key: "phoneNumber" },
+  ];  
 
   const handleViewClassGrades = () => {
     const id = classInfo?.classId || classId;
@@ -117,6 +189,24 @@ const StudentListScreen: React.FC = () => {
       >
         Quay về danh sách lớp
       </Button>
+
+      {classDetails && (
+      <div className="mb-6">
+        <Title level={2} className="text-center text-gray-800 font-bold text-3xl">
+          {classDetails.className}
+        </Title>
+        <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+          <p><strong>Khối:</strong> {classDetails.gradeName}</p>
+          <p><strong>Năm học:</strong> {classDetails.academicYear}</p>
+          <p><strong>Số lượng thiếu nhi:</strong> {classInfo?.students?.length || 0}</p>
+          <p><strong>Giáo lý viên chính:</strong> {classDetails.mainTeachers.map(t => t.name).join(', ')}</p>
+          {classDetails.assistantTeachers.length > 0 && (
+            <p><strong>Giáo lý viên phụ:</strong> {classDetails.assistantTeachers.map(t => t.name).join(', ')}</p>
+          )}
+        </div>
+      </div>
+    )}
+
       <Title
         level={2}
         className="mb-6 text-center text-gray-800 font-bold text-3xl"

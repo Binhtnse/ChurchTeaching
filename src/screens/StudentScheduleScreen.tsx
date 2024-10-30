@@ -157,6 +157,13 @@ const StudentScheduleScreen: React.FC = () => {
     (week) => week.weekNumber === selectedWeek
   );
 
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+  };
+
   const renderCalendar = (
     timetable: { [key: string]: { [key: string]: Slot | null } },
     classItem: Class
@@ -174,11 +181,21 @@ const StudentScheduleScreen: React.FC = () => {
       new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
     ).sort();
 
+    const weekStart = new Date(currentWeek!.startDate);
+    const dates = days.map((_, index) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
+      return formatDate(date);
+    });
+
     return (
       <CalendarGrid>
         <CalendarCell />
-        {days.map((day) => (
-          <DayCell key={day}>{day}</DayCell>
+        {days.map((day, index) => (
+          <DayCell key={day}>
+            <div>{day}</div>
+            <div className="text-sm mt-1">{dates[index]}</div>
+          </DayCell>
         ))}
         {times.map((time) => (
           <React.Fragment key={time}>
