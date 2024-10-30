@@ -13,7 +13,8 @@ import {
   SafetyOutlined,
   UsergroupAddOutlined,
   SnippetsOutlined,
-  CreditCardOutlined
+  CreditCardOutlined,
+  AreaChartOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -105,6 +106,11 @@ const getMenuItems = (role: string): MenuItem[] => {
       },
     ],
     ADMIN: [
+      {
+        key: "dashboard",
+        label: "Bảng thông tin",
+        icon: <AreaChartOutlined />,
+      },
       {
         key: "user-list",
         label: "Quản lý tài khoản",

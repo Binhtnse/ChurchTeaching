@@ -161,6 +161,13 @@ const CatechistScheduleScreen: React.FC = () => {
     e.stopPropagation(); // This prevents the click from bubbling up to the cell
   };
 
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+  };
+
   const renderCalendar = (timetable: Timetable, classItem: Class) => {
     const days = [
       "Thứ Hai",
@@ -175,11 +182,21 @@ const CatechistScheduleScreen: React.FC = () => {
       new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
     ).sort();
 
+    const weekStart = new Date(currentWeek!.startDate);
+    const dates = days.map((_, index) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
+      return formatDate(date);
+    });
+
     return (
       <CalendarGrid>
         <CalendarCell />
-        {days.map((day) => (
-          <DayCell key={day}>{day}</DayCell>
+        {days.map((day, index) => (
+          <DayCell key={day}>
+            <div>{day}</div>
+            <div className="text-sm mt-1">{dates[index]}</div>
+          </DayCell>
         ))}
         {times.map((time) => (
           <React.Fragment key={time}>
