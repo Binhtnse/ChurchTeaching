@@ -30,6 +30,7 @@ import ParentGradesProgressScreen from "../screens/ParentGradesProgressScreen";
 import StudentGradesProgressScreen from "../screens/StudentGradesProgressScreen";
 import ParentAttendanceProgressScreen from "../screens/ParentAttendanceProgressScreen";
 import StudentAttendanceProgressScreen from "../screens/StudentAttendanceProgressScreen";
+import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -165,6 +166,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminPostScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminDashboardScreen />
               </ProtectedRoute>
             }
           />

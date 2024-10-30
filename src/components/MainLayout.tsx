@@ -4,6 +4,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MyFooter from "./Footer";
 import { useAuthState } from "../hooks/useAuthState";
+import ChatboxAI from '../components/ChatboxAI';
 
 const { Content } = Layout;
 
@@ -18,6 +19,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
           <Layout className="flex flex-col flex-1">
             <Content className="flex-1">
               <MyContent>{children}</MyContent>
+              <ChatboxAI/>
             </Content>
           </Layout>
         </Layout>

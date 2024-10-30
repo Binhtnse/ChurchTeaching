@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Input, Button, Card, Spin, FloatButton } from 'antd';
 import { SendOutlined, MessageOutlined, CloseOutlined } from '@ant-design/icons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
   text: string;
@@ -53,8 +54,14 @@ const ChatboxAI: React.FC = () => {
         style={{ right: 24, bottom: 24 }}
       />
 
+<AnimatePresence>
       {isOpen && (
-        <div className="fixed bottom-24 right-8 z-50 w-[350px] sm:w-[400px]">
+        <motion.div 
+        className="fixed bottom-24 right-8 z-50 w-[350px] sm:w-[400px]"
+        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.8, y: 20 }}
+        transition={{ duration: 0.2 }}>
           <Card 
             className="shadow-lg"
             extra={
@@ -64,7 +71,7 @@ const ChatboxAI: React.FC = () => {
                 onClick={() => setIsOpen(false)}
               />
             }
-            title="Church Teaching AI Chat"
+            title="Trò chuyện với AI"
           >
             <div className="h-[400px] flex flex-col">
               <div className="flex-1 overflow-y-auto mb-4 space-y-4">
@@ -111,8 +118,9 @@ const ChatboxAI: React.FC = () => {
               </div>
             </div>
           </Card>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </>
   );
 };
