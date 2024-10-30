@@ -11,6 +11,7 @@ interface PostDTO {
   customCSS: string;
   categoryId: number;
   userId: number;
+  category: any;
 }
 
 
@@ -31,8 +32,8 @@ const HomeScreen: React.FC = () => {
         "https://sep490-backend-production.up.railway.app/api/posts"
       );
       const fetchedPosts = response.data;
-      setSpotLightPosts(fetchedPosts.filter((post, index) => index < 2))
-      setGridPosts(fetchedPosts.filter((post, index) => index >= 2));
+      setSpotLightPosts(fetchedPosts.filter((post) => post.category.id === 3))
+      setGridPosts(fetchedPosts.filter((post) => post.category.id === 4));
       setLatestPosts(fetchedPosts.slice(-3));
 
       // setPosts(fetchedPosts);
