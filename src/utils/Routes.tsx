@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Routes, Route, createBrowserRouter } from "react-router-dom";
+import { Routes, Route, createBrowserRouter, useParams } from "react-router-dom";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
 import EnrollScreen from "../screens/EnrollScreen";
@@ -30,6 +30,7 @@ import ParentGradesProgressScreen from "../screens/ParentGradesProgressScreen";
 import StudentGradesProgressScreen from "../screens/StudentGradesProgressScreen";
 import ParentAttendanceProgressScreen from "../screens/ParentAttendanceProgressScreen";
 import StudentAttendanceProgressScreen from "../screens/StudentAttendanceProgressScreen";
+import { PostDetail } from "../screens/PostDetailScreen";
 import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
@@ -169,6 +170,7 @@ export const AppRoutes = createBrowserRouter([
               </ProtectedRoute>
             }
           />
+          
           <Route
             path="/dashboard"
             element={
@@ -298,9 +300,13 @@ export const AppRoutes = createBrowserRouter([
             }
           />
         </Routes>
-        
+
       </Layout>
     ),
+  },
+  {
+    path: "/post/:id",
+    element: <PostDetail />,
   },
   {
     path: "/login",

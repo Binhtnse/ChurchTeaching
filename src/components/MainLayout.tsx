@@ -9,23 +9,23 @@ import ChatboxAI from '../components/ChatboxAI';
 const { Content } = Layout;
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
-    const { role, isLoggedIn, userName } = useAuthState();
-  
-    return (
-      <Layout className="min-h-screen">
-        <Header isLoggedIn={isLoggedIn} userName={userName}/>
-        <Layout className="flex-1 flex flex-row">
-          <Sidebar role={role} />
-          <Layout className="flex flex-col flex-1">
-            <Content className="flex-1">
-              <MyContent>{children}</MyContent>
-              <ChatboxAI/>
-            </Content>
-          </Layout>
+  const { role, isLoggedIn, userName } = useAuthState();
+
+  return (
+    isLoggedIn ? <Layout className="min-h-screen">
+      <Header isLoggedIn={isLoggedIn} userName={userName} />
+      <Layout className="flex-1 flex flex-row">
+        <Sidebar role={role} />
+        <Layout className="flex flex-col flex-1">
+          <Content className="flex-1">
+            <MyContent>{children}</MyContent>
+            <ChatboxAI/>
+          </Content>
         </Layout>
-        <MyFooter />
       </Layout>
-    );
-  };
-  
-  export default MainLayout;
+      <MyFooter />
+    </Layout> : <>{children}</>
+  );
+};
+
+export default MainLayout;

@@ -7,6 +7,7 @@ import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import EditorComponent from "../components/EditorComponent";
 import { ColumnsType } from "antd/es/table/interface";
+import CloudinaryUploadWidget from "../components/CloudinaryUploadWidget";
 
 const { Search } = Input;
 
@@ -18,6 +19,7 @@ interface PostDTO {
   customCSS: string;
   categoryId: number;
   userId: number;
+  category: Category;
 }
 
 interface Category {
@@ -40,6 +42,7 @@ const AdminPostScreen: React.FC = () => {
   const [filteredPosts, setFilteredPosts] = useState<PostDTO[]>([]);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState<boolean>(false);
   const [postToDelete, setPostToDelete] = useState<PostDTO | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const filtered = posts.filter(
@@ -95,11 +98,12 @@ const AdminPostScreen: React.FC = () => {
       const postData: PostDTO = {
         ...values,
         content: htmlContent,
-        linkImage: [], // Assuming an empty array for demonstration; adjust as necessary
+        linkImage: [imageUrl], // Assuming an empty array for demonstration; adjust as necessary
         customCSS: "",
         userId: userLogin.id,
         id: 0, // ID will be set by the backend
       };
+
       const response = await axios.post<PostDTO>(
         "https://sep490-backend-production.up.railway.app/api/posts",
         postData,
@@ -112,10 +116,11 @@ const AdminPostScreen: React.FC = () => {
       );
       if (response.status === 200) {
         message.success("Post created successfully");
-        setIsEditorModalVisible(false);
-        fetchPosts();
-        form.resetFields();
-        setHtmlContent("");
+        // setIsEditorModalVisible(false);
+        // fetchPosts();
+        // form.resetFields();
+        // setHtmlContent("");
+        window.location.reload()
       }
     } catch (error) {
       console.error("Error creating post:", error);
@@ -133,22 +138,29 @@ const AdminPostScreen: React.FC = () => {
         const postData: PostDTO = {
           ...values,
           content: htmlContent,
-          linkImage: editingPost.linkImage,
+          linkImage: [imageUrl],
           customCSS: editingPost.customCSS,
           userId: userLogin.id,
           id: editingPost.id,
         };
         const response = await axios.put<PostDTO>(
-          `https://sep490-backend-production.up.railway.app/api/posts/${editingPost.id}`,
-          postData
+          `https://sep490-backend-production.up.railway.app/api/posts`,
+          postData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              accept: "application/json",
+            },
+          }
         );
         if (response.status === 200) {
           message.success("Post updated successfully");
-          setIsEditModalVisible(false);
-          fetchPosts();
-          form.resetFields();
-          setHtmlContent("");
-          setEditingPost(null);
+          // setIsEditModalVisible(false);
+          // fetchPosts();
+          // form.resetFields();
+          // setHtmlContent("");
+          // setEditingPost(null);
+          window.location.reload()
         }
       } catch (error) {
         console.error("Error updating post:", error);
@@ -168,9 +180,9 @@ const AdminPostScreen: React.FC = () => {
         );
         if (response.status === 200) {
           message.success("Post deleted successfully");
-          setIsDeleteModalVisible(false);
-          setPostToDelete(null);
-          await fetchPosts(); // Reload the post list
+          // setIsDeleteModalVisible(false);
+          // setPostToDelete(null);
+          window.location.reload()
         }
       } catch (error) {
         console.error("Error deleting post:", error);
@@ -179,6 +191,16 @@ const AdminPostScreen: React.FC = () => {
         setLoading(false);
       }
     }
+  };
+
+  const handleUploadSuccess = (info: any) => {
+    setImageUrl(info.secure_url);
+    message.success(`Image uploaded successfully: ${info.original_filename}`);
+  };
+
+  const handleUploadFailure = (error: unknown) => {
+    message.error("Failed to upload image");
+    console.error("Upload error:", error);
   };
 
   const columns: ColumnsType<PostDTO> = [
@@ -210,16 +232,17 @@ const AdminPostScreen: React.FC = () => {
               setEditingPost(record);
               setIsEditModalVisible(true);
               setHtmlContent(record.content);
+              setImageUrl(record.linkImage[0])
               form.setFieldsValue({
                 title: record.title,
-                categoryId: record.categoryId,
+                categoryId: record?.category?.id,
               });
             }}
           >
             Chỉnh sửa
           </Button>
           <Button
-           
+
             onClick={() => {
               setPostToDelete(record);
               setIsDeleteModalVisible(true);
@@ -297,11 +320,23 @@ const AdminPostScreen: React.FC = () => {
           >
             <Select placeholder="Chọn danh mục">
               {categories.map((category) => (
-                <Select.Option key={category.id} value={category.id}>
+                <Select.Option key={category.id} value={category.id} >
                   {category.name}
                 </Select.Option>
               ))}
             </Select>
+          </Form.Item>
+
+          <Form.Item label="Hình ảnh">
+            <CloudinaryUploadWidget
+              onUploadSuccess={handleUploadSuccess} // Handle successful uploads
+              onUploadFailure={(error) => console.error("Upload failed:", error)}
+            />
+            {imageUrl && (
+              <div style={{ marginTop: 10 }}>
+                <img src={imageUrl} alt="Uploaded" style={{ maxWidth: "100%", height: "auto" }} />
+              </div>
+            )}
           </Form.Item>
 
           <Form.Item label="Nội dung" required>
@@ -319,6 +354,7 @@ const AdminPostScreen: React.FC = () => {
                 setEditingPost(null);
                 form.resetFields();
                 setHtmlContent("");
+                setImageUrl("");
               }}
               className="mr-2"
             >
@@ -374,6 +410,19 @@ const AdminPostScreen: React.FC = () => {
             </Select>
           </Form.Item>
 
+          <Form.Item label="Upload Hình ảnh">
+            <CloudinaryUploadWidget
+              onUploadSuccess={handleUploadSuccess}
+              onUploadFailure={handleUploadFailure}
+            />
+          </Form.Item>
+
+          {/* <Form.Item>
+            <Button type="primary" htmlType="submit" disabled={!imageUrl}>
+              Lưu
+            </Button>
+          </Form.Item> */}
+
           <Form.Item
             label="Nội dung"
             required
@@ -415,7 +464,7 @@ const AdminPostScreen: React.FC = () => {
           <Button key="cancel" onClick={() => setIsDeleteModalVisible(false)}>
             Hủy
           </Button>,
-          <Button key="delete"  onClick={handleDeletePost}>
+          <Button key="delete" onClick={handleDeletePost}>
             Xóa
           </Button>,
         ]}
