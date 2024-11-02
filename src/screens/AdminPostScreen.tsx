@@ -464,12 +464,13 @@ const AdminPostScreen: React.FC = () => {
           <Button key="cancel" onClick={() => setIsDeleteModalVisible(false)}>
             Hủy
           </Button>,
-          <Button key="delete" onClick={handleDeletePost}>
+          <Button key="delete" onClick={handleDeletePost }>
             Xóa
           </Button>,
         ]}
       >
         <p>Bạn có chắc chắn muốn xóa bài viết này không?</p>
+        
       </Modal>
     </div>
   );
