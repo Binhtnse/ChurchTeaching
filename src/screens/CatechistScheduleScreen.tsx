@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select } from "antd";
+import { Card, Typography, Spin, Select, message, Tag } from "antd";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 
 interface Material {
@@ -100,6 +100,9 @@ const CatechistScheduleScreen: React.FC = () => {
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string; timeStatus: string }[]
+  >([]);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const navigate = useNavigate();
 
@@ -140,6 +143,22 @@ const CatechistScheduleScreen: React.FC = () => {
     };
 
     fetchSchedule();
+  }, []);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+      setAcademicYears(response.data);
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+      message.error("Failed to fetch academic years");
+    }
+  };
+
+  useEffect(() => {
+    fetchAcademicYears();
   }, []);
 
   const createTimetable = (slots: Slot[]): Timetable => {
@@ -281,20 +300,26 @@ const CatechistScheduleScreen: React.FC = () => {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <Title level={2} className="mb-6">
-        Lịch Giảng Dạy
-      </Title>
+      <h1 className="text-2xl font-bold text-blue-600">Lịch Giảng Dạy</h1>
 
       <div className="flex space-x-6 mb-6">
         <Select
-          style={{ width: 240 }}
-          value={selectedYear}
+          className="w-48"
+          placeholder="Chọn niên khóa"
           onChange={(value) => setSelectedYear(value)}
-          className="shadow-sm"
+          value={selectedYear}
+          allowClear
         >
-          <Option value={scheduleData?.academicYear}>
-            {scheduleData?.academicYear}
-          </Option>
+          {academicYears.map((year) => (
+            <Option key={year.id} value={year.id}>
+              {year.year}{" "}
+              {year.timeStatus === "NOW" && (
+                <Tag color="blue" className="ml-2">
+                  Hiện tại
+                </Tag>
+              )}
+            </Option>
+          ))}
         </Select>
 
         <Select

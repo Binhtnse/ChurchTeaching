@@ -331,7 +331,7 @@ const AdminUserListScreen: React.FC = () => {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
+      <h1 className="text-2xl font-bold text-blue-600">
         Danh sách tài khoản
       </h1>
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow">

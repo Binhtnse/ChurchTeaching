@@ -251,6 +251,9 @@ const EnrollListScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-blue-600">
+      Danh sách đơn đăng ký học
+      </h1>
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <Select
           className="w-48"
@@ -260,7 +263,12 @@ const EnrollListScreen: React.FC = () => {
         >
           {academicYears.map((year) => (
             <Option key={year.id} value={year.id}>
-              {year.year} {year.timeStatus === "NOW" ? "(Hiện tại)" : ""}
+              {year.year}{" "}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
             </Option>
           ))}
         </Select>

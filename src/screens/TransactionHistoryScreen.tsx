@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Spin, Select } from "antd";
+import { Table, Select, Tag } from "antd";
 import axios from "axios";
 
 const { Option } = Select;
@@ -45,7 +45,7 @@ const TransactionHistoryScreen: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [academicYears, setAcademicYears] = useState<
-    { id: number; year: string }[]
+    { id: number; year: string; timeStatus: string }[]
   >([]);
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<
@@ -172,9 +172,9 @@ const TransactionHistoryScreen: React.FC = () => {
   }));
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4 text-blue-600 pb-2 border-b-2 border-blue-400">
+        <h1 className="text-2xl font-bold text-blue-600">
           Lịch sử giao dịch
         </h1>
         <div className="mb-4 flex space-x-4">
@@ -186,7 +186,12 @@ const TransactionHistoryScreen: React.FC = () => {
           >
             {academicYears.map((year) => (
               <Option key={year.id} value={year.id}>
-                {year.year}
+                {year.year}{" "}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
               </Option>
             ))}
           </Select>
@@ -204,24 +209,28 @@ const TransactionHistoryScreen: React.FC = () => {
             ))}
           </Select>
         </div>
-        {loading ? (
-          <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-md">
-            <Spin size="large" tip="Đang tải dữ liệu..." />
-          </div>
-        ) : (
-          <Table
-            dataSource={transactions}
-            columns={columns}
-            rowKey="tuitionId"
-            className="shadow-lg bg-white rounded-lg overflow-hidden"
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: false,
-              className: "bg-gray-50 p-4",
-            }}
-            rowClassName="hover:bg-gray-50 transition-colors duration-200"
-          />
-        )}
+        {selectedAcademicYear ? (
+  <Table
+    dataSource={transactions}
+    columns={columns}
+    rowKey="tuitionId"
+    className="shadow-lg bg-white rounded-lg overflow-hidden"
+    pagination={{
+      pageSize: 10,
+      showSizeChanger: false,
+      className: "bg-gray-50 p-4",
+    }}
+    rowClassName="hover:bg-gray-50 transition-colors duration-200"
+    loading={loading}
+  />
+) : (
+  <div className="text-center text-gray-500 py-8">
+    <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
+    <p className="text-sm">
+      Chọn một niên khóa để xem lịch sử giao dịch
+    </p>
+  </div>
+)}
       </div>
     </div>
   );

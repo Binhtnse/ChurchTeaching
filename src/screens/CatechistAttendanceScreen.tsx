@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Button, message, Typography, Checkbox, Spin } from "antd";
+import { Table, Button, message, Checkbox, Spin } from "antd";
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuthState } from "../hooks/useAuthState";
@@ -7,8 +7,6 @@ import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
 import usePageTitle from "../hooks/usePageTitle";
 import { useParams, useNavigate } from "react-router-dom";
-
-const { Title } = Typography;
 
 interface AttendanceRecord {
   attendanceId: number;
@@ -151,7 +149,7 @@ const CatechistAttendanceScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gradient-to-br from-blue-100 to-indigo-100 min-h-screen">
+    <div className="p-6 bg-white rounded-lg shadow-md">
       <Button
         icon={<ArrowLeftOutlined />}
         onClick={handleBack}
@@ -159,12 +157,10 @@ const CatechistAttendanceScreen: React.FC = () => {
       >
         Quay lại lịch dạy
       </Button>
-      <Title
-        level={2}
-        className="mb-6 text-center text-gray-800 font-bold text-3xl"
+      <h1 className="text-2xl font-bold text-blue-600"
       >
         Điểm Danh Thiếu Nhi - {attendanceData?.slotName}
-      </Title>
+      </h1>
       <div className="bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
         {loading ? (
           <div className="flex justify-center items-center h-64">

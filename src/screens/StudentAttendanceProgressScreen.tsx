@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Select, Table, Typography, Card, Spin, message, Tag } from "antd";
+import { Select, Table, Card, Spin, message, Tag } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
 
-const { Title } = Typography;
 const { Option } = Select;
 
 interface AttendanceDetail {
@@ -235,13 +234,11 @@ const StudentAttendanceProgressScreen: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen">
-      <Title
-        level={2}
-        className="mb-6 text-indigo-700 pb-2 border-b-2 border-indigo-200"
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-blue-600"
       >
         Thông Tin Điểm Danh
-      </Title>
+      </h1>
 
       <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">

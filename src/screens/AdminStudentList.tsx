@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Spin, Typography, TablePaginationConfig, message, Select } from "antd";
+import { Table, Spin, TablePaginationConfig, message, Select, Tag } from "antd";
 import axios from "axios";
-
-const { Title } = Typography;
 
 interface StudentData {
   id: number;
@@ -37,13 +35,14 @@ interface ApiResponse {
   };
 }
 
-
 const AdminStudentList: React.FC = () => {
   const [students, setStudents] = useState<StudentData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
-  const [academicYears, setAcademicYears] = useState<{ id: number; year: string }[]>([]);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string; timeStatus: string }[]
+  >([]);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -83,53 +82,58 @@ const AdminStudentList: React.FC = () => {
     }
   };
 
-  const fetchStudents = useCallback(async (page: number = 1, pageSize: number = 10) => {
-    if (!selectedYear || !selectedGrade) return;
-    
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get<ApiResponse>(
-        `https://sep490-backend-production.up.railway.app/api/student-grade-year/get-student-to-prepare-arrange-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}&page=${page-1}&size=${pageSize}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-  
-      // Transform the data to match the expected structure
-      const transformedStudents = response.data.data.content.map(item => ({
-        id: item.student.id,
-        fullName: item.student.fullName,
-        holyName: item.student.saintName,
-        dateOfBirth: item.student.dob,
-        address: item.student.address || 'N/A',
-        phoneNumber: item.student.phoneNumber || 'N/A',
-        status: item.studyStatus
-      }));
-  
-      setStudents(transformedStudents);
-      setPagination(prev => ({
-        ...prev,
-        total: response.data.data.totalElements,
-        current: page,
-        pageSize: pageSize,
-      }));
-    } catch (error) {
-      console.error("Error fetching students:", error);
-      message.error("Failed to fetch students");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedYear, selectedGrade]);  
+  const fetchStudents = useCallback(
+    async (page: number = 1, pageSize: number = 10) => {
+      if (!selectedYear || !selectedGrade) return;
+
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("accessToken");
+        const response = await axios.get<ApiResponse>(
+          `https://sep490-backend-production.up.railway.app/api/student-grade-year/get-student-to-prepare-arrange-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}&page=${
+            page - 1
+          }&size=${pageSize}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Transform the data to match the expected structure
+        const transformedStudents = response.data.data.content.map((item) => ({
+          id: item.student.id,
+          fullName: item.student.fullName,
+          holyName: item.student.saintName,
+          dateOfBirth: item.student.dob,
+          address: item.student.address || "N/A",
+          phoneNumber: item.student.phoneNumber || "N/A",
+          status: item.studyStatus,
+        }));
+
+        setStudents(transformedStudents);
+        setPagination((prev) => ({
+          ...prev,
+          total: response.data.data.totalElements,
+          current: page,
+          pageSize: pageSize,
+        }));
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        message.error("Failed to fetch students");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedYear, selectedGrade]
+  );
 
   const handleAutoAssignStudents = async () => {
     if (!selectedYear || !selectedGrade) {
       message.warning("Vui lòng chọn niên khóa và khối");
       return;
     }
-  
+
     try {
       const token = localStorage.getItem("accessToken");
       await axios.post(
@@ -144,7 +148,7 @@ const AdminStudentList: React.FC = () => {
       message.success("Xếp lớp thành công");
       fetchStudents(pagination.current, pagination.pageSize);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       message.error("Xếp lớp thất bại");
     }
   };
@@ -158,17 +162,17 @@ const AdminStudentList: React.FC = () => {
     if (selectedYear && selectedGrade) {
       fetchStudents(pagination.current, pagination.pageSize);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchStudents, selectedYear, selectedGrade]);
 
   const handleYearChange = (value: number) => {
     setSelectedYear(value);
-    setPagination(prev => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const handleGradeChange = (value: number) => {
     setSelectedGrade(value);
-    setPagination(prev => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const handleTableChange = (newPagination: TablePaginationConfig) => {
@@ -204,11 +208,9 @@ const AdminStudentList: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen">
-      <Title level={2} className="mb-6 text-blue-600 text-center font-bold">
-        Danh Sách Thiếu Nhi
-      </Title>
-      
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-blue-600">Danh Sách Thiếu Nhi</h1>
+
       <div className="mb-6 flex gap-4">
         <Select
           style={{ width: 200 }}
@@ -219,7 +221,12 @@ const AdminStudentList: React.FC = () => {
         >
           {academicYears.map((year) => (
             <Select.Option key={year.id} value={year.id}>
-              {year.year}
+              {year.year}{" "}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
             </Select.Option>
           ))}
         </Select>
@@ -239,11 +246,11 @@ const AdminStudentList: React.FC = () => {
         </Select>
 
         <button
-    onClick={handleAutoAssignStudents}
-    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
-  >
-    Xếp thiếu nhi vào lớp
-  </button>
+          onClick={handleAutoAssignStudents}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+        >
+          Xếp thiếu nhi vào lớp
+        </button>
       </div>
 
       <Spin spinning={loading}>
@@ -258,7 +265,14 @@ const AdminStudentList: React.FC = () => {
             rowClassName="hover:bg-gray-50 transition-colors duration-200"
           />
         ) : (
-          <Typography.Text>Vui lòng chọn niên khóa và khối.</Typography.Text>
+          <div className="text-center text-gray-500 py-8">
+            <p className="text-lg font-semibold">
+              Vui lòng chọn niên khóa và khối
+            </p>
+            <p className="text-sm">
+              Chọn một niên khóa và khối để xem danh sách thiếu nhi
+            </p>
+          </div>
         )}
       </Spin>
     </div>

@@ -10,6 +10,7 @@ import {
   Select,
   message,
   Spin,
+  Tag,
 } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import styled from "styled-components";
@@ -127,6 +128,9 @@ const ParentScheduleScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string; timeStatus: string }[]
+  >([]);
   const [parentDetails, setParentDetails] = useState<{
     email: string;
     phoneNumber: string;
@@ -169,6 +173,22 @@ const ParentScheduleScreen: React.FC = () => {
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+      setAcademicYears(response.data);
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+      message.error("Failed to fetch academic years");
+    }
+  };
+
+  useEffect(() => {
+    fetchAcademicYears();
+  }, []);
 
   const fetchSchedule = useCallback(async (studentId: number) => {
     try {
@@ -252,6 +272,13 @@ const ParentScheduleScreen: React.FC = () => {
     }
   };
 
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+  };
+
   const renderCalendar = (
     timetable: { [key: string]: { [key: string]: Slot | null } },
     classItem: Class
@@ -269,11 +296,21 @@ const ParentScheduleScreen: React.FC = () => {
       new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
     ).sort();
 
+    const weekStart = new Date(currentWeek!.startDate);
+    const dates = days.map((_, index) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
+      return formatDate(date);
+    });
+
     return (
       <CalendarGrid>
         <CalendarCell />
-        {days.map((day) => (
-          <DayCell key={day}>{day}</DayCell>
+        {days.map((day, index) => (
+          <DayCell key={day}>
+            <div>{day}</div>
+            <div className="text-sm mt-1">{dates[index]}</div>
+          </DayCell>
         ))}
         {times.map((time) => (
           <React.Fragment key={time}>
@@ -524,9 +561,7 @@ const ParentScheduleScreen: React.FC = () => {
   };
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <Title level={2} className="mb-6">
-        Lịch Học Của Con
-      </Title>
+      <h1 className="text-2xl font-bold text-blue-600">Lịch Học Của Con</h1>
 
       <div className="flex flex-col space-y-6 mb-6">
         <Select
@@ -547,14 +582,22 @@ const ParentScheduleScreen: React.FC = () => {
           <>
             <div className="flex space-x-6">
               <Select
-                style={{ width: 240 }}
-                value={selectedYear}
+                className="w-48"
+                placeholder="Chọn niên khóa"
                 onChange={(value) => setSelectedYear(value)}
-                className="shadow-sm"
+                value={selectedYear}
+                allowClear
               >
-                <Option value={scheduleData.academicYear}>
-                  {scheduleData.academicYear}
-                </Option>
+                {academicYears.map((year) => (
+                  <Option key={year.id} value={year.id}>
+                    {year.year}{" "}
+                    {year.timeStatus === "NOW" && (
+                      <Tag color="blue" className="ml-2">
+                        Hiện tại
+                      </Tag>
+                    )}
+                  </Option>
+                ))}
               </Select>
 
               <Select

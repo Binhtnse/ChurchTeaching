@@ -110,7 +110,7 @@ const ParentTransactionScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white shadow-md rounded-lg py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto">
         <Card className="shadow-2xl rounded-2xl border-0">
           <div className="text-center mb-10">

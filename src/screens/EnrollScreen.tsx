@@ -470,7 +470,7 @@ const EnrollScreen: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="p-6 bg-white rounded-lg shadow-md">
       <div style={{ marginLeft: "256px", padding: "20px" }}>
         <Form
           {...formItemLayout}

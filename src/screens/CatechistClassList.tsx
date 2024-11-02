@@ -2,15 +2,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   Spin,
-  Typography,
   TablePaginationConfig,
   message,
   Select,
+  Tag,
 } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
-const { Title } = Typography;
 
 interface ClassData {
   id: number;
@@ -42,7 +40,7 @@ const CatechistClassList: React.FC = () => {
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
-    { id: number; year: string }[]
+    { id: number; year: string; timeStatus: string }[]
   >([]);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -190,29 +188,33 @@ const CatechistClassList: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen">
-      <Title level={2} className="mb-6 text-blue-600 text-center font-bold">
-        Lớp của giáo lý viên
-      </Title>
+    <div className="p-6 bg-white rounded-lg shadow-md">
+    <h1 className="text-2xl font-bold text-blue-600">
+      Lớp của giáo lý viên
+    </h1>
+    <div className="flex flex-wrap items-center gap-4 mb-6">
       <Select
-        style={{ width: 200 }}
+        className="w-48"
         placeholder="Chọn niên khóa"
         onChange={handleYearChange}
         value={selectedYear}
-        className="border border-blue-300 rounded-md shadow-sm"
       >
         {academicYears.map((year) => (
           <Select.Option key={year.id} value={year.id}>
-            {year.year}
+            {year.year}{" "}
+            {year.timeStatus === "NOW" && (
+              <Tag color="blue" className="ml-2">
+                Hiện tại
+              </Tag>
+            )}
           </Select.Option>
         ))}
       </Select>
       <Select
-        style={{ width: 200, marginBottom: 16, marginLeft: 16 }}
+        className="w-48"
         placeholder="Chọn khối"
         onChange={handleGradeChange}
         value={selectedGrade}
-        className="border border-blue-300 rounded-md shadow-sm"
       >
         {grades.map((grade) => (
           <Select.Option key={grade.id} value={grade.id}>
@@ -220,28 +222,33 @@ const CatechistClassList: React.FC = () => {
           </Select.Option>
         ))}
       </Select>
-      <Spin spinning={loading}>
-        {selectedYear ? (
-          <Table
-            columns={columns}
-            dataSource={classes}
-            rowKey="id"
-            pagination={pagination}
-            onChange={handleTableChange}
-            className="bg-white rounded-lg shadow-md overflow-hidden"
-            rowClassName={() =>
-              "hover:bg-gray-50 transition-colors duration-200"
-            }
-            onRow={(record) => ({
-              onClick: () => handleRowClick(record),
-              style: { cursor: "pointer" },
-            })}
-          />
-        ) : (
-          <Typography.Text>Vui lòng chọn niên khóa.</Typography.Text>
-        )}
-      </Spin>
     </div>
+
+    {selectedYear ? (
+      <Spin spinning={loading}>
+        <Table
+          columns={columns}
+          dataSource={classes}
+          rowKey="id"
+          pagination={pagination}
+          onChange={handleTableChange}
+          className="mb-4 overflow-x-auto"
+          rowClassName="hover:bg-gray-50"
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+            style: { cursor: "pointer" },
+          })}
+        />
+      </Spin>
+    ) : (
+      <div className="text-center text-gray-500 py-8">
+        <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
+        <p className="text-sm">
+          Chọn một niên khóa để xem danh sách lớp học
+        </p>
+      </div>
+    )}
+  </div>
   );
 };
 export default CatechistClassList;
