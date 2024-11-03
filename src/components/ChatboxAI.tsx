@@ -57,7 +57,7 @@ const ChatboxAI: React.FC = () => {
 <AnimatePresence>
       {isOpen && (
         <motion.div 
-        className="fixed bottom-24 right-8 z-50 w-[350px] sm:w-[400px]"
+        className="fixed bottom-24 right-8 z-50 w-[450px] sm:w-[500px]"
         initial={{ opacity: 0, scale: 0.8, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8, y: 20 }}
@@ -73,7 +73,7 @@ const ChatboxAI: React.FC = () => {
             }
             title="Trò chuyện với AI"
           >
-            <div className="h-[400px] flex flex-col">
+            <div className="h-[500px] flex flex-col">
               <div className="flex-1 overflow-y-auto mb-4 space-y-4">
                 {messages.map((message, index) => (
                   <div
@@ -83,7 +83,7 @@ const ChatboxAI: React.FC = () => {
                     }`}
                   >
                     <div
-                      className={`max-w-[70%] rounded-lg p-3 ${
+                      className={`max-w-[80%] rounded-lg p-3 ${
                         message.isUser
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 text-gray-800'

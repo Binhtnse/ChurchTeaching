@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, message, Form, Input, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
@@ -205,12 +204,12 @@ const AdminPostScreen: React.FC = () => {
 
   const columns: ColumnsType<PostDTO> = [
     {
-      title: "Title",
+      title: "Tựa Đề",
       dataIndex: "title",
       key: "title",
     },
     {
-      title: "Content",
+      title: "Nội Dung",
       dataIndex: "content",
       key: "content",
       render: (content: string) => (
@@ -222,7 +221,7 @@ const AdminPostScreen: React.FC = () => {
       ),
     },
     {
-      title: "Actions",
+      title: "Hành Động",
       key: "actions",
       render: (_: string, record: PostDTO) => (
         <div>
@@ -265,7 +264,7 @@ const AdminPostScreen: React.FC = () => {
           onClick={handleAddPost}
           className="mb-4"
         >
-          Add New Post
+          Thêm bài viết mới
         </Button>
         <Search
           placeholder="Tìm kiếm bài viết..."

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect,useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   Space,
@@ -125,7 +125,7 @@ const AdminClassListScreen: React.FC = () => {
           `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}${statusParam}`
         );
         const { data } = response.data;
-        
+
         // Handle empty data case
         if (!data || data.length === 0) {
           setAllData([]);
@@ -137,7 +137,7 @@ const AdminClassListScreen: React.FC = () => {
           }));
           return;
         }
-  
+
         const formattedData = data.map((item: DataType) => ({
           key: item.id,
           id: item.id,
@@ -147,7 +147,7 @@ const AdminClassListScreen: React.FC = () => {
           academicYear: item.academicYear,
           numberOfCatechist: item.numberOfCatechist,
         }));
-        
+
         setAllData(formattedData);
         setDataSource(formattedData);
         setPagination((prevPagination) => ({
@@ -171,7 +171,7 @@ const AdminClassListScreen: React.FC = () => {
       }
     },
     [isLoggedIn, role, selectedAcademicYear, selectedGrade, statusFilter]
-  );  
+  );
 
   useEffect(() => {
     if (selectedAcademicYear && isLoggedIn && role === "ADMIN") {
@@ -358,7 +358,7 @@ const AdminClassListScreen: React.FC = () => {
             onClick={handleExport}
           >
             <ExportOutlined />
-            Export
+            Xuất danh sách
           </Button>
 
           <ImportFileModal />
@@ -372,7 +372,12 @@ const AdminClassListScreen: React.FC = () => {
         >
           {academicYears.map((year) => (
             <Option key={year.id} value={year.id}>
-              {year.year} {year.timeStatus === "NOW" ? "(Hiện tại)" : ""}
+              {year.year}{" "}
+              {year.timeStatus === "NOW" && (
+                <Tag color="blue" className="ml-2">
+                  Hiện tại
+                </Tag>
+              )}
             </Option>
           ))}
         </Select>

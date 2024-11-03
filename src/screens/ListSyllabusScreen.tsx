@@ -5,8 +5,6 @@ import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import { useNavigate } from "react-router-dom";
 
-const { Title } = Typography;
-
 interface Syllabus {
   id: number;
   grade: {
@@ -26,11 +24,11 @@ interface Syllabus {
 
 const ListSyllabusScreen: React.FC = () => {
   const [syllabuses, setSyllabuses] = useState<Syllabus[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { role, isLoggedIn } = useAuthState();
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
   const [academicYears, setAcademicYears] = useState<
-    { id: number; year: string }[]
+    { id: number; year: string; timeStatus: string }[]
   >([]);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -216,9 +214,9 @@ const ListSyllabusScreen: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <Title level={2} className="mb-6">
+        <h1 className="text-2xl font-bold text-blue-600">
           Danh sách giáo trình
-        </Title>
+        </h1>
         <div className="mb-6 flex justify-start items-center space-x-4">
           <Select
             style={{ width: 200 }}
@@ -230,7 +228,12 @@ const ListSyllabusScreen: React.FC = () => {
           >
             {academicYears.map((year) => (
               <Select.Option key={year.id} value={year.id}>
-                {year.year}
+                {year.year}{" "}
+                {year.timeStatus === "NOW" && (
+                  <Tag color="blue" className="ml-2">
+                    Hiện tại
+                  </Tag>
+                )}
               </Select.Option>
             ))}
           </Select>
@@ -261,32 +264,35 @@ const ListSyllabusScreen: React.FC = () => {
           </Select>
         </div>
         {isYearSelected ? (
-  <Table
-    columns={columns}
-    dataSource={syllabuses}
-    rowKey="id"
-    loading={loading}
-    className="bg-white rounded-lg shadow"
-    pagination={{
-      current: pagination.current,
-      total: pagination.total,
-      pageSize: pagination.pageSize,
-      onChange: handlePaginationChange,
-      showSizeChanger: true,
-      showQuickJumper: true,
-      showTotal: (total) => `Tổng cộng ${total} mục`,
-      className: "mt-4",
-    }}
-    onRow={(record) => ({
-      onClick: () => handleRowClick(record),
-      className: "hover:bg-gray-50 cursor-pointer transition-colors duration-150",
-    })}
-  />
-) : (
-  <div className="text-center py-8">
-    <Typography.Text strong>Vui lòng chọn một niên khóa để xem danh sách giáo trình.</Typography.Text>
-  </div>
-)}
+          <Table
+            columns={columns}
+            dataSource={syllabuses}
+            rowKey="id"
+            loading={loading}
+            className="bg-white rounded-lg shadow"
+            pagination={{
+              current: pagination.current,
+              total: pagination.total,
+              pageSize: pagination.pageSize,
+              onChange: handlePaginationChange,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `Tổng cộng ${total} mục`,
+              className: "mt-4",
+            }}
+            onRow={(record) => ({
+              onClick: () => handleRowClick(record),
+              className:
+                "hover:bg-gray-50 cursor-pointer transition-colors duration-150",
+            })}
+          />
+        ) : (
+          <div className="text-center py-8">
+            <Typography.Text strong>
+              Vui lòng chọn một niên khóa để xem danh sách giáo trình.
+            </Typography.Text>
+          </div>
+        )}
       </div>
     </div>
   );
