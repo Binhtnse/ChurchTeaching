@@ -9,6 +9,7 @@ import {
   Select,
   Pagination,
   Tag,
+  Card,
 } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
@@ -345,9 +346,9 @@ const AdminClassListScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-blue-600">
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
           Danh sách lớp giáo lý
         </h1>
         <div className="gap-2 flex">
@@ -364,54 +365,76 @@ const AdminClassListScreen: React.FC = () => {
           <ImportFileModal />
         </div>
       </div>
-      <div style={{ marginBottom: 16 }}>
-        <Select
-          style={{ width: 200, marginRight: 16 }}
-          placeholder="Chọn niên khóa"
-          onChange={handleAcademicYearChange}
-        >
-          {academicYears.map((year) => (
-            <Option key={year.id} value={year.id}>
-              {year.year}{" "}
-              {year.timeStatus === "NOW" && (
-                <Tag color="blue" className="ml-2">
-                  Hiện tại
-                </Tag>
-              )}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          style={{ width: 200, marginRight: 16 }}
-          placeholder="Chọn khối"
-          onChange={handleGradeChange}
-          value={selectedGrade}
-          allowClear
-        >
-          {grades.map((grade) => (
-            <Option key={grade.id} value={grade.id}>
-              {grade.name}
-            </Option>
-          ))}
-        </Select>
-        <Search
-          placeholder="Tìm theo tên"
-          onSearch={handleSearch}
-          style={{ width: 200, marginRight: 16 }}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-        <Select
-          style={{ width: 120 }}
-          placeholder="Lọc theo trạng thái"
-          onChange={handleStatusFilter}
-          allowClear
-        >
-          <Option value="ACTIVE">Hoạt động</Option>
-          <Option value="PENDING">Đang chờ</Option>
-          <Option value="INACTIVE">Không hoạt động</Option>
-          <Option value="REJECTED">Từ chối</Option>
-        </Select>
-      </div>
+      <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
+              Niên khóa
+            </label>
+            <Select
+              className="w-full"
+              placeholder="Chọn niên khóa"
+              onChange={handleAcademicYearChange}
+            >
+              {academicYears.map((year) => (
+                <Option key={year.id} value={year.id}>
+                  {year.year}{" "}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
+                </Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">Khối</label>
+            <Select
+              className="w-full"
+              placeholder="Chọn khối"
+              onChange={handleGradeChange}
+              value={selectedGrade}
+              allowClear
+            >
+              {grades.map((grade) => (
+                <Option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
+              Trạng thái
+            </label>
+            <Select
+              className="w-full"
+              placeholder="Lọc theo trạng thái"
+              onChange={handleStatusFilter}
+              allowClear
+            >
+              <Option value="APPROVE">Đồng ý</Option>
+              <Option value="PENDING">Đang chờ</Option>
+              <Option value="REJECT">Từ chối</Option>
+            </Select>
+          </div>
+
+          <div className="space-y-2 md:col-span-3">
+            <label className="text-sm font-medium text-gray-600">
+              Tìm kiếm
+            </label>
+            <Search
+              placeholder="Tìm theo tên"
+              onSearch={handleSearch}
+              className="w-full"
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </div>
+        </div>
+      </Card>
 
       {selectedAcademicYear ? (
         <>
@@ -434,7 +457,12 @@ const AdminClassListScreen: React.FC = () => {
           />
         </>
       ) : (
-        <div>Vui lòng chọn niên khóa</div>
+        <div className="text-center text-gray-500 py-8">
+          <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
+          <p className="text-sm">
+            Chọn một niên khóa để xem danh sách lớp giáo lý
+          </p>
+        </div>
       )}
     </div>
   );

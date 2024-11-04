@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Table, Tag, Pagination, Input, Select, message } from "antd";
+import { Table, Tag, Pagination, Input, Select, message, Card } from "antd";
 import { Link } from "react-router-dom";
 import {
   CheckCircleOutlined,
@@ -210,7 +210,7 @@ const EnrollListScreen: React.FC = () => {
         let color = "default";
         let icon = null;
         let text = "";
-    
+
         switch (status) {
           case "APPROVE":
             color = "success";
@@ -228,7 +228,7 @@ const EnrollListScreen: React.FC = () => {
             text = "Đã từ chối";
             break;
         }
-    
+
         return (
           <Tag icon={icon} color={color}>
             {text}
@@ -251,57 +251,80 @@ const EnrollListScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-blue-600">
-      Danh sách đơn đăng ký học
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+        Danh sách đơn đăng ký học
       </h1>
-      <div className="flex flex-wrap items-center gap-4 mb-6">
-        <Select
-          className="w-48"
-          placeholder="Chọn niên khóa"
-          onChange={handleAcademicYearChange}
-          allowClear
-        >
-          {academicYears.map((year) => (
-            <Option key={year.id} value={year.id}>
-              {year.year}{" "}
+      <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
+              Niên khóa
+            </label>
+            <Select
+              className="w-full"
+              placeholder="Chọn niên khóa"
+              onChange={handleAcademicYearChange}
+              allowClear
+            >
+              {academicYears.map((year) => (
+                <Option key={year.id} value={year.id}>
+                  {year.year}{" "}
                   {year.timeStatus === "NOW" && (
                     <Tag color="blue" className="ml-2">
                       Hiện tại
                     </Tag>
                   )}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          className="w-48"
-          placeholder="Chọn khối"
-          onChange={handleGradeChange}
-          value={selectedGrade}
-          allowClear
-        >
-          {grades.map((grade) => (
-            <Option key={grade.id} value={grade.id}>
-              {grade.name}
-            </Option>
-          ))}
-        </Select>
-        <Search
-          placeholder="Tìm theo tên"
-          onSearch={handleSearch}
-          className="w-64"
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-        <Select
-          className="w-48"
-          placeholder="Lọc theo trạng thái"
-          onChange={handleStatusFilter}
-          allowClear
-        >
-          <Option value="APPROVE">Đồng ý</Option>
-          <Option value="PENDING">Đang chờ</Option>
-          <Option value="REJECT">Từ chối</Option>
-        </Select>
-      </div>
+                </Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">Khối</label>
+            <Select
+              className="w-full"
+              placeholder="Chọn khối"
+              onChange={handleGradeChange}
+              value={selectedGrade}
+              allowClear
+            >
+              {grades.map((grade) => (
+                <Option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
+              Trạng thái
+            </label>
+            <Select
+              className="w-full"
+              placeholder="Lọc theo trạng thái"
+              onChange={handleStatusFilter}
+              allowClear
+            >
+              <Option value="APPROVE">Đồng ý</Option>
+              <Option value="PENDING">Đang chờ</Option>
+              <Option value="REJECT">Từ chối</Option>
+            </Select>
+          </div>
+
+          <div className="space-y-2 md:col-span-3">
+            <label className="text-sm font-medium text-gray-600">
+              Tìm kiếm
+            </label>
+            <Search
+              placeholder="Tìm theo tên"
+              onSearch={handleSearch}
+              className="w-full"
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </div>
+        </div>
+      </Card>
       {selectedAcademicYear ? (
         <>
           <Table

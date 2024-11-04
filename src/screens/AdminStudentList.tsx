@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Spin, TablePaginationConfig, message, Select, Tag } from "antd";
+import {
+  Table,
+  Spin,
+  TablePaginationConfig,
+  message,
+  Select,
+  Tag,
+  Card,
+} from "antd";
 import axios from "axios";
 
 interface StudentData {
@@ -209,50 +217,61 @@ const AdminStudentList: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-blue-600">Danh Sách Thiếu Nhi</h1>
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+        Danh Sách Thiếu Nhi
+      </h1>
 
-      <div className="mb-6 flex gap-4">
-        <Select
-          style={{ width: 200 }}
-          placeholder="Chọn niên khóa"
-          onChange={handleYearChange}
-          value={selectedYear}
-          className="border border-blue-300 rounded-md shadow-sm"
-        >
-          {academicYears.map((year) => (
-            <Select.Option key={year.id} value={year.id}>
-              {year.year}{" "}
+      <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
+              Niên khóa
+            </label>
+            <Select
+              className="w-full"
+              placeholder="Chọn niên khóa"
+              onChange={handleYearChange}
+              value={selectedYear}
+            >
+              {academicYears.map((year) => (
+                <Select.Option key={year.id} value={year.id}>
+                  {year.year}{" "}
                   {year.timeStatus === "NOW" && (
                     <Tag color="blue" className="ml-2">
                       Hiện tại
                     </Tag>
                   )}
-            </Select.Option>
-          ))}
-        </Select>
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
 
-        <Select
-          style={{ width: 200 }}
-          placeholder="Chọn khối"
-          onChange={handleGradeChange}
-          value={selectedGrade}
-          className="border border-blue-300 rounded-md shadow-sm"
-        >
-          {grades.map((grade) => (
-            <Select.Option key={grade.id} value={grade.id}>
-              {grade.name}
-            </Select.Option>
-          ))}
-        </Select>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">Khối</label>
+            <Select
+              className="w-full"
+              placeholder="Chọn khối"
+              onChange={handleGradeChange}
+              value={selectedGrade}
+            >
+              {grades.map((grade) => (
+                <Select.Option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
 
-        <button
-          onClick={handleAutoAssignStudents}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
-        >
-          Xếp thiếu nhi vào lớp
-        </button>
-      </div>
-
+          <div className="space-y-2 flex items-end">
+            <button
+              onClick={handleAutoAssignStudents}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+            >
+              Xếp thiếu nhi vào lớp
+            </button>
+          </div>
+        </div>
+      </Card>
       <Spin spinning={loading}>
         {selectedYear && selectedGrade ? (
           <Table

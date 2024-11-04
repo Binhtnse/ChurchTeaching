@@ -23,20 +23,17 @@ import { useNavigate } from "react-router-dom";
 type MenuItem = Required<MenuProps>["items"][number];
 
 const getMenuItems = (role: string): MenuItem[] => {
-  const commonItems: MenuItem[] = [
-    {
-      key: "",
-      label: "Trang chủ",
-      icon: <HomeOutlined />,
-    },
-    {
-      type: "divider",
-      style: { color: "black" },
-    },
-  ];
-
   const roleSpecificItems: Record<string, MenuItem[]> = {
     STUDENT: [
+      {
+        key: "",
+        label: "Trang chủ",
+        icon: <HomeOutlined />,
+      },
+      {
+        type: "divider",
+        style: { color: "black" },
+      },
       {
         key: "student-schedule",
         label: "Lịch học",
@@ -64,6 +61,15 @@ const getMenuItems = (role: string): MenuItem[] => {
     ],
     CATECHIST: [
       {
+        key: "",
+        label: "Trang chủ",
+        icon: <HomeOutlined />,
+      },
+      {
+        type: "divider",
+        style: { color: "black" },
+      },
+      {
         key: "classes-catechist",
         label: "Lớp học",
         icon: <TeamOutlined />,
@@ -75,6 +81,15 @@ const getMenuItems = (role: string): MenuItem[] => {
       },
     ],
     PARENT: [
+      {
+        key: "",
+        label: "Trang chủ",
+        icon: <HomeOutlined />,
+      },
+      {
+        type: "divider",
+        style: { color: "black" },
+      },
       {
         key: "parent-schedule",
         label: "Lịch học của con",
@@ -110,6 +125,10 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "dashboard",
         label: "Bảng thông tin",
         icon: <AreaChartOutlined />,
+      },
+      {
+        type: "divider",
+        style: { color: "black" },
       },
       {
         key: "user-list",
@@ -174,7 +193,7 @@ const getMenuItems = (role: string): MenuItem[] => {
     ? role.toUpperCase()
     : "GUEST";
 
-  return [...commonItems, ...(roleSpecificItems[safeRole] || [])];
+  return [...(roleSpecificItems[safeRole] || [])];
 };
 
 const Sidebar: React.FC<{ role: string }> = ({ role }) => {

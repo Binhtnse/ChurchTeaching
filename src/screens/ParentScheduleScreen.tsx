@@ -560,8 +560,10 @@ const ParentScheduleScreen: React.FC = () => {
     );
   };
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-2xl font-bold text-blue-600">Lịch Học Của Con</h1>
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+        Lịch Học Của Con
+      </h1>
 
       <div className="flex flex-col space-y-6 mb-6">
         <Select
@@ -579,59 +581,61 @@ const ParentScheduleScreen: React.FC = () => {
         </Select>
 
         {selectedStudent && scheduleData && (
-          <>
-            <div className="flex space-x-6">
-              <Select
-                className="w-48"
-                placeholder="Chọn niên khóa"
-                onChange={(value) => setSelectedYear(value)}
-                value={selectedYear}
-                allowClear
-              >
-                {academicYears.map((year) => (
-                  <Option key={year.id} value={year.id}>
-                    {year.year}{" "}
-                    {year.timeStatus === "NOW" && (
-                      <Tag color="blue" className="ml-2">
-                        Hiện tại
-                      </Tag>
-                    )}
-                  </Option>
-                ))}
-              </Select>
+          <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-600">
+                  Niên khóa
+                </label>
+                <Select
+                  className="w-full"
+                  placeholder="Chọn niên khóa"
+                  onChange={(value) => setSelectedYear(value)}
+                  value={selectedYear}
+                  allowClear
+                >
+                  {academicYears.map((year) => (
+                    <Select.Option key={year.id} value={year.id}>
+                      {year.year}{" "}
+                      {year.timeStatus === "NOW" && (
+                        <Tag color="blue" className="ml-2">
+                          Hiện tại
+                        </Tag>
+                      )}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
 
-              <Select
-                style={{ width: 240 }}
-                value={selectedWeek}
-                onChange={(value) => setSelectedWeek(value)}
-                placeholder="Chọn tuần"
-                className="shadow-sm"
-              >
-                {scheduleData.schedule.map((week) => (
-                  <Option key={week.weekNumber} value={week.weekNumber}>
-                    Tuần {week.weekNumber}
-                  </Option>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-600">
+                  Tuần
+                </label>
+                <Select
+                  className="w-full"
+                  value={selectedWeek}
+                  onChange={(value) => setSelectedWeek(value)}
+                  placeholder="Chọn tuần"
+                >
+                  {scheduleData.schedule.map((week) => (
+                    <Select.Option
+                      key={week.weekNumber}
+                      value={week.weekNumber}
+                    >
+                      Tuần {week.weekNumber}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
             </div>
-
-            <div className="mb-6">
-              <Text strong className="text-lg mr-6">
-                Niên Khóa: {selectedYear}
-              </Text>
-              <Text strong className="text-lg">
-                Tuần: {selectedWeek}
-              </Text>
-            </div>
-          </>
+          </Card>
         )}
       </div>
 
       {!selectedStudent && (
-        <div className="text-center mt-8">
-          <Text className="text-gray-500">
-            Vui lòng chọn thiếu nhi để xem lịch học
-          </Text>
+        <div className="text-center text-gray-500 py-8">
+          <p className="text-lg font-semibold">Vui lòng chọn thiếu nhi</p>
+          <p className="text-sm">Vui lòng chọn thiếu nhi để xem lịch học</p>
         </div>
       )}
       <AbsenceRequestModal />

@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Table, Typography, Spin, message } from "antd";
+import { Table, Spin, message } from "antd";
 import axios from "axios";
 import usePageTitle from "../hooks/usePageTitle";
-
-const { Title } = Typography;
 
 interface Policy {
   id: number;
@@ -85,11 +83,11 @@ const PolicyListScreen: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen">
+    <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="max-w-4xl mx-auto">
-        <Title level={2} className="mb-6 text-blue-600 text-center font-bold">
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
           Quy định giảng dạy giáo lý
-        </Title>
+        </h1>
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <Spin size="large" />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Table, Typography, Tag, message, Select, Spin } from "antd";
+import { Table, Tag, message, Select, Spin, Card } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -214,55 +214,69 @@ const ListSyllabusScreen: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold text-blue-600">
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
           Danh sách giáo trình
         </h1>
-        <div className="mb-6 flex justify-start items-center space-x-4">
-          <Select
-            style={{ width: 200 }}
-            placeholder="Chọn niên khóa"
-            onChange={handleYearChange}
-            value={selectedYear}
-            allowClear
-            className="border rounded-md"
-          >
-            {academicYears.map((year) => (
-              <Select.Option key={year.id} value={year.id}>
-                {year.year}{" "}
-                {year.timeStatus === "NOW" && (
-                  <Tag color="blue" className="ml-2">
-                    Hiện tại
-                  </Tag>
-                )}
-              </Select.Option>
-            ))}
-          </Select>
-          <Select
-            style={{ width: 200, marginRight: 16 }}
-            placeholder="Chọn khối"
-            onChange={handleGradeChange}
-            value={selectedGrade}
-            allowClear
-            className="border rounded-md"
-          >
-            {grades.map((grade) => (
-              <Select.Option key={grade.id} value={grade.id}>
-                {grade.name}
-              </Select.Option>
-            ))}
-          </Select>
-          <Select
-            style={{ width: 200 }}
-            placeholder="Chọn trạng thái"
-            onChange={(value) => setSelectedStatus(value)}
-            value={selectedStatus}
-            allowClear
-            className="border rounded-md"
-          >
-            <Select.Option value="ACTIVE">Hoạt động</Select.Option>
-            <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
-          </Select>
-        </div>
+        <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">
+                Niên khóa
+              </label>
+              <Select
+                className="w-full"
+                placeholder="Chọn niên khóa"
+                onChange={handleYearChange}
+                value={selectedYear}
+                allowClear
+              >
+                {academicYears.map((year) => (
+                  <Select.Option key={year.id} value={year.id}>
+                    {year.year}{" "}
+                    {year.timeStatus === "NOW" && (
+                      <Tag color="blue" className="ml-2">
+                        Hiện tại
+                      </Tag>
+                    )}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">Khối</label>
+              <Select
+                className="w-full"
+                placeholder="Chọn khối"
+                onChange={handleGradeChange}
+                value={selectedGrade}
+                allowClear
+              >
+                {grades.map((grade) => (
+                  <Select.Option key={grade.id} value={grade.id}>
+                    {grade.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">
+                Trạng thái
+              </label>
+              <Select
+                className="w-full"
+                placeholder="Chọn trạng thái"
+                onChange={(value) => setSelectedStatus(value)}
+                value={selectedStatus}
+                allowClear
+              >
+                <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+                <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
+              </Select>
+            </div>
+          </div>
+        </Card>
         {isYearSelected ? (
           <Table
             columns={columns}
@@ -287,10 +301,11 @@ const ListSyllabusScreen: React.FC = () => {
             })}
           />
         ) : (
-          <div className="text-center py-8">
-            <Typography.Text strong>
-              Vui lòng chọn một niên khóa để xem danh sách giáo trình.
-            </Typography.Text>
+          <div className="text-center text-gray-500 py-8">
+            <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
+            <p className="text-sm">
+              Chọn một niên khóa để xem danh sách giáo trình
+            </p>
           </div>
         )}
       </div>

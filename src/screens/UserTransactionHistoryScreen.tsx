@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Spin, message, Select, Tag } from "antd";
+import { Table, Spin, message, Select, Tag, Card } from "antd";
 import axios from "axios";
 
 interface Transaction {
@@ -236,71 +236,79 @@ const UserTransactionHistoryScreen: React.FC = () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-blue-600"
-        >
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
           Lịch sử giao dịch
         </h1>
-        <div className="flex gap-4 mb-6">
-          <Select
-            style={{ width: 200 }}
-            placeholder="Chọn niên khóa"
-            onChange={(value) => {
-              setSelectedYear(value);
-              fetchTransactions(1, pagination.pageSize);
-            }}
-            value={selectedYear}
-            className="border border-blue-300 rounded-md shadow-sm"
-          >
-            {academicYears.map((year) => (
-              <Select.Option key={year.id} value={year.id}>
-                {year.year}{" "}
-                  {year.timeStatus === "NOW" && (
-                    <Tag color="blue" className="ml-2">
-                      Hiện tại
-                    </Tag>
-                  )}
-              </Select.Option>
-            ))}
-          </Select>
-          <Select
-            style={{ width: 200 }}
-            placeholder="Chọn khối"
-            onChange={(value) => {
-              setSelectedGrade(value);
-              fetchTransactions(1, pagination.pageSize);
-            }}
-            value={selectedGrade}
-            className="border border-blue-300 rounded-md shadow-sm"
-          >
-            {grades.map((grade) => (
-              <Select.Option key={grade.id} value={grade.id}>
-                {grade.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
+        <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">
+                Niên khóa
+              </label>
+              <Select
+                className="w-full"
+                placeholder="Chọn niên khóa"
+                onChange={(value) => {
+                  setSelectedYear(value);
+                  fetchTransactions(1, pagination.pageSize);
+                }}
+                value={selectedYear}
+              >
+                {academicYears.map((year) => (
+                  <Select.Option key={year.id} value={year.id}>
+                    {year.year}{" "}
+                    {year.timeStatus === "NOW" && (
+                      <Tag color="blue" className="ml-2">
+                        Hiện tại
+                      </Tag>
+                    )}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">Khối</label>
+              <Select
+                className="w-full"
+                placeholder="Chọn khối"
+                onChange={(value) => {
+                  setSelectedGrade(value);
+                  fetchTransactions(1, pagination.pageSize);
+                }}
+                value={selectedGrade}
+              >
+                {grades.map((grade) => (
+                  <Select.Option key={grade.id} value={grade.id}>
+                    {grade.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        </Card>
         {selectedYear ? (
-  <Spin spinning={loading} tip="Đang tải dữ liệu...">
-    <Table
-      columns={columns}
-      dataSource={transactions}
-      rowKey="tuitionId"
-      pagination={pagination}
-      onChange={(newPagination) =>
-        fetchTransactions(newPagination.current, newPagination.pageSize)
-      }
-      className="bg-white rounded-lg shadow-lg"
-      rowClassName="hover:bg-gray-50 transition-colors duration-200"
-    />
-  </Spin>
-) : (
-  <div className="text-center text-gray-500 py-8">
-    <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
-    <p className="text-sm">
-      Chọn một niên khóa để xem lịch sử giao dịch
-    </p>
-  </div>
-)}
+          <Spin spinning={loading} tip="Đang tải dữ liệu...">
+            <Table
+              columns={columns}
+              dataSource={transactions}
+              rowKey="tuitionId"
+              pagination={pagination}
+              onChange={(newPagination) =>
+                fetchTransactions(newPagination.current, newPagination.pageSize)
+              }
+              className="bg-white rounded-lg shadow-lg"
+              rowClassName="hover:bg-gray-50 transition-colors duration-200"
+            />
+          </Spin>
+        ) : (
+          <div className="text-center text-gray-500 py-8">
+            <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
+            <p className="text-sm">
+              Chọn một niên khóa để xem lịch sử giao dịch
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

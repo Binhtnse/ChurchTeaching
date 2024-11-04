@@ -210,9 +210,9 @@ const AdminUserListScreen: React.FC = () => {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/user/import",
-        validRecords.map(record => ({
+        validRecords.map((record) => ({
           ...record,
-          gradeName: record.gradeName || "" // Ensure gradeName is included
+          gradeName: record.gradeName || "", // Ensure gradeName is included
         })),
         {
           headers: {
@@ -330,8 +330,8 @@ const AdminUserListScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold text-blue-600">
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
         Danh sách tài khoản
       </h1>
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow">
@@ -377,7 +377,7 @@ const AdminUserListScreen: React.FC = () => {
         pagination={false}
         onRow={(record) => ({
           onClick: () => navigate(`/account/${record.id}`),
-          style: { cursor: 'pointer' }
+          style: { cursor: "pointer" },
         })}
       />
       <Pagination

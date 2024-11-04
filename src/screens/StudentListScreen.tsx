@@ -181,7 +181,7 @@ const StudentListScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div className="p-6 bg-white rounded-lg shadow-md">
       <Button
         icon={<ArrowLeftOutlined />}
         onClick={handleBack}
@@ -207,12 +207,10 @@ const StudentListScreen: React.FC = () => {
       </div>
     )}
 
-      <Title
-        level={2}
-        className="mb-6 text-center text-gray-800 font-bold text-3xl"
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4"
       >
         Danh sách Thiếu Nhi
-      </Title>
+      </h1>
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <div className="flex justify-between mb-6">
           <Input

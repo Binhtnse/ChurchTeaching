@@ -17,7 +17,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
       <Layout className="flex-1 flex flex-row">
         <Sidebar role={role} />
         <Layout className="flex flex-col flex-1">
-          <Content className="flex-1">
+          <Content className="flex-1 mt-0">
             <MyContent>{children}</MyContent>
             <ChatboxAI/>
           </Content>

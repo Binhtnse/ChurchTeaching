@@ -122,26 +122,32 @@ const AdminDashboardScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <div className="mb-6">
-        <Select
-          style={{ width: 200 }}
-          placeholder="Chọn niên khóa"
-          onChange={setSelectedYear}
-          value={selectedYear}
-          className="border border-blue-300 rounded-md shadow-sm"
-        >
-          {academicYears.map((year) => (
-            <Select.Option key={year.id} value={year.id}>
-              {year.year}{" "}
-              {year.timeStatus === "NOW" && (
-                <Tag color="blue" className="ml-2">
-                  Hiện tại
-                </Tag>
-              )}
-            </Select.Option>
-          ))}
-        </Select>
-      </div>
+      <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+        <div className="grid grid-cols-1 gap-6 p-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
+              Niên khóa
+            </label>
+            <Select
+              className="w-full"
+              placeholder="Chọn niên khóa"
+              onChange={setSelectedYear}
+              value={selectedYear}
+            >
+              {academicYears.map((year) => (
+                <Select.Option key={year.id} value={year.id}>
+                  {year.year}{" "}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+        </div>
+      </Card>
 
       {statistics ? (
         <>

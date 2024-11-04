@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Select, Tag } from "antd";
+import { Table, Select, Tag, Card } from "antd";
 import axios from "axios";
 
 const { Option } = Select;
@@ -174,63 +174,72 @@ const TransactionHistoryScreen: React.FC = () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-blue-600">
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
           Lịch sử giao dịch
         </h1>
-        <div className="mb-4 flex space-x-4">
-          <Select
-            style={{ width: 200 }}
-            placeholder="Chọn niên khóa"
-            onChange={handleAcademicYearChange}
-            className="border border-gray-300 rounded-md shadow-sm"
-          >
-            {academicYears.map((year) => (
-              <Option key={year.id} value={year.id}>
-                {year.year}{" "}
-                  {year.timeStatus === "NOW" && (
-                    <Tag color="blue" className="ml-2">
-                      Hiện tại
-                    </Tag>
-                  )}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            style={{ width: 200 }}
-            placeholder="Chọn khối"
-            onChange={handleGradeChange}
-            allowClear
-            className="border border-gray-300 rounded-md shadow-sm"
-          >
-            {grades.map((grade) => (
-              <Option key={grade.id} value={grade.id}>
-                {grade.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
+        <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">
+                Niên khóa
+              </label>
+              <Select
+                className="w-full"
+                placeholder="Chọn niên khóa"
+                onChange={handleAcademicYearChange}
+              >
+                {academicYears.map((year) => (
+                  <Option key={year.id} value={year.id}>
+                    {year.year}{" "}
+                    {year.timeStatus === "NOW" && (
+                      <Tag color="blue" className="ml-2">
+                        Hiện tại
+                      </Tag>
+                    )}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">Khối</label>
+              <Select
+                className="w-full"
+                placeholder="Chọn khối"
+                onChange={handleGradeChange}
+                allowClear
+              >
+                {grades.map((grade) => (
+                  <Option key={grade.id} value={grade.id}>
+                    {grade.name}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        </Card>
         {selectedAcademicYear ? (
-  <Table
-    dataSource={transactions}
-    columns={columns}
-    rowKey="tuitionId"
-    className="shadow-lg bg-white rounded-lg overflow-hidden"
-    pagination={{
-      pageSize: 10,
-      showSizeChanger: false,
-      className: "bg-gray-50 p-4",
-    }}
-    rowClassName="hover:bg-gray-50 transition-colors duration-200"
-    loading={loading}
-  />
-) : (
-  <div className="text-center text-gray-500 py-8">
-    <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
-    <p className="text-sm">
-      Chọn một niên khóa để xem lịch sử giao dịch
-    </p>
-  </div>
-)}
+          <Table
+            dataSource={transactions}
+            columns={columns}
+            rowKey="tuitionId"
+            className="shadow-lg bg-white rounded-lg overflow-hidden"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: false,
+              className: "bg-gray-50 p-4",
+            }}
+            rowClassName="hover:bg-gray-50 transition-colors duration-200"
+            loading={loading}
+          />
+        ) : (
+          <div className="text-center text-gray-500 py-8">
+            <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
+            <p className="text-sm">
+              Chọn một niên khóa để xem lịch sử giao dịch
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

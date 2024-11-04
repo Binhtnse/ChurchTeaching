@@ -6,6 +6,7 @@ import {
   message,
   Select,
   Tag,
+  Card,
 } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -115,7 +116,7 @@ const CatechistClassList: React.FC = () => {
           setPagination((prev) => ({
             ...prev,
             total: 0,
-            current: 1
+            current: 1,
           }));
           message.info("Không tìm thấy lớp học nào");
           return;
@@ -134,7 +135,7 @@ const CatechistClassList: React.FC = () => {
         setPagination((prev) => ({
           ...prev,
           total: 0,
-          current: 1
+          current: 1,
         }));
       } finally {
         setLoading(false);
@@ -189,66 +190,75 @@ const CatechistClassList: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-    <h1 className="text-2xl font-bold text-blue-600">
-      Lớp của giáo lý viên
-    </h1>
-    <div className="flex flex-wrap items-center gap-4 mb-6">
-      <Select
-        className="w-48"
-        placeholder="Chọn niên khóa"
-        onChange={handleYearChange}
-        value={selectedYear}
-      >
-        {academicYears.map((year) => (
-          <Select.Option key={year.id} value={year.id}>
-            {year.year}{" "}
-            {year.timeStatus === "NOW" && (
-              <Tag color="blue" className="ml-2">
-                Hiện tại
-              </Tag>
-            )}
-          </Select.Option>
-        ))}
-      </Select>
-      <Select
-        className="w-48"
-        placeholder="Chọn khối"
-        onChange={handleGradeChange}
-        value={selectedGrade}
-      >
-        {grades.map((grade) => (
-          <Select.Option key={grade.id} value={grade.id}>
-            {grade.name}
-          </Select.Option>
-        ))}
-      </Select>
-    </div>
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+        Lớp của giáo lý viên
+      </h1>
+      <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
+              Niên khóa
+            </label>
+            <Select
+              className="w-full"
+              placeholder="Chọn niên khóa"
+              onChange={handleYearChange}
+              value={selectedYear}
+            >
+              {academicYears.map((year) => (
+                <Select.Option key={year.id} value={year.id}>
+                  {year.year}{" "}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
 
-    {selectedYear ? (
-      <Spin spinning={loading}>
-        <Table
-          columns={columns}
-          dataSource={classes}
-          rowKey="id"
-          pagination={pagination}
-          onChange={handleTableChange}
-          className="mb-4 overflow-x-auto"
-          rowClassName="hover:bg-gray-50"
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-            style: { cursor: "pointer" },
-          })}
-        />
-      </Spin>
-    ) : (
-      <div className="text-center text-gray-500 py-8">
-        <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
-        <p className="text-sm">
-          Chọn một niên khóa để xem danh sách lớp học
-        </p>
-      </div>
-    )}
-  </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">Khối</label>
+            <Select
+              className="w-full"
+              placeholder="Chọn khối"
+              onChange={handleGradeChange}
+              value={selectedGrade}
+            >
+              {grades.map((grade) => (
+                <Select.Option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+        </div>
+      </Card>
+
+      {selectedYear ? (
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={classes}
+            rowKey="id"
+            pagination={pagination}
+            onChange={handleTableChange}
+            className="mb-4 overflow-x-auto"
+            rowClassName="hover:bg-gray-50"
+            onRow={(record) => ({
+              onClick: () => handleRowClick(record),
+              style: { cursor: "pointer" },
+            })}
+          />
+        </Spin>
+      ) : (
+        <div className="text-center text-gray-500 py-8">
+          <p className="text-lg font-semibold">Vui lòng chọn niên khóa</p>
+          <p className="text-sm">Chọn một niên khóa để xem danh sách lớp học</p>
+        </div>
+      )}
+    </div>
   );
 };
 export default CatechistClassList;

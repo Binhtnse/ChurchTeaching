@@ -85,9 +85,14 @@ const LoginScreen: React.FC = () => {
       }
 
       setIsLoggedIn(true);
-      setRole(response.data.data.userLogin.roleName?.toUpperCase() || "");
+      const userRole = response.data.data.userLogin.roleName?.toUpperCase() || "";
+      setRole(userRole);
       setUserName(response.data.data.userLogin.name || "");
-      navigate("/");
+      if (userRole === "ADMIN") {
+        navigate("/dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       console.error("Login failed:", error);
       message.error("Đăng nhập thất bại. Vui lòng thử lại!");

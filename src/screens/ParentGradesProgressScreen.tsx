@@ -269,7 +269,7 @@ const ParentGradesProgressScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-blue-600"
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4"
       >
         Bảng Điểm Chi Tiết
       </h1>
