@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { Typography, Spin, Card, Row, Col, Select, Collapse } from "antd";
-import { ClockCircleOutlined, BookOutlined, UserOutlined } from '@ant-design/icons';
+import { Typography, Spin, Card, Row, Col, Select, Collapse, Button } from "antd";
+import { ClockCircleOutlined, UserOutlined, LinkOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { useNavigate } from "react-router-dom";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 const { Panel } = Collapse;
+
+interface Material {
+  name: string;
+  links: string[];
+}
 
 interface Slot {
   id: number;
@@ -14,6 +20,7 @@ interface Slot {
   description: string;
   orderSlot: number;
   slotType: string;
+  materialRequestDTO: Material;
 }
 
 interface Session {
@@ -32,6 +39,7 @@ interface SyllabusData {
 }
 
 const SyllabusDetailScreen: React.FC = () => {
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [syllabus, setSyllabus] = useState<SyllabusData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +80,10 @@ const SyllabusDetailScreen: React.FC = () => {
     setSelectedSlot(value === 'all' ? null : value);
   };
 
+  const handleReturn = () => {
+    navigate('/list-syllabus');
+  };
+
   const filteredSessions = selectedSession
     ? syllabus.sessions.filter((session) => session.id === selectedSession)
     : syllabus.sessions;
@@ -87,14 +99,19 @@ const SyllabusDetailScreen: React.FC = () => {
 
   return (
     <div className="p-6">
+       <Button 
+        type="primary"
+        onClick={handleReturn}
+        className="mb-4"
+        icon={<ArrowLeftOutlined />}
+      >
+        Quay lại danh sách
+      </Button>
       <Card className="mb-6">
-        <Title level={2}>{syllabus.name}</Title>
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">{syllabus.name}</h1>
         <Row gutter={16}>
           <Col span={12}>
-            <ClockCircleOutlined /> <Text strong>Duration:</Text> {syllabus.duration}
-          </Col>
-          <Col span={12}>
-            <BookOutlined /> <Text strong>Level:</Text> {syllabus.levelName}
+            <ClockCircleOutlined /> <Text strong>Thời gian:</Text> {syllabus.duration}
           </Col>
         </Row>
       </Card>
@@ -103,7 +120,7 @@ const SyllabusDetailScreen: React.FC = () => {
         <Col span={12}>
           <Select
             style={{ width: '100%' }}
-            placeholder="Select a session"
+            placeholder="Chọn chương"
             onChange={handleSessionChange}
             allowClear
           >
@@ -118,7 +135,7 @@ const SyllabusDetailScreen: React.FC = () => {
         <Col span={12}>
           <Select
             style={{ width: '100%' }}
-            placeholder="Select a slot"
+            placeholder="Chọn tiết"
             onChange={handleSlotChange}
             allowClear
           >
@@ -140,8 +157,25 @@ const SyllabusDetailScreen: React.FC = () => {
               .filter((slot) => session.slots.some((s) => s.id === slot.id))
               .map((slot) => (
                 <Card key={slot.id} title={slot.name} className="mt-4">
-                  <p><Text strong>Description:</Text> {slot.description}</p>
-                  <p><UserOutlined /> <Text strong>Slot Type:</Text> {slot.slotType}</p>
+                  <p><Text strong>Mô tả:</Text> {slot.description}</p>
+                  <p><UserOutlined /> <Text strong>Loại tiết học:</Text> {slot.slotType}</p>
+                  {slot.materialRequestDTO && (
+                    <div>
+                      <Text strong>Tài liệu:</Text>
+                      <p>{slot.materialRequestDTO.name}</p>
+                      {slot.materialRequestDTO.links.map((link, index) => (
+                        <Button 
+                          key={index}
+                          type="link" 
+                          icon={<LinkOutlined />}
+                          href={link}
+                          target="_blank"
+                        >
+                          Link tài liệu {index + 1}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               ))}
           </Panel>

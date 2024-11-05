@@ -641,7 +641,7 @@ const AddSyllabusScreen: React.FC = () => {
           <Row justify="space-between" className="mt-4">
             <Col>
               {currentStep > 0 && (
-                <Button onClick={() => prev()}>Previous</Button>
+                <Button onClick={() => prev()}>Quay lại</Button>
               )}
             </Col>
             <Col>
@@ -651,13 +651,13 @@ const AddSyllabusScreen: React.FC = () => {
                 onClick={() => setPreviewVisible(!previewVisible)}
                 icon={<EyeOutlined />}
               >
-                {previewVisible ? "Hide Preview" : "Show Preview"}
+                {previewVisible ? "Ẩn xem trước" : "Hiện xem trước"}
               </Button>
             </Col>
             <Col>
               {currentStep < steps.length - 1 && (
                 <Button type="primary" onClick={() => next()}>
-                  Next
+                  Tiếp theo
                 </Button>
               )}
               {currentStep === steps.length - 1 && (
