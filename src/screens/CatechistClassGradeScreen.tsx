@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import {
   Table,
-  Typography,
   Spin,
   message,
   Button,
@@ -13,7 +12,11 @@ import {
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 
-const { Title } = Typography;
+interface ScoreData {
+  examId: number;
+  score: number | undefined;
+  isChanged?: boolean;
+}
 
 interface Student {
   studentId: number;
@@ -22,7 +25,7 @@ interface Student {
   account: string;
   status: string;
   scores: {
-    [key: string]: { examId: number; score: number | undefined };
+    [key: string]: ScoreData;
   };
 }
 
@@ -158,55 +161,46 @@ const CatechistClassGradeScreen: React.FC = () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-
+  
+      // Track only changed scores using Object.prototype.hasOwnProperty.call()
       const changedScores = students
-        .filter((student) =>
-          Object.values(student.scores).some(
-            (score) => score.score !== undefined
+        .filter(student => 
+          Object.values(student.scores).some(score => 
+            Object.prototype.hasOwnProperty.call(score, 'isChanged') && score['isChanged']
           )
         )
-        .map((student) => ({
+        .map(student => ({
           studentClassId: student.studentClassId,
           exams: Object.entries(student.scores)
-            .filter(([, score]) => score.score !== undefined)
+            .filter(([, score]) => Object.prototype.hasOwnProperty.call(score, 'isChanged') && score['isChanged'])
             .map(([, score]) => ({
               examId: score.examId,
               score: score.score,
             })),
         }));
-
-      console.log("Data to be sent for saveGrades:", {
-        studentClassScores: changedScores,
-      });
-
+  
       if (changedScores.length > 0) {
         await axios.put(
           "https://sep490-backend-production.up.railway.app/api/v1/student-grade",
           { studentClassScores: changedScores },
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-
         message.success("Thay đổi thành công");
       } else {
-        message.info("No changes to save");
+        message.info("Không có thay đổi để lưu");
       }
-
+  
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save grades:", error);
-      message.error("Failed to save changes");
+      message.error("Lưu thay đổi thất bại");
     } finally {
       setLoading(false);
     }
-  };
+  };   
 
   const handleScoreChange = useCallback(
-    (
-      studentClassId: number,
-      examId: number,
-      examName: string,
-      value: string
-    ) => {
+    (studentClassId: number, examId: number, examName: string, value: string) => {
       setStudents((prevStudents) =>
         prevStudents.map((student) =>
           student.studentClassId === studentClassId
@@ -217,6 +211,7 @@ const CatechistClassGradeScreen: React.FC = () => {
                   [examName]: {
                     examId,
                     score: value === "" ? undefined : parseFloat(value),
+                    isChanged: true, // Mark this score as changed
                   },
                 },
               }
@@ -225,7 +220,7 @@ const CatechistClassGradeScreen: React.FC = () => {
       );
     },
     []
-  );
+  );  
 
   const checkAllCellsFilled = useCallback(() => {
     const allFilledAndNonZero = students.every((student) =>
@@ -331,13 +326,11 @@ const CatechistClassGradeScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen">
-      <Title
-        level={2}
-        className="mb-6 text-indigo-700 pb-2 border-b-2 border-indigo-200"
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4"
       >
         Danh sách điểm số
-      </Title>
+      </h1>
       <Spin spinning={loading} tip="Đang tải...">
         <Button
           onClick={isEditing ? saveGrades : toggleEditing}
