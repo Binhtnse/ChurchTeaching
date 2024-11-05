@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Row, Col, Statistic, Select, Tag } from "antd";
+import { Card, Row, Col, Statistic, Select, Tag, message } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -65,6 +65,7 @@ const AdminDashboardScreen: React.FC = () => {
   const fetchStatistics = async (yearId: number) => {
     try {
       setLoading(true);
+      setStatistics(null); // Clear previous data
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/statistics/academic-year/${yearId}`,
@@ -74,13 +75,17 @@ const AdminDashboardScreen: React.FC = () => {
           },
         }
       );
+      if (!response.data.data) {
+        throw new Error("No data found");
+      }
       setStatistics(response.data.data);
     } catch (error) {
       console.error("Error fetching statistics:", error);
+      message.error("Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   useEffect(() => {
     fetchAcademicYears();
