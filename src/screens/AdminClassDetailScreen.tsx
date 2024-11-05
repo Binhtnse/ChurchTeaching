@@ -4,13 +4,14 @@ import {
   Spin,
   Form,
   Input,
-  Select,
   Table,
   Row,
   Col,
   message,
   FormProps,
   InputNumber,
+  Select,
+  Tag,
 } from "antd";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
@@ -91,6 +92,7 @@ const AdminClassDetailScreen: React.FC = () => {
       message.error("Failed to fetch academic years");
     }
   };
+
   const statusOptions = [
     "ACTIVE",
     "INACTIVE",
@@ -145,90 +147,125 @@ const AdminClassDetailScreen: React.FC = () => {
     return <Spin size="large" />;
   }
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md">
-        <div className="flex gap-5">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="flex justify-between items-center mb-6 bg-white p-6 rounded-xl shadow-sm">
+        <div className="flex gap-6 items-center">
           <Button
             type="primary"
             icon={<RollbackOutlined />}
             onClick={() => navigate(-1)}
+            size="large"
+            className="hover:scale-105 transition-transform"
           >
             Quay lại
           </Button>
-          <h1 className="text-2xl font-bold text-blue-600">
+          <h1 className="text-2xl font-bold text-gray-800">
             Thông tin {classData?.className}
           </h1>
         </div>
       </div>
-      <Form
-        layout="vertical"
-        form={form}
-        onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
-      >
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <Form.Item label="Tên lớp" name="className">
-              <Input />
-            </Form.Item>
-            <Form.Item label="Số lượng giáo viên" name="numberOfCatechist">
-              <InputNumber style={{ width: "100%" }} />
-            </Form.Item>
-            <Form.Item label="Khối" name="gradeId">
-              <Input name="gradeId" />
-            </Form.Item>
-            <Form.Item label="Niên khóa" name="academicYearId">
-              <Select>
-                {academicYears.map((year) => (
-                  <Select.Option key={year.id} value={year.id}>
-                    {year.year} {year.timeStatus === "NOW" ? "(Hiện tại)" : ""}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item label="Trạng thái" name="status">
-              <Select>
-                {statusOptions.map((status) => (
-                  <Select.Option key={status} value={status}>
-                    {status}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item label="Giáo viên">
-              <div>
-                <strong>Giáo viên chính:</strong>{" "}
-                {classData?.mainTeachers
-                  .filter((teacher) => teacher.isMain)
-                  .map((teacher) => teacher.name)
-                  .join(", ")}
+
+      <div className="bg-white p-8 rounded-xl shadow-sm">
+        <Form
+          layout="vertical"
+          form={form}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          className="max-w-7xl mx-auto"
+        >
+          <Row gutter={[24, 24]}>
+            <Col span={12}>
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <Form.Item label="Tên lớp" name="className">
+                  <Input className="rounded-md" />
+                </Form.Item>
+                <Form.Item label="Số lượng giáo viên" name="numberOfCatechist">
+                  <InputNumber style={{ width: "100%" }} className="rounded-md" />
+                </Form.Item>
+                <Form.Item label="Khối" name="gradeId">
+                  <Input name="gradeId" className="rounded-md" />
+                </Form.Item>
+                <Form.Item label="Niên khóa" name="academicYearId">
+                  <Select className="rounded-md">
+                    {academicYears.map((year) => (
+                      <Select.Option key={year.id} value={year.id}>
+                        {year.year}{" "}
+                        {year.timeStatus === "NOW" && (
+                          <Tag color="blue" className="ml-2">
+                            Hiện tại
+                          </Tag>
+                        )}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item label="Trạng thái" name="status">
+                  <Select className="rounded-md">
+                    {statusOptions.map((status) => (
+                      <Select.Option key={status} value={status}>
+                        {status === 'ACTIVE' && 'Đang hoạt động'}
+                        {status === 'INACTIVE' && 'Không hoạt động'}
+                        {status === 'PENDING' && 'Đang chờ'}
+                        {status === 'REJECTED' && 'Từ chối'}
+                        {status === 'APPROVE' && 'Chấp nhận'}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
               </div>
-              <strong>Giáo viên phụ:</strong>{" "}
-              {classData?.assistantTeachers.map((teacher) => (
-                <div key={teacher.id}>{teacher.name}</div>
-              ))}
-            </Form.Item>
-            <Form.Item label="Thiếu nhi thánh thể">
-              <Table
-                dataSource={classData?.students}
-                columns={columns}
-                rowKey="id"
-                pagination={false}
-                scroll={{ x: 500, y: 800 }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={24}>
-            <Form.Item>
-              <Button type="primary" htmlType="submit">
-                Cập nhật
-              </Button>
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
+            </Col>
+
+            <Col span={12}>
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <Form.Item label="Giáo viên" className="mb-6">
+                  <div className="space-y-4">
+                    <div className="bg-white p-4 rounded-md shadow-sm">
+                      <strong className="text-blue-600">Giáo viên chính:</strong>
+                      <div className="mt-2">
+                        {classData?.mainTeachers
+                          .filter((teacher) => teacher.isMain)
+                          .map((teacher) => teacher.name)
+                          .join(", ")}
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-md shadow-sm">
+                      <strong className="text-blue-600">Giáo viên phụ:</strong>
+                      {classData?.assistantTeachers.map((teacher) => (
+                        <div key={teacher.id} className="mt-2">{teacher.name}</div>
+                      ))}
+                    </div>
+                  </div>
+                </Form.Item>
+
+                <Form.Item label="Thiếu nhi thánh thể">
+                  <Table
+                    dataSource={classData?.students}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={false}
+                    scroll={{ x: 500, y: 600 }}
+                    className="border rounded-lg"
+                  />
+                </Form.Item>
+              </div>
+            </Col>
+
+            <Col span={24}>
+              <Form.Item className="text-right">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  className="px-8 hover:scale-105 transition-transform"
+                >
+                  Cập nhật
+                </Button>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </div>
     </div>
   );
 };

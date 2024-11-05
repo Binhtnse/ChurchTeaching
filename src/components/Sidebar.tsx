@@ -216,7 +216,7 @@ const Sidebar: React.FC<{ role: string }> = ({ role }) => {
   return (
     <div
       style={{
-        width: collapsed ? "80px" : "256px",
+        width: collapsed ? "80px" : "300px",
         transition: "width 0.3s",
         backgroundColor: "white",
         boxShadow: "2px 0 8px rgba(0,0,0,0.15)",
