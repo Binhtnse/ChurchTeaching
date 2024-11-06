@@ -127,6 +127,9 @@ const AdminDashboardScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+        Bảng thông tin thống kê
+      </h1>
       <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
         <div className="grid grid-cols-1 gap-6 p-4">
           <div className="space-y-2">
