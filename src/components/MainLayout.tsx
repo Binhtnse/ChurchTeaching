@@ -19,7 +19,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
         <Layout className="flex flex-col flex-1">
           <Content className="flex-1 mt-0">
             <MyContent>{children}</MyContent>
-            <ChatboxAI/>
+            {role === 'STUDENT' && <ChatboxAI/>}
           </Content>
         </Layout>
       </Layout>
