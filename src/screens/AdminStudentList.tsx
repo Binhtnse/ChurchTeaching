@@ -155,12 +155,12 @@ const AdminStudentList: React.FC = () => {
       );
       message.success("Xếp lớp thành công");
       fetchStudents(pagination.current, pagination.pageSize);
-    } catch (error) {
+    } catch (error: unknown) {
       console.log(error);
-      message.error("Xếp lớp thất bại");
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Xếp lớp thất bại";
+      message.error(errorMessage);
     }
   };
-
   useEffect(() => {
     fetchAcademicYears();
     fetchGrades();

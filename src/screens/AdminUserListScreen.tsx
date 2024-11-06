@@ -51,6 +51,27 @@ interface UserImportData {
   error?: string;
 }
 
+const columnTitleMap: { [key: string]: string } = {
+  fatherName: "Tên cha",
+  fatherSaintName: "Tên thánh cha",
+  motherName: "Tên mẹ", 
+  motherSaintName: "Tên thánh mẹ",
+  parentEmail: "Email phụ huynh",
+  parentPhoneNumber: "Số điện thoại phụ huynh",
+  childName: "Tên con",
+  childGender: "Giới tính",
+  childDob: "Ngày sinh",
+  childSaintName: "Tên thánh con",
+  baptismDate: "Ngày rửa tội",
+  baptismChurch: "Nhà thờ rửa tội",
+  firstCommunionDate: "Ngày rước lễ lần đầu",
+  firstCommunionChurch: "Nhà thờ rước lễ lần đầu",
+  confirmationDate: "Ngày thêm sức",
+  confirmationBishop: "Đức Giám Mục thêm sức",
+  gradeName: "Tên khối",
+  error: "Lỗi"
+};
+
 interface ValidationResponse {
   invalidRecords: UserImportData[];
   validRecords: UserImportData[];
@@ -449,7 +470,7 @@ const AdminUserListScreen: React.FC = () => {
                 <AntTable
                   dataSource={validRecords}
                   columns={Object.keys(validRecords[0] || {}).map((key) => ({
-                    title: key,
+                    title: columnTitleMap[key] || key,
                     dataIndex: key,
                     key: key,
                   }))}
@@ -461,8 +482,8 @@ const AdminUserListScreen: React.FC = () => {
               <TabPane tab="Invalid Records" key="2">
                 <AntTable
                   dataSource={invalidRecords}
-                  columns={Object.keys(invalidRecords[0] || {}).map((key) => ({
-                    title: key,
+                  columns={Object.keys(validRecords[0] || {}).map((key) => ({
+                    title: columnTitleMap[key] || key,
                     dataIndex: key,
                     key: key,
                   }))}
