@@ -43,14 +43,8 @@ const ListSyllabusScreen: React.FC = () => {
 
   const fetchGrades = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
       if (response.data.status === "success") {
         setGrades(response.data.data);

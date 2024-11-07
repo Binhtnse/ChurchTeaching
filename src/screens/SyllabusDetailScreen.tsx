@@ -84,6 +84,15 @@ const SyllabusDetailScreen: React.FC = () => {
     navigate('/list-syllabus');
   };
 
+  const getVietnameseSlotType = (slotType: string) => {
+    const typeMap: Record<string, string> = {
+      'lesson': 'Bài học',
+      'activity': 'Hoạt động',
+      'prayer': 'Cầu nguyện'
+    };
+    return typeMap[slotType] || slotType;
+  };
+
   const filteredSessions = selectedSession
     ? syllabus.sessions.filter((session) => session.id === selectedSession)
     : syllabus.sessions;
@@ -158,7 +167,7 @@ const SyllabusDetailScreen: React.FC = () => {
               .map((slot) => (
                 <Card key={slot.id} title={slot.name} className="mt-4">
                   <p><Text strong>Mô tả:</Text> {slot.description}</p>
-                  <p><UserOutlined /> <Text strong>Loại tiết học:</Text> {slot.slotType}</p>
+                  <p><UserOutlined /> <Text strong>Loại tiết học:</Text> {getVietnameseSlotType(slot.slotType)}</p>
                   {slot.materialRequestDTO && (
                     <div>
                       <Text strong>Tài liệu:</Text>
