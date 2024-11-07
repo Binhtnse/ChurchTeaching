@@ -18,9 +18,16 @@ import styled from "styled-components";
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-interface AbsenceStats {
-  authorizedAbsences: number;
-  unauthorizedAbsences: number;
+interface AttendanceData {
+  studentAccount: string;
+  studentName: string;
+  className: string;
+  attendanceDetails: AttendanceDetail[];
+}
+
+interface AttendanceDetail {
+  isAbsent: "ABSENT" | "FUTURE" | "FALSE";
+  isAbsentWithPermission: "TRUE" | "FALSE";
 }
 
 interface Student {
@@ -122,12 +129,16 @@ const ParentScheduleScreen: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [parentDetailsLoading, setParentDetailsLoading] = useState(false);
+  console.log(parentDetailsLoading)
+  const [modalKey, setModalKey] = useState(0);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -135,10 +146,6 @@ const ParentScheduleScreen: React.FC = () => {
     email: string;
     phoneNumber: string;
   } | null>(null);
-  const [absenceStats] = useState<AbsenceStats>({
-    authorizedAbsences: 0,
-    unauthorizedAbsences: 0,
-  });
   const [form] = Form.useForm();
 
   const fetchStudents = useCallback(async () => {
@@ -190,6 +197,46 @@ const ParentScheduleScreen: React.FC = () => {
     fetchAcademicYears();
   }, []);
 
+  const fetchAttendanceData = useCallback(async (studentId: number) => {
+    if (!selectedStudent || !selectedYear) return;
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${selectedYear}&studentId=${studentId}&gradeId=1`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setAttendanceData(response.data.data);
+    } catch (error) {
+      console.error("Error fetching attendance data:", error);
+      message.error("Không thể lấy thông tin điểm danh");
+    }
+  }, [selectedStudent, selectedYear]);
+
+  const getAttendanceStats = () => {
+    if (!attendanceData?.attendanceDetails) return {
+      totalAbsent: 0,
+      absentWithPermission: 0,
+      absentWithoutPermission: 0
+    };
+
+    const totalSessions = attendanceData.attendanceDetails.filter(d => d.isAbsent !== "FUTURE").length;
+    const absentWithPermission = attendanceData.attendanceDetails.filter(d =>
+      d.isAbsent === "ABSENT" && d.isAbsentWithPermission === "TRUE"
+    ).length;
+    const absentWithoutPermission = attendanceData.attendanceDetails.filter(d =>
+      d.isAbsent === "ABSENT" && d.isAbsentWithPermission === "FALSE"
+    ).length;
+
+    return {
+      totalSessions,
+      absentWithPermission,
+      absentWithoutPermission
+    };
+  };
+
   const fetchSchedule = useCallback(async (studentId: number) => {
     try {
       setLoading(true);
@@ -197,7 +244,10 @@ const ParentScheduleScreen: React.FC = () => {
         `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}`
       );
       setScheduleData(response.data.data);
-      setSelectedYear(response.data.data.academicYear);
+      const matchingYear = academicYears.find(year => year.year === response.data.data.academicYear);
+      if (matchingYear) {
+        setSelectedYear(matchingYear.id);
+      }
 
       const currentDate = new Date();
       const currentWeek = response.data.data.schedule.find(
@@ -218,9 +268,17 @@ const ParentScheduleScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [academicYears]);
+
+  useEffect(() => {
+    if (selectedStudent && selectedYear) {
+      fetchAttendanceData(selectedStudent);
+    }
+  }, [fetchAttendanceData, selectedStudent, selectedYear]);
+
 
   const fetchParentDetails = async (parentId: number) => {
+    setParentDetailsLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
@@ -239,6 +297,8 @@ const ParentScheduleScreen: React.FC = () => {
     } catch (error) {
       console.error("Error fetching parent details:", error);
       message.error("Không thể lấy thông tin liên hệ phụ huynh");
+    } finally {
+      setParentDetailsLoading(false);
     }
   };
 
@@ -260,7 +320,10 @@ const ParentScheduleScreen: React.FC = () => {
     return timetable;
   };
 
+  const stats = getAttendanceStats();
+
   const showModal = (slot: Slot, classItem: Class) => {
+    setModalKey(prev => prev + 1);
     setSelectedSlot(slot);
     setSelectedClass(classItem);
     setIsModalVisible(true);
@@ -357,14 +420,13 @@ const ParentScheduleScreen: React.FC = () => {
                           slot.attendance.isAbsent !== "FUTURE" && (
                             <div className="mt-2 pt-2 border-t border-gray-200">
                               <Text
-                                className={`${
-                                  slot.attendance.isAbsent === "TRUE"
-                                    ? slot.attendance.isAbsentWithPermission ===
-                                      "TRUE"
-                                      ? "text-yellow-600"
-                                      : "text-red-600"
-                                    : "text-green-600"
-                                } font-medium`}
+                                className={`${slot.attendance.isAbsent === "TRUE"
+                                  ? slot.attendance.isAbsentWithPermission ===
+                                    "TRUE"
+                                    ? "text-yellow-600"
+                                    : "text-red-600"
+                                  : "text-green-600"
+                                  } font-medium`}
                               >
                                 Trạng thái điểm danh:
                                 {slot.attendance.isAbsent === "TRUE"
@@ -406,15 +468,6 @@ const ParentScheduleScreen: React.FC = () => {
     (week) => week.weekNumber === selectedWeek
   );
 
-  if (loading) {
-    return (
-      <Spin
-        size="large"
-        className="flex justify-center items-center h-screen"
-      />
-    );
-  }
-
   const handleSubmitLeaveRequest = async (values: { reason: string }) => {
     setSubmitting(true);
     try {
@@ -450,7 +503,7 @@ const ParentScheduleScreen: React.FC = () => {
     }
   };
 
-  const AbsenceRequestModal = () => {
+  const AbsenceRequestModal = React.memo(() => {
     const selectedStudentObj = students.find((s) => s.id === selectedStudent);
     return (
       <Modal
@@ -504,20 +557,16 @@ const ParentScheduleScreen: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center">
-                  <Text strong className="w-48">
-                    Số ngày nghỉ có phép:
-                  </Text>
-                  <Text className="text-green-600">
-                    {absenceStats.authorizedAbsences}
-                  </Text>
+                  <Text strong className="w-48">Số buổi vắng có phép:</Text>
+                  <Text className="text-orange-600">{stats.absentWithPermission}</Text>
                 </div>
                 <div className="flex items-center">
-                  <Text strong className="w-48">
-                    Số ngày nghỉ không phép:
-                  </Text>
-                  <Text className="text-red-600">
-                    {absenceStats.unauthorizedAbsences}
-                  </Text>
+                  <Text strong className="w-48">Số buổi vắng không phép:</Text>
+                  <Text className="text-red-600">{stats.absentWithoutPermission}</Text>
+                </div>
+                <div className="flex items-center">
+                  <Text strong className="w-48">Tổng số buổi học:</Text>
+                  <Text>{stats.totalSessions}</Text>
                 </div>
               </div>
             </div>
@@ -558,7 +607,7 @@ const ParentScheduleScreen: React.FC = () => {
         </Form>
       </Modal>
     );
-  };
+  });
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
@@ -580,85 +629,88 @@ const ParentScheduleScreen: React.FC = () => {
           ))}
         </Select>
 
-        {selectedStudent && scheduleData && (
-          <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">
-                  Niên khóa
-                </label>
-                <Select
-                  className="w-full"
-                  placeholder="Chọn niên khóa"
-                  onChange={(value) => setSelectedYear(value)}
-                  value={selectedYear}
-                  allowClear
-                >
-                  {academicYears.map((year) => (
-                    <Select.Option key={year.id} value={year.id}>
-                      {year.year}{" "}
-                      {year.timeStatus === "NOW" && (
-                        <Tag color="blue" className="ml-2">
-                          Hiện tại
-                        </Tag>
-                      )}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">
-                  Tuần
-                </label>
-                <Select
-                  className="w-full"
-                  value={selectedWeek}
-                  onChange={(value) => setSelectedWeek(value)}
-                  placeholder="Chọn tuần"
-                >
-                  {scheduleData.schedule.map((week) => (
-                    <Select.Option
-                      key={week.weekNumber}
-                      value={week.weekNumber}
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <>
+            {selectedStudent && scheduleData && (
+              <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-600">
+                      Niên khóa
+                    </label>
+                    <Select
+                      className="w-full"
+                      placeholder="Chọn niên khóa"
+                      onChange={(value) => setSelectedYear(value)}
+                      value={selectedYear}
+                      allowClear
                     >
-                      Tuần {week.weekNumber}
-                    </Select.Option>
-                  ))}
-                </Select>
+                      {academicYears.map((year) => (
+                        <Select.Option key={year.id} value={year.id}>
+                          {year.year}{" "}
+                          {year.timeStatus === "NOW" && (
+                            <Tag color="blue" className="ml-2">
+                              Hiện tại
+                            </Tag>
+                          )}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-600">
+                      Tuần
+                    </label>
+                    <Select
+                      className="w-full"
+                      value={selectedWeek}
+                      onChange={(value) => setSelectedWeek(value)}
+                      placeholder="Chọn tuần"
+                    >
+                      {scheduleData.schedule.map((week) => (
+                        <Select.Option key={week.weekNumber} value={week.weekNumber}>
+                          Tuần {week.weekNumber}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {!selectedStudent && (
+              <div className="text-center text-gray-500 py-8">
+                <p className="text-lg font-semibold">Vui lòng chọn thiếu nhi</p>
+                <p className="text-sm">Vui lòng chọn thiếu nhi để xem lịch học</p>
               </div>
-            </div>
-          </Card>
+            )}
+            <AbsenceRequestModal key={modalKey} />
+
+            {currentWeek && (
+              <div className="mt-4">
+                <Text>
+                  Từ {currentWeek.startDate} đến {currentWeek.endDate}
+                </Text>
+                {currentWeek.classes.map((classItem, index) => {
+                  const timetable = createTimetable(classItem.slots);
+                  return (
+                    <Card key={index} className="mb-4 mt-4">
+                      <Title level={4}>{`${classItem.className} - ${classItem.grade}`}</Title>
+                      <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
+                      {renderCalendar(timetable, classItem)}
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
-
-      {!selectedStudent && (
-        <div className="text-center text-gray-500 py-8">
-          <p className="text-lg font-semibold">Vui lòng chọn thiếu nhi</p>
-          <p className="text-sm">Vui lòng chọn thiếu nhi để xem lịch học</p>
-        </div>
-      )}
-      <AbsenceRequestModal />
-
-      {currentWeek && (
-        <div className="mt-4">
-          <Text>
-            Từ {currentWeek.startDate} đến {currentWeek.endDate}
-          </Text>
-          {currentWeek.classes.map((classItem, index) => {
-            const timetable = createTimetable(classItem.slots);
-            return (
-              <Card key={index} className="mb-4 mt-4">
-                <Title
-                  level={4}
-                >{`${classItem.className} - ${classItem.grade}`}</Title>
-                <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
-                {renderCalendar(timetable, classItem)}
-              </Card>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 };
