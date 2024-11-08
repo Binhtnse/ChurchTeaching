@@ -242,13 +242,25 @@ const CatechistClassGradeScreen: React.FC = () => {
 
   const handleFinalize = async () => {
     try {
-      // Implement finalize logic here
-      message.success("Grades finalized successfully");
+      setLoading(true);
+      const accessToken = localStorage.getItem("accessToken");
+      
+      await axios.post(
+        `https://sep490-backend-production.up.railway.app/api/v1/student-grade/finalize/class/${classId}`,
+        {},
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+  
+      message.success("Tổng kết điểm thành công");
+      fetchClassGrades(); // Refresh the data after finalizing
     } catch (error) {
       console.error("Failed to finalize grades:", error);
-      message.error("Failed to finalize grades");
+      message.error("Tổng kết điểm thất bại");
+    } finally {
+      setLoading(false);
     }
   };
+  
 
   const EditableCell: React.FC<{
     value: number | undefined | null;
