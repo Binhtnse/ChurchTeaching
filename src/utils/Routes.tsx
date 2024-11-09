@@ -34,6 +34,9 @@ import { PostDetail } from "../screens/PostDetailScreen";
 import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 import AdminCatechistListScreen from "../screens/AdminCatechistListScreen";
 import StudentTransactionScreen from "../screens/StudentTransactionScreen";
+import CatechistLeaveRequestListScreen from "../screens/CatechistLeaveRequestListScreen";
+import ParentLeaveRequestListScreen from "../screens/ParentLeaveRequestListScreen";
+import AdminLeaveRequestListScreen from "../screens/AdminLeaveRequestListScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -117,6 +120,14 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/leave-requests-parent"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentLeaveRequestListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/classes-catechist/:classId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
@@ -153,6 +164,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <CatechistClassGradeScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leave-requests/:timeTableId"
+            element={
+              <ProtectedRoute allowedRoles={["CATECHIST"]}>
+                <CatechistLeaveRequestListScreen />
               </ProtectedRoute>
             }
           />
@@ -290,6 +309,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminCatechistListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leave-request-history"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminLeaveRequestListScreen />
               </ProtectedRoute>
             }
           />

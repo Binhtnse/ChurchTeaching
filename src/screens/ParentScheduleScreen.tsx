@@ -439,18 +439,20 @@ const ParentScheduleScreen: React.FC = () => {
                             </div>
                           )}
                         <div className="mt-2">
-                          <Button
-                            type="primary"
-                            icon={<EllipsisOutlined />}
-                            size="middle"
-                            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              showModal(slot, classItem);
-                            }}
-                          >
-                            Xin nghỉ
-                          </Button>
+                          {(!slot.attendance || slot.attendance.isAbsent === "FUTURE" || slot.attendance.isAbsent === "TRUE") && (
+                            <Button
+                              type="primary"
+                              icon={<EllipsisOutlined />}
+                              size="middle"
+                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                showModal(slot, classItem);
+                              }}
+                            >
+                              Xin nghỉ
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>

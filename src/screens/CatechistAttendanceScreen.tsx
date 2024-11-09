@@ -115,7 +115,7 @@ const CatechistAttendanceScreen: React.FC = () => {
     } catch (error) {
       console.error("Error saving attendance:", error);
       message.error("Lưu điểm danh thất bại");
-    }finally {
+    } finally {
       setSaveLoading(false);
     }
   };
@@ -161,7 +161,13 @@ const CatechistAttendanceScreen: React.FC = () => {
       >
         Quay lại lịch dạy
       </Button>
-      <h1 className="text-2xl font-bold text-blue-600"
+      <Button
+        onClick={() => navigate(`/leave-requests/${timeTableId}`)}
+        className="mb-4 ml-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 border rounded shadow"
+      >
+        Xem danh sách đơn xin nghỉ
+      </Button>
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4"
       >
         Điểm Danh Thiếu Nhi - {attendanceData?.slotName}
       </h1>
