@@ -180,10 +180,6 @@ const UserTransactionHistoryScreen: React.FC = () => {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
-
   const columns = [
     {
       title: "Lớp",
