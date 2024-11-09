@@ -153,7 +153,7 @@ const AdminPostScreen: React.FC = () => {
           }
         );
         if (response.status === 200) {
-          message.success("Post updated successfully");
+          message.success("Cập nhật bài viết thành công");
           // setIsEditModalVisible(false);
           // fetchPosts();
           // form.resetFields();
@@ -163,7 +163,7 @@ const AdminPostScreen: React.FC = () => {
         }
       } catch (error) {
         console.error("Error updating post:", error);
-        message.error("Failed to update post");
+        message.error("Cập nhật bài viết thất bại");
       } finally {
         setSubmitLoading(false);
       }
@@ -178,14 +178,14 @@ const AdminPostScreen: React.FC = () => {
           `https://sep490-backend-production.up.railway.app/api/posts/${postToDelete.id}`
         );
         if (response.status === 200) {
-          message.success("Post deleted successfully");
+          message.success("Xóa bài viết thành công");
           // setIsDeleteModalVisible(false);
           // setPostToDelete(null);
           window.location.reload()
         }
       } catch (error) {
         console.error("Error deleting post:", error);
-        message.error("Failed to delete post");
+        message.error("Xóa bài viết thất bại");
       } finally {
         setLoading(false);
       }
@@ -194,11 +194,11 @@ const AdminPostScreen: React.FC = () => {
 
   const handleUploadSuccess = (info: any) => {
     setImageUrl(info.secure_url);
-    message.success(`Image uploaded successfully: ${info.original_filename}`);
+    message.success(`Tải hình ảnh lên thành công: ${info.original_filename}`);
   };
 
   const handleUploadFailure = (error: unknown) => {
-    message.error("Failed to upload image");
+    message.error("Tải hình ảnh lên thất bại");
     console.error("Upload error:", error);
   };
 

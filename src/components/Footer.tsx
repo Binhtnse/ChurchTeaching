@@ -13,20 +13,20 @@ const MyFooter: React.FC = () => {
             <div className="w-full sm:w-1/4 px-4 mb-8 sm:mb-0">
               <Space direction="vertical">
                 <img src="src\assets\vecteezy_cross-christian_1194154.png" alt="Church Logo" className="h-12" />
-                <Title level={4}>ChurchTeaching</Title>
+                <Title level={4}>Nhà thờ giáo xứ Phước Vĩnh</Title>
               </Space>
             </div>
             <div className="w-full sm:w-1/4 px-4 mb-8 sm:mb-0">
               <Space direction="vertical">
-                <Title level={4}>Contact Us</Title>
-                <Text>123 Church Street, City, State 12345</Text>
-                <Text>Phone: (123) 456-7890</Text>
+                <Title level={4}>Thông tin liên hệ</Title>
+                <Text>123 Đường Lê Văn Việt, Thủ Đức, TP Hồ Chí Minh</Text>
+                <Text>Số điện thoại: (123) 456-7890</Text>
                 <Text>Email: info@churchteaching.com</Text>
               </Space>
             </div>
             <div className="w-full sm:w-1/4 px-4">
               <Space direction="vertical">
-                <Title level={4}>Follow Us</Title>
+                <Title level={4}>Theo dõi chúng tôi tại</Title>
                 <Space>
                   <Link href="https://facebook.com/churchteaching" target="_blank">
                     <FacebookOutlined className="text-2xl" />
@@ -45,7 +45,7 @@ const MyFooter: React.FC = () => {
       </div>
       <div className="py-4" style={{ backgroundColor: '#939393' }}>
         <div className="container mx-auto px-4 text-center">
-          <Text className="text-white">&copy; {new Date().getFullYear()} ChurchTeaching. All rights reserved.</Text>
+          <Text className="text-white">&copy; {new Date().getFullYear()} Bản quyền thuộc về Nhà thờ giáo xứ Phước Vĩnh</Text>
         </div>
       </div>
     </footer>

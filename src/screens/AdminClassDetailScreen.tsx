@@ -103,12 +103,12 @@ const AdminClassDetailScreen: React.FC = () => {
 
   const columns = [
     {
-      title: "Student Name",
+      title: "Tên thiếu nhi",
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "Account",
+      title: "Tên tài khoản",
       dataIndex: "account",
       key: "account",
     },
@@ -159,7 +159,7 @@ const AdminClassDetailScreen: React.FC = () => {
           >
             Quay lại
           </Button>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
             Thông tin {classData?.className}
           </h1>
         </div>
@@ -179,7 +179,7 @@ const AdminClassDetailScreen: React.FC = () => {
                 <Form.Item label="Tên lớp" name="className">
                   <Input className="rounded-md" />
                 </Form.Item>
-                <Form.Item label="Số lượng giáo viên" name="numberOfCatechist">
+                <Form.Item label="Số lượng giáo lý viên" name="numberOfCatechist">
                   <InputNumber style={{ width: "100%" }} className="rounded-md" />
                 </Form.Item>
                 <Form.Item label="Khối" name="gradeId">
@@ -218,10 +218,10 @@ const AdminClassDetailScreen: React.FC = () => {
 
             <Col span={12}>
               <div className="bg-gray-50 p-6 rounded-lg">
-                <Form.Item label="Giáo viên" className="mb-6">
+                <Form.Item label="Giáo lý viên" className="mb-6">
                   <div className="space-y-4">
                     <div className="bg-white p-4 rounded-md shadow-sm">
-                      <strong className="text-blue-600">Giáo viên chính:</strong>
+                      <strong className="text-blue-600">Giáo lý viên chính:</strong>
                       <div className="mt-2">
                         {classData?.mainTeachers
                           .filter((teacher) => teacher.isMain)
@@ -230,7 +230,7 @@ const AdminClassDetailScreen: React.FC = () => {
                       </div>
                     </div>
                     <div className="bg-white p-4 rounded-md shadow-sm">
-                      <strong className="text-blue-600">Giáo viên phụ:</strong>
+                      <strong className="text-blue-600">Giáo lý viên phụ:</strong>
                       {classData?.assistantTeachers.map((teacher) => (
                         <div key={teacher.id} className="mt-2">{teacher.name}</div>
                       ))}
@@ -238,7 +238,7 @@ const AdminClassDetailScreen: React.FC = () => {
                   </div>
                 </Form.Item>
 
-                <Form.Item label="Thiếu nhi thánh thể">
+                <Form.Item label="Danh sách thiếu nhi thánh thể">
                   <Table
                     dataSource={classData?.students}
                     columns={columns}

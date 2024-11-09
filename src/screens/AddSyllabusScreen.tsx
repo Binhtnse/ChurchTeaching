@@ -285,7 +285,7 @@ const AddSyllabusScreen: React.FC = () => {
       setSessions(newSessions);
     } else {
       message.warning(
-        `Bạn không thể tạo nhiều hơn ${declaredSlotCount} buổi cho chương này.`
+        `Bạn không thể tạo nhiều hơn ${declaredSlotCount} bài cho chương này.`
       );
     }
   };
@@ -389,12 +389,12 @@ const AddSyllabusScreen: React.FC = () => {
                   </Form.Item>
                   <Form.Item
                     name={["sessions", sessionIndex, "slotCount"]}
-                    label="Số Buổi Học"
+                    label="Số Bài Học"
                     rules={[{ required: true }]}
                   >
                     <InputNumber min={1} />
                   </Form.Item>
-                  <Title level={4}>Buổi học</Title>
+                  <Title level={4}>Bài học</Title>
                   {session.slots.map((_slot, slotIndex) => (
                     <Card
                       key={slotIndex}
@@ -409,7 +409,7 @@ const AddSyllabusScreen: React.FC = () => {
                           slotIndex,
                           "name",
                         ]}
-                        label="Tên Buổi Học"
+                        label="Tên Bài Học"
                         rules={[{ required: true }]}
                       >
                         <Input />
@@ -434,7 +434,7 @@ const AddSyllabusScreen: React.FC = () => {
                           slotIndex,
                           "type",
                         ]}
-                        label="Loại Buổi Học"
+                        label="Hoạt động chính"
                         rules={[{ required: true }]}
                       >
                         <Select>
@@ -494,12 +494,12 @@ const AddSyllabusScreen: React.FC = () => {
                               },
                             });
                             message.success(
-                              `File "${uploadInfo.original_filename}" uploaded successfully`
+                              `Tải file "${uploadInfo.original_filename}" thành công`
                             );
                           }}
                           onUploadFailure={(error) => {
                             console.error("Upload failed:", error);
-                            message.error("Failed to upload file");
+                            message.error("Tải file lên thất bại");
                           }}
                         />
                       </Form.Item>
@@ -511,7 +511,7 @@ const AddSyllabusScreen: React.FC = () => {
                     block
                     icon={<PlusOutlined />}
                   >
-                    Thêm buổi học
+                    Thêm bài học
                   </Button>
                 </Card>
               </Panel>

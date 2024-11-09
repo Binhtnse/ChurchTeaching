@@ -26,7 +26,7 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
       } catch (error) {
         console.error("Logout failed:", error);
       }
-    }else if (e.key === "account") {
+    } else if (e.key === "account") {
       navigate("/account");
     }
   };
@@ -35,9 +35,9 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
     <Menu onClick={handleMenuClick}>
       {isLoggedIn ? (
         <>
-        <Menu.Item key="account">Thông tin tài khoản</Menu.Item>
-        <Menu.Item key="logout">Đăng xuất</Menu.Item>
-      </>
+          <Menu.Item key="account">Thông tin tài khoản</Menu.Item>
+          <Menu.Item key="logout">Đăng xuất</Menu.Item>
+        </>
       ) : (
         <Menu.Item key="login">Đăng nhập</Menu.Item>
       )}
@@ -53,7 +53,7 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
           className="h-8 w-8 mr-2"
         />
         <Title level={4} className="m-0 text-white">
-          Church Teaching
+          Nhà thờ giáo xứ Phước Vĩnh
         </Title>
       </Space>
       <Space>
@@ -66,7 +66,7 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
         />
         <Dropdown overlay={menu} placement="bottomRight">
           <Button icon={<UserOutlined />}>
-          {isLoggedIn ? userName || "Account" : "Login"}
+            {isLoggedIn ? userName || "Account" : "Login"}
           </Button>
         </Dropdown>
       </Space>

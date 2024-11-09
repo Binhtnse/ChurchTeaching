@@ -171,9 +171,15 @@ const AdminUserDetailScreen: React.FC = () => {
           <Descriptions.Item label="Số điện thoại">
             {userData.phoneNumber}
           </Descriptions.Item>
-          <Descriptions.Item label="Vai trò">{userData.role}</Descriptions.Item>
+          <Descriptions.Item label="Vai trò"> {userData.role === "CATECHIST"
+            ? "Giáo lý viên"
+            : userData.role === "PARENT"
+              ? "Phụ huynh"
+              : userData.role === "STUDENT"
+                ? "Thiếu nhi thánh thể"
+                : userData.role}</Descriptions.Item>
           <Descriptions.Item label="Trạng thái">
-            {userData.status}
+            {userData.status === "ACTIVE" ? "Đang hoạt động" : "Không hoạt động"}
           </Descriptions.Item>
         </Descriptions>
       </Card>

@@ -15,7 +15,8 @@ import {
   SnippetsOutlined,
   CreditCardOutlined,
   AreaChartOutlined,
-  FileDoneOutlined
+  FileDoneOutlined,
+  ReadOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -149,7 +150,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       {
         key: "syllabus",
         label: "Quản lý giáo trình",
-        icon: <BookOutlined />,
+        icon: <ReadOutlined />,
         children: [
           { key: "list-syllabus", label: "Xem tất cả giáo trình" },
           { key: "add-syllabus", label: "Tạo giáo trình" },

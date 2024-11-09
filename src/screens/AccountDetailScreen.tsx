@@ -20,6 +20,8 @@ interface UserData {
   address: string;
   gender: string;
   phoneNumber: string;
+  role: string;
+  status: string;
 }
 
 const AccountDetailScreen: React.FC = () => {
@@ -36,11 +38,11 @@ const AccountDetailScreen: React.FC = () => {
         const user = userString ? JSON.parse(userString) : null;
         const userId = user?.id;
         const token = localStorage.getItem("accessToken");
-    
+
         if (!isLoggedIn || !userId) {
           return;
         }
-    
+
         const response = await axios.get(
           `https://sep490-backend-production.up.railway.app/api/v1/user?id=${userId}`,
           {
@@ -154,6 +156,16 @@ const AccountDetailScreen: React.FC = () => {
             </Descriptions.Item>
             <Descriptions.Item label="Số điện thoại">
               {userData?.phoneNumber}
+            </Descriptions.Item>
+            <Descriptions.Item label="Vai trò"> {userData?.role === "CATECHIST"
+              ? "Giáo lý viên"
+              : userData?.role === "PARENT"
+                ? "Phụ huynh"
+                : userData?.role === "STUDENT"
+                  ? "Thiếu nhi thánh thể"
+                  : userData?.role}</Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">
+              {userData?.status === "ACTIVE" ? "Đang hoạt động" : "Không hoạt động"}
             </Descriptions.Item>
           </Descriptions>
           <Button
