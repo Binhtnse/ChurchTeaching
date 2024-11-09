@@ -54,7 +54,7 @@ interface UserImportData {
 const columnTitleMap: { [key: string]: string } = {
   fatherName: "Tên cha",
   fatherSaintName: "Tên thánh cha",
-  motherName: "Tên mẹ", 
+  motherName: "Tên mẹ",
   motherSaintName: "Tên thánh mẹ",
   parentEmail: "Email phụ huynh",
   parentPhoneNumber: "Số điện thoại phụ huynh",
@@ -76,8 +76,6 @@ interface ValidationResponse {
   invalidRecords: UserImportData[];
   validRecords: UserImportData[];
 }
-
-const { TabPane } = Tabs;
 
 const AdminUserListScreen: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -192,7 +190,7 @@ const AdminUserListScreen: React.FC = () => {
       link.remove();
     } catch (error) {
       console.error("Error downloading template:", error);
-      message.error("Failed to download template");
+      message.error("Tải template thất bại");
     }
   };
 
@@ -216,10 +214,10 @@ const AdminUserListScreen: React.FC = () => {
 
       setValidRecords(validationResponse.data.validRecords);
       setInvalidRecords(validationResponse.data.invalidRecords);
-      message.success("File validated successfully");
+      message.success("Xác thực thông tin thành công");
     } catch (error) {
       console.error("Error validating file:", error);
-      message.error("Failed to validate file");
+      message.error("Xác thực thông tin thất bại");
     } finally {
       setIsUploading(false);
     }
@@ -243,12 +241,12 @@ const AdminUserListScreen: React.FC = () => {
         }
       );
       console.log(response);
-      message.success("Valid records imported successfully");
+      message.success("Tải lên thành công");
       fetchUsers();
       setIsModalVisible(false);
     } catch (error) {
       console.error("Error importing users:", error);
-      message.error("Failed to import users");
+      message.error("Tải lên thất bại");
     } finally {
       setIsUploading(false);
     }
@@ -330,7 +328,8 @@ const AdminUserListScreen: React.FC = () => {
       key: "status",
       render: (status: string) => {
         const color = status === "ACTIVE" ? "green" : "red";
-        return <Tag color={color}>{status}</Tag>;
+        const displayStatus = status === "ACTIVE" ? "Đang hoạt động" : status;
+        return <Tag color={color}>{displayStatus}</Tag>;
       },
     },
     {
@@ -463,36 +462,67 @@ const AdminUserListScreen: React.FC = () => {
           </p>
         </Dragger>
         {(validRecords.length > 0 || invalidRecords.length > 0) && (
-          <div className="mt-4">
-            <h3>File Preview:</h3>
-            <Tabs defaultActiveKey="1">
-              <TabPane tab="Valid Records" key="1">
-                <AntTable
-                  dataSource={validRecords}
-                  columns={Object.keys(validRecords[0] || {}).map((key) => ({
-                    title: columnTitleMap[key] || key,
-                    dataIndex: key,
-                    key: key,
-                  }))}
-                  pagination={false}
-                  scroll={{ x: true, y: 300 }}
-                  size="small"
-                />
-              </TabPane>
-              <TabPane tab="Invalid Records" key="2">
-                <AntTable
-                  dataSource={invalidRecords}
-                  columns={Object.keys(validRecords[0] || {}).map((key) => ({
-                    title: columnTitleMap[key] || key,
-                    dataIndex: key,
-                    key: key,
-                  }))}
-                  pagination={false}
-                  scroll={{ x: true, y: 300 }}
-                  size="small"
-                />
-              </TabPane>
-            </Tabs>
+          <div className="mt-8 bg-white rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4 text-blue-600 px-4 pt-4">
+              Xem trước nội dung tải lên
+            </h3>
+            <Tabs
+              defaultActiveKey="1"
+              type="card"
+              className="mx-4"
+              items={[
+                {
+                  key: "1",
+                  label: (
+                    <span className="px-2">
+                      <Tag color="green">Hợp lệ ({validRecords.length})</Tag>
+                    </span>
+                  ),
+                  children: (
+                    <div className="border rounded-b-lg p-4">
+                      <AntTable
+                        dataSource={validRecords}
+                        columns={Object.keys(validRecords[0] || {}).map((key) => ({
+                          title: columnTitleMap[key] || key,
+                          dataIndex: key,
+                          key: key,
+                          ellipsis: true,
+                        }))}
+                        pagination={false}
+                        scroll={{ x: true, y: 300 }}
+                        size="small"
+                        className="border rounded-lg"
+                      />
+                    </div>
+                  )
+                },
+                {
+                  key: "2",
+                  label: (
+                    <span className="px-2">
+                      <Tag color="red">Không hợp lệ ({invalidRecords.length})</Tag>
+                    </span>
+                  ),
+                  children: (
+                    <div className="border rounded-b-lg p-4">
+                      <AntTable
+                        dataSource={invalidRecords}
+                        columns={Object.keys(validRecords[0] || {}).map((key) => ({
+                          title: columnTitleMap[key] || key,
+                          dataIndex: key,
+                          key: key,
+                          ellipsis: true,
+                        }))}
+                        pagination={false}
+                        scroll={{ x: true, y: 300 }}
+                        size="small"
+                        className="border rounded-lg"
+                      />
+                    </div>
+                  )
+                }
+              ]}
+            />
           </div>
         )}
       </Modal>

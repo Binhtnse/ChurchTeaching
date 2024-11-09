@@ -99,7 +99,7 @@ const ImportFileModal = () => {
         icon={<ImportOutlined />}
         onClick={() => setIsModalOpen(true)}
       >
-        Import
+        Tải lên
       </Button>
       <Modal
         title="Nhập File"

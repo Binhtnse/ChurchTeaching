@@ -28,6 +28,7 @@ interface AttendanceData {
 const CatechistAttendanceScreen: React.FC = () => {
   const { isLoggedIn, role, checkAuthState } = useAuthState();
   const [loading, setLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const { setPageTitle } = usePageTitle();
   const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(
     null
@@ -89,6 +90,7 @@ const CatechistAttendanceScreen: React.FC = () => {
   };
 
   const handleSaveAttendance = async () => {
+    setSaveLoading(true);
     try {
       const accessToken = localStorage.getItem("accessToken");
       const requestBody = {
@@ -106,13 +108,15 @@ const CatechistAttendanceScreen: React.FC = () => {
       );
 
       if (response.status === 200) {
-        message.success("Attendance saved successfully");
+        message.success("Lưu điểm danh thành công");
       } else {
-        throw new Error("Failed to save attendance");
+        throw new Error("Lưu điểm danh thất bại");
       }
     } catch (error) {
       console.error("Error saving attendance:", error);
-      message.error("Failed to save attendance");
+      message.error("Lưu điểm danh thất bại");
+    }finally {
+      setSaveLoading(false);
     }
   };
 
@@ -180,6 +184,7 @@ const CatechistAttendanceScreen: React.FC = () => {
           <Button
             icon={<SaveOutlined />}
             onClick={handleSaveAttendance}
+            loading={saveLoading}
             className="bg-green-500 text-white hover:bg-green-600 font-bold py-2 px-4 rounded-full transition-colors duration-300"
           >
             Lưu điểm danh

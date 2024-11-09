@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
@@ -39,19 +39,6 @@ const { Step } = Steps;
 interface Grade {
   id: number;
   name: string;
-}
-
-interface GradeTemplate {
-  id: number;
-  name: string;
-  maxExamCount: number;
-  exams: {
-    id: number;
-    name: string;
-    weight: number;
-    status: string | null;
-    gradeTemplateName: string;
-  }[];
 }
 
 const SyllabusPreview: React.FC<{
@@ -102,9 +89,8 @@ const SyllabusPreview: React.FC<{
                 renderItem={(slot, slotIndex: number) => (
                   <List.Item>
                     <Space direction="vertical" size="small">
-                      <Text strong>{`Buổi ${slotIndex + 1}: ${
-                        slot.name
-                      }`}</Text>
+                      <Text strong>{`Buổi ${slotIndex + 1}: ${slot.name
+                        }`}</Text>
                       <Text>{slot.description}</Text>
                       <Tag color="green">{slot.type}</Tag>
                     </Space>
@@ -128,15 +114,11 @@ const AddSyllabusScreen: React.FC = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [gradeTemplates, setGradeTemplates] = useState<GradeTemplate[]>([]);
-  const [selectedGradeTemplate, setSelectedGradeTemplate] = useState<
-    number | null
-  >(null);
   const [policies, setPolicies] = useState<
-    { id: number; absenceLimit: number; numberOfMember: number }[]
+    { id: number; absenceLimit: number; absenceWithPermissionLimit: number }[]
   >([]);
   const [academicYears, setAcademicYears] = useState<
-    { id: number; year: string }[]
+    { id: number; year: string; timeStatus: string }[]
   >([]);
   const [formValues, setFormValues] = useState<{
     name: string;
@@ -173,33 +155,33 @@ const AddSyllabusScreen: React.FC = () => {
         policyId: values.policyId,
         sessions: values.sessions
           ? values.sessions.map(
-              (session: {
+            (session: {
+              name: string;
+              description: string;
+              slotCount: number;
+              slots: Array<{
+                materialLinks: string[];
                 name: string;
                 description: string;
-                slotCount: number;
-                slots: Array<{
-                  materialLinks: string[];
-                  name: string;
-                  description: string;
-                  type: string;
-                  materialName: string;
-                }>;
-              }) => ({
-                name: session.name,
-                description: session.description,
-                numberOfSlot: session.slotCount,
-                slots: session.slots.map((slot, slotIndex) => ({
-                  name: slot.name,
-                  description: slot.description,
-                  orderSlot: slotIndex + 1,
-                  slotType: slot.type,
-                  materialRequestDTO: {
-                    name: slot.materialName || "",
-                    links: slot.materialLinks || [],
-                  },
-                })),
-              })
-            )
+                type: string;
+                materialName: string;
+              }>;
+            }) => ({
+              name: session.name,
+              description: session.description,
+              numberOfSlot: session.slotCount,
+              slots: session.slots.map((slot, slotIndex) => ({
+                name: slot.name,
+                description: slot.description,
+                orderSlot: slotIndex + 1,
+                slotType: slot.type,
+                materialRequestDTO: {
+                  name: slot.materialName || "",
+                  links: slot.materialLinks || [],
+                },
+              })),
+            })
+          )
           : [],
       };
 
@@ -226,24 +208,6 @@ const AddSyllabusScreen: React.FC = () => {
     }
   };
 
-  const fetchGradeTemplate = useCallback(async () => {
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      setGradeTemplates(response.data.data);
-    } catch (error) {
-      console.error("Error fetching grade template:", error);
-      message.error("Failed to load grade template data");
-    }
-  }, []);
-
   const fetchPolicies = async () => {
     try {
       const response = await axios.get(
@@ -263,10 +227,6 @@ const AddSyllabusScreen: React.FC = () => {
   useEffect(() => {
     fetchPolicies();
   }, []);
-
-  useEffect(() => {
-    fetchGradeTemplate();
-  }, [fetchGradeTemplate]);
 
   useEffect(() => {
     const fetchAcademicYears = async () => {
@@ -361,25 +321,28 @@ const AddSyllabusScreen: React.FC = () => {
           <Form.Item
             name="academicYearId"
             label="Niên khóa"
-            rules={[{ required: true }]}
+            rules={[
+              { required: true },
+              {
+                validator: (_, value) => {
+                  const selectedYear = academicYears.find(year => year.id === value);
+                  if (selectedYear?.timeStatus === 'NOW') {
+                    return Promise.reject('Chương trình này chỉ có thể áp dụng cho năm học sau');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Select>
               {academicYears.map((year) => (
                 <Option key={year.id} value={year.id}>
-                  {year.year}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="gradeTemplateId"
-            label="Khung chấm điểm"
-            rules={[{ required: true }]}
-          >
-            <Select onChange={(value) => setSelectedGradeTemplate(value)}>
-              {gradeTemplates.map((template) => (
-                <Option key={template.id} value={template.id}>
-                  {template.name}
+                  {year.year}{" "}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
                 </Option>
               ))}
             </Select>
@@ -392,7 +355,7 @@ const AddSyllabusScreen: React.FC = () => {
             <Select>
               {policies.map((policy) => (
                 <Option key={policy.id} value={policy.id}>
-                  {`Absence Limit: ${policy.absenceLimit}, Members: ${policy.numberOfMember}`}
+                  {`Số buổi vắng không phép tối đa: ${policy.absenceLimit}, Số buổi vắng có phép tối đa: ${policy.absenceWithPermissionLimit}`}
                 </Option>
               ))}
             </Select>
@@ -581,7 +544,7 @@ const AddSyllabusScreen: React.FC = () => {
       setFormValues(values);
       setCurrentStep(currentStep + 1);
     });
-  };  
+  };
 
   const prev = () => {
     setCurrentStep(currentStep - 1);
@@ -600,8 +563,6 @@ const AddSyllabusScreen: React.FC = () => {
   if (!isLoggedIn || role !== "ADMIN") {
     return <ForbiddenScreen />;
   }
-
-  console.log(selectedGradeTemplate);
 
   return (
     <div className="p-6">
