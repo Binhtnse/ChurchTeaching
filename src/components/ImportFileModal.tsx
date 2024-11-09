@@ -132,7 +132,7 @@ const ImportFileModal = () => {
           loading={uploading}
           style={{ marginTop: 16 }}
         >
-          {uploading ? "Uploading" : "Start Upload"}
+          {uploading ? "Đang tải lên" : "Tải lên"}
         </Button>
       </Modal>
     </>
