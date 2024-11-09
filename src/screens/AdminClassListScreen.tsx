@@ -265,7 +265,7 @@ const AdminClassListScreen: React.FC = () => {
       key: "name",
     },
     {
-      title: "Số lượng giáo viên",
+      title: "Số lượng giáo lý viên",
       dataIndex: "numberOfCatechist",
       key: "numberOfCatechist",
     },
@@ -291,24 +291,28 @@ const AdminClassListScreen: React.FC = () => {
           case "ACTIVE":
             color = "success";
             icon = <CheckCircleOutlined />;
+            status = "Hoạt động";
             break;
           case "PENDING":
             color = "processing";
             icon = <ClockCircleOutlined />;
+            status = "Đang chờ";
             break;
           case "INACTIVE":
             color = "default";
             icon = <CloseCircleOutlined />;
+            status = "Không hoạt động";
             break;
           case "REJECTED":
             color = "error";
             icon = <CloseCircleOutlined />;
+            status = "Từ chối";
             break;
         }
 
         return (
           <Tag icon={icon} color={color}>
-            {status === "REJECTED" ? "REJECT" : status.toUpperCase()}
+            {status}
           </Tag>
         );
       },
@@ -418,6 +422,7 @@ const AdminClassListScreen: React.FC = () => {
             >
               <Option value="APPROVE">Đồng ý</Option>
               <Option value="PENDING">Đang chờ</Option>
+              <Option value="INACTIVE">Không hoạt động</Option>
               <Option value="REJECT">Từ chối</Option>
             </Select>
           </div>

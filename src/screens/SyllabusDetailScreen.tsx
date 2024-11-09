@@ -68,7 +68,7 @@ const SyllabusDetailScreen: React.FC = () => {
   }
 
   if (!syllabus) {
-    return <Text>Syllabus not found</Text>;
+    return <Text>Không tìm thấy giáo trình</Text>;
   }
 
   const handleSessionChange = (value: number | 'all') => {
