@@ -158,7 +158,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       },
       {
         key: "post",
-        label: "Quản lý Post",
+        label: "Quản lý bài viết",
         icon: <BookOutlined />,
       },
       {

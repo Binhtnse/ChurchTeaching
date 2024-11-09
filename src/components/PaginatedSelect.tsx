@@ -90,7 +90,7 @@ const PaginatedSelect: React.FC<PaginatedSelectProps> = ({
       value={value}
       onChange={onChange}
       options={options}
-      placeholder="Chọn cấp"
+      placeholder="Chọn khối"
       loading={loading}
       style={{ width: "100%" }}
       showSearch

@@ -117,10 +117,14 @@ const CatechistScheduleScreen: React.FC = () => {
           return;
         }
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/schedule/catechist/${userId}`
+          `https://sep490-backend-production.up.railway.app/api/v1/schedule/catechist/${userId}?academicYear=${selectedYear}`
         );
+        if (!response.data.data || response.data.data.length === 0) {
+          setScheduleData(null);
+          setSelectedWeek(1);
+          return;
+        }
         setScheduleData(response.data.data);
-        setSelectedYear(response.data.data.academicYear);
         const currentDate = new Date();
         const currentWeek = response.data.data.schedule.find(
           (week: WeekSchedule) => {
@@ -134,15 +138,18 @@ const CatechistScheduleScreen: React.FC = () => {
             ? currentWeek.weekNumber
             : response.data.data.schedule[0].weekNumber
         );
-        setLoading(false);
       } catch (error) {
-        console.error("Error fetching schedule:", error);
+        console.log(error)
+        setScheduleData(null);
+        setSelectedWeek(1);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchSchedule();
-  }, []);
+    
+      fetchSchedule();
+  }, [selectedYear]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -317,7 +324,7 @@ const CatechistScheduleScreen: React.FC = () => {
               allowClear
             >
               {academicYears.map((year) => (
-                <Select.Option key={year.id} value={year.id}>
+                <Select.Option key={year.id} value={year.year}>
                   {year.year}{" "}
                   {year.timeStatus === "NOW" && (
                     <Tag color="blue" className="ml-2">

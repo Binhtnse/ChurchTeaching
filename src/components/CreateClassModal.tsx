@@ -12,6 +12,43 @@ interface CreateClassPayload {
   academicYearId: number;
 }
 
+const modalStyles = {
+  content: {
+    borderRadius: '12px',
+    padding: '24px',
+    maxWidth: '800px',
+    margin: 'auto'
+  },
+  header: {
+    borderBottom: '1px solid #f0f0f0',
+    padding: '16px 24px',
+    marginBottom: '24px'
+  },
+  form: {
+    padding: '0 24px'
+  },
+  formItem: {
+    marginBottom: '24px'
+  },
+  input: {
+    height: '40px',
+    borderRadius: '6px'
+  },
+  footer: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    padding: '16px 24px',
+    borderTop: '1px solid #f0f0f0',
+    marginTop: '24px'
+  },
+  button: {
+    height: '40px',
+    borderRadius: '6px',
+    minWidth: '100px'
+  }
+}
+
 const CreateClassModal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,11 +80,11 @@ const CreateClassModal = () => {
       );
 
       if (response.data.status === "success") {
-        message.success("Class created successfully!");
+        message.success("Tạo lớp thành công");
         form.resetFields(); // Reset the form fields
         setIsModalOpen(false); // Close modal after successful creation
       } else {
-        message.error("Failed to create class.");
+        message.error("Tạo lớp thất bại");
       }
     } catch (error) {
       console.error("Error creating class:", error);
@@ -73,51 +110,62 @@ const CreateClassModal = () => {
         onOk={handleOk}
         onCancel={handleCancel}
         footer={null}
-        style={{ top: 20 }}
-        width={1000}
+        style={{ ...modalStyles.content }}
+        width={800}
       >
-        <Form layout="vertical" form={form}>
+        <Form layout="vertical" form={form} style={modalStyles.form}>
           <Form.Item
             label="Tên lớp"
             name="className"
+            style={modalStyles.formItem}
             rules={[{ required: true, message: "Vui lòng nhập tên lớp!" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
-            label="Số lượng giảng viên"
+            label="Số lượng giáo lý viên"
             name="numberOfCatechist"
+            style={modalStyles.formItem}
             rules={[
-              { required: true, message: "Vui lòng nhập số lượng giảng viên!" },
+              { required: true, message: "Vui lòng nhập số lượng giáo lý viên!" },
             ]}
           >
             <Input type="number" />
           </Form.Item>
           <Form.Item
-            label="Tên cấp lớp"
+            label="Tên khối"
             name="gradeId"
-            rules={[{ required: true, message: "Vui lòng nhập tên cấp lớp!" }]}
+            style={modalStyles.formItem}
+            rules={[{ required: true, message: "Vui lòng nhập tên khối!" }]}
           >
             {/* <Input /> */}
             <PaginatedSelect />
           </Form.Item>
           <Form.Item
-            label="Năm học"
+            label="Niên khóa"
             name="academicYear"
-            rules={[{ required: true, message: "Vui lòng chọn năm học!" }]}
+            style={modalStyles.formItem}
+            rules={[{ required: true, message: "Vui lòng chọn niên khóa!" }]}
           >
             <SelectYear />
           </Form.Item>
           <Form.Item>
-            <Button
-              type="primary"
-              onClick={handleOk}
-              loading={loading}
-              style={{ marginRight: 8 }}
-            >
-              Tạo
-            </Button>
-            <Button onClick={handleCancel}>Hủy</Button>
+            <div style={modalStyles.footer}>
+              <Button
+                type="primary"
+                onClick={handleOk}
+                loading={loading}
+                style={modalStyles.button}
+              >
+                Tạo
+              </Button>
+              <Button
+                onClick={handleCancel}
+                style={modalStyles.button}
+              >
+                Hủy
+              </Button>
+            </div>
           </Form.Item>
         </Form>
       </Modal>
