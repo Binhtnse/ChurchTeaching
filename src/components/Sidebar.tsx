@@ -14,7 +14,8 @@ import {
   UsergroupAddOutlined,
   SnippetsOutlined,
   CreditCardOutlined,
-  AreaChartOutlined
+  AreaChartOutlined,
+  FileDoneOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -172,6 +173,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "transaction-history",
         label: "Lịch sử giao dịch",
         icon: <AccountBookOutlined />,
+      },
+      {
+        key: "leave-request-history",
+        label: "Danh sách đơn xin nghỉ",
+        icon: <FileDoneOutlined />,
       },
       {
         key: "policy",

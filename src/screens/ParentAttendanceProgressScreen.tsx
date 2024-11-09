@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Select, Table, Card, Spin, message, Tag } from "antd";
+import { Select, Table, Card, Spin, message, Tag, Button } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -50,6 +51,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
   const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(
     null
   );
+  const navigate = useNavigate();
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -173,17 +175,17 @@ const ParentAttendanceProgressScreen: React.FC = () => {
 
   const getAttendanceStats = () => {
     if (!attendanceData?.attendanceDetails || !activePolicy) return null;
-  
+
     const totalSessions = attendanceData.attendanceDetails.filter(d => d.isAbsent !== "FUTURE").length;
-    const absentWithPermission = attendanceData.attendanceDetails.filter(d => 
+    const absentWithPermission = attendanceData.attendanceDetails.filter(d =>
       d.isAbsent === "ABSENT" && d.isAbsentWithPermission === "TRUE"
     ).length;
-    const absentWithoutPermission = attendanceData.attendanceDetails.filter(d => 
+    const absentWithoutPermission = attendanceData.attendanceDetails.filter(d =>
       d.isAbsent === "ABSENT" && d.isAbsentWithPermission === "FALSE"
     ).length;
-    
+
     const absentPercentage = totalSessions ? ((absentWithPermission + absentWithoutPermission) / totalSessions * 100).toFixed(1) : 0;
-  
+
     return (
       <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-indigo-100 shadow-sm">
         <h3 className="text-xl font-semibold text-indigo-700 mb-4">Thống kê điểm danh</h3>
@@ -197,7 +199,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
               </span>
             </div>
           </div>
-          
+
           <div className="bg-white p-4 rounded-lg shadow-sm border border-indigo-100">
             <div className="text-sm text-gray-500 mb-1">Vắng không phép</div>
             <div className="flex items-center justify-between">
@@ -207,7 +209,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
               </span>
             </div>
           </div>
-          
+
           <div className="bg-white p-4 rounded-lg shadow-sm border border-indigo-100">
             <div className="text-sm text-gray-500 mb-1">Tổng vắng</div>
             <div className="flex items-center justify-between">
@@ -220,7 +222,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
         </div>
       </div>
     );
-  };  
+  };
 
   const columns = [
     {
@@ -249,10 +251,18 @@ const ParentAttendanceProgressScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4"
-      >
-        Thông Tin Điểm Danh
-      </h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600">
+          Thông Tin Điểm Danh
+        </h1>
+        <Button
+          type="primary"
+          onClick={() => navigate('/leave-requests-parent')}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          Xem đơn xin nghỉ
+        </Button>
+      </div>
 
       <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
