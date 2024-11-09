@@ -8,6 +8,7 @@ import {
   UploadFile,
   message,
   DatePicker,
+  Spin,
 } from "antd";
 import axios from "axios";
 import { UploadOutlined } from "@ant-design/icons";
@@ -195,18 +196,18 @@ const EnrollScreen: React.FC = () => {
                     // Remove required rule for the "Thông tin liên quan khác" group
                     ...(groupIndex !== 2
                       ? [
-                          {
-                            required: true,
-                            message: `Vui lòng trả lời câu hỏi này!`,
-                          },
-                        ]
+                        {
+                          required: true,
+                          message: `Vui lòng trả lời câu hỏi này!`,
+                        },
+                      ]
                       : []),
                   ]}
                 >
                   {question.questionId === 9 ||
-                  question.questionId === 11 ||
-                  question.questionId === 13 ||
-                  question.questionId === 15 ? (
+                    question.questionId === 11 ||
+                    question.questionId === 13 ||
+                    question.questionId === 15 ? (
                     <DatePicker
                       format="DD-MM-YYYY"
                       onChange={(date) => {
@@ -271,7 +272,7 @@ const EnrollScreen: React.FC = () => {
                     }
                   }}
                 >
-                  <Button icon={<UploadOutlined />}>Upload Images</Button>
+                  <Button icon={<UploadOutlined />}>Tải hình ảnh lên</Button>
                 </Upload>
               </Form.Item>
             )}
@@ -462,7 +463,11 @@ const EnrollScreen: React.FC = () => {
   }
 
   if (isSurveyLoading) {
-    return <div>Loading survey data...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Spin size="large" />
+      </div>
+    );
   }
 
   if (!surveyData) {

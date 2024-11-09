@@ -9,6 +9,7 @@ interface Policy {
   numberOfMember: number;
   absenceWithPermissionLimit: number | null;
   status: string;
+  tuitionFee: number;
 }
 
 const PolicyListScreen: React.FC = () => {
@@ -44,29 +45,32 @@ const PolicyListScreen: React.FC = () => {
       title: "STT",
       dataIndex: "id",
       key: "id",
-      width: "10%",
       align: "center" as const,
     },
     {
       title: "Số ngày nghỉ không phép tối đa",
       dataIndex: "absenceLimit",
       key: "absenceLimit",
-      width: "30%",
       align: "center" as const,
     },
     {
       title: "Số ngày nghỉ có phép tối đa",
       dataIndex: "absenceWithPermissionLimit",
       key: "absenceWithPermissionLimit",
-      width: "30%",
       align: "center" as const,
       render: (value: number | null) => value ?? "N/A",
+    },
+    {
+      title: "Học phí",
+      dataIndex: "tuitionFee",
+      key: "tuitionFee",
+      align: "center" as const,
+      render: (value: number) => `${value.toLocaleString('vi-VN')} VNĐ`,
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      width: "30%",
       align: "center" as const,
       render: (status: string) => (
         <span
@@ -80,7 +84,7 @@ const PolicyListScreen: React.FC = () => {
         </span>
       ),
     },
-  ];
+];
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
