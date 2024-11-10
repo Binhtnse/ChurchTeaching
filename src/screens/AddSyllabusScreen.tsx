@@ -41,6 +41,13 @@ interface Grade {
   name: string;
 }
 
+interface GradeTemplate {
+  id: number;
+  name: string;
+  weight: number;
+  isFullSlot: string;
+}
+
 const SyllabusPreview: React.FC<{
   formValues: {
     name: string;
@@ -113,6 +120,8 @@ const AddSyllabusScreen: React.FC = () => {
   const { role, isLoggedIn } = useAuthState();
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(false);
+  const [gradeTemplates, setGradeTemplates] = useState<GradeTemplate[]>([]);
+  const [selectedExams, setSelectedExams] = useState<{ [key: string]: number }>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [policies, setPolicies] = useState<
     { id: number; absenceLimit: number; absenceWithPermissionLimit: number }[]
@@ -223,6 +232,24 @@ const AddSyllabusScreen: React.FC = () => {
       message.error("An error occurred while fetching policies");
     }
   };
+
+  useEffect(() => {
+    const fetchGradeTemplates = async () => {
+      try {
+        const response = await axios.get(
+          'https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10'
+        );
+        if (response.data.status === 'success') {
+          setGradeTemplates(response.data.data[0].exams);
+        }
+      } catch (error) {
+        console.error('Error fetching grade templates:', error);
+        message.error('Failed to fetch grade templates');
+      }
+    };
+
+    fetchGradeTemplates();
+  }, []);
 
   useEffect(() => {
     fetchPolicies();
@@ -407,31 +434,6 @@ const AddSyllabusScreen: React.FC = () => {
                           sessionIndex,
                           "slots",
                           slotIndex,
-                          "name",
-                        ]}
-                        label="Tên Bài Học"
-                        rules={[{ required: true }]}
-                      >
-                        <Input />
-                      </Form.Item>
-                      <Form.Item
-                        name={[
-                          "sessions",
-                          sessionIndex,
-                          "slots",
-                          slotIndex,
-                          "description",
-                        ]}
-                        label="Mô tả"
-                      >
-                        <Input.TextArea />
-                      </Form.Item>
-                      <Form.Item
-                        name={[
-                          "sessions",
-                          sessionIndex,
-                          "slots",
-                          slotIndex,
                           "type",
                         ]}
                         label="Hoạt động chính"
@@ -439,70 +441,262 @@ const AddSyllabusScreen: React.FC = () => {
                       >
                         <Select>
                           <Option value="Lesson">Bài học</Option>
-                          <Option value="activity">Hoạt động</Option>
-                          <Option value="Prayer">Học kinh</Option>
+                          <Option value="exam">Kiểm tra</Option>
+                          <Option value="lesson_and_exam">Học và kiểm tra</Option>
                         </Select>
                       </Form.Item>
-                      <Form.Item
-                        name={[
-                          "sessions",
-                          sessionIndex,
-                          "slots",
-                          slotIndex,
-                          "materialName",
-                        ]}
-                        label="Tài Liệu"
-                      >
-                        <Input />
-                      </Form.Item>
-                      <Form.Item
-                        name={[
-                          "sessions",
-                          sessionIndex,
-                          "slots",
-                          slotIndex,
-                          "materialLinks",
-                        ]}
-                        label="Link tài liệu"
-                      >
-                        <CloudinaryUploadWidget
-                          onUploadSuccess={(info: unknown) => {
-                            const uploadInfo = info as {
-                              secure_url: string;
-                              original_filename: string;
-                            };
-                            const currentLinks =
-                              form.getFieldValue([
-                                "sessions",
-                                sessionIndex,
-                                "slots",
-                                slotIndex,
-                                "materialLinks",
-                              ]) || [];
-                            form.setFieldsValue({
-                              sessions: {
-                                [sessionIndex]: {
-                                  slots: {
-                                    [slotIndex]: {
-                                      materialLinks: [
-                                        ...currentLinks,
-                                        uploadInfo.secure_url,
-                                      ],
+                      {form.getFieldValue([
+                        "sessions",
+                        sessionIndex,
+                        "slots",
+                        slotIndex,
+                        "type"
+                      ]) === "exam" ? (
+                        <Form.Item
+                          name={[
+                            "sessions",
+                            sessionIndex,
+                            "slots",
+                            slotIndex,
+                            "examId"
+                          ]}
+                          label="Chọn bài kiểm tra"
+                          rules={[{ required: true }]}
+                        >
+                          <Select
+                            labelInValue
+                            onChange={(selected) => {
+                              const slotKey = `${sessionIndex}-${slotIndex}`;
+                              const value = selected.value;
+                              setSelectedExams(prev => ({
+                                ...prev,
+                                [slotKey]: value
+                              }));
+                            }}
+                          >
+                            {gradeTemplates
+                              .filter((exam) => exam.isFullSlot === "true" && !Object.values(selectedExams).includes(exam.id))
+                              .map((exam) => (
+                                <Option key={exam.id} value={exam.id}>
+                                  {exam.name}
+                                </Option>
+                              ))}
+                          </Select>
+                        </Form.Item>
+                      ) : form.getFieldValue([
+                        "sessions",
+                        sessionIndex,
+                        "slots",
+                        slotIndex,
+                        "type"
+                      ]) === "lesson_and_exam" ? (
+                        <>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "name",
+                            ]}
+                            label="Tên Bài Học"
+                            rules={[{ required: true }]}
+                          >
+                            <Input />
+                          </Form.Item>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "description",
+                            ]}
+                            label="Mô tả"
+                          >
+                            <Input.TextArea />
+                          </Form.Item>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "examId"
+                            ]}
+                            label="Chọn bài kiểm tra"
+                            rules={[{ required: true }]}
+                          >
+                            <Select
+                              labelInValue
+                              onChange={(selected) => {
+                                const slotKey = `${sessionIndex}-${slotIndex}`;
+                                const value = selected.value;
+                                setSelectedExams(prev => ({
+                                  ...prev,
+                                  [slotKey]: value
+                                }));
+                              }}
+                            >
+                              {gradeTemplates
+                                .filter((exam) => exam.isFullSlot === "false" && !Object.values(selectedExams).includes(exam.id))
+                                .map((exam) => (
+                                  <Option key={exam.id} value={exam.id}>
+                                    {exam.name}
+                                  </Option>
+                                ))}
+                            </Select>
+                          </Form.Item>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "materialName",
+                            ]}
+                            label="Tài Liệu"
+                          >
+                            <Input />
+                          </Form.Item>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "materialLinks",
+                            ]}
+                            label="Link tài liệu"
+                          >
+                            <CloudinaryUploadWidget
+                              onUploadSuccess={(info: unknown) => {
+                                const uploadInfo = info as {
+                                  secure_url: string;
+                                  original_filename: string;
+                                };
+                                const currentLinks =
+                                  form.getFieldValue([
+                                    "sessions",
+                                    sessionIndex,
+                                    "slots",
+                                    slotIndex,
+                                    "materialLinks",
+                                  ]) || [];
+                                form.setFieldsValue({
+                                  sessions: {
+                                    [sessionIndex]: {
+                                      slots: {
+                                        [slotIndex]: {
+                                          materialLinks: [
+                                            ...currentLinks,
+                                            uploadInfo.secure_url,
+                                          ],
+                                        },
+                                      },
                                     },
                                   },
-                                },
-                              },
-                            });
-                            message.success(
-                              `Tải file "${uploadInfo.original_filename}" thành công`
-                            );
-                          }}
-                          onUploadFailure={(error) => {
-                            console.error("Upload failed:", error);
-                            message.error("Tải file lên thất bại");
-                          }}
-                        />
-                      </Form.Item>
+                                });
+                                message.success(
+                                  `Tải file "${uploadInfo.original_filename}" thành công`
+                                );
+                              }}
+                              onUploadFailure={(error) => {
+                                console.error("Upload failed:", error);
+                                message.error("Tải file lên thất bại");
+                              }}
+                            />
+                          </Form.Item>
+                        </>
+                      ) : (
+                        <>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "name",
+                            ]}
+                            label="Tên Bài Học"
+                            rules={[{ required: true }]}
+                          >
+                            <Input />
+                          </Form.Item>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "description",
+                            ]}
+                            label="Mô tả"
+                          >
+                            <Input.TextArea />
+                          </Form.Item>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "materialName",
+                            ]}
+                            label="Tài Liệu"
+                          >
+                            <Input />
+                          </Form.Item>
+                          <Form.Item
+                            name={[
+                              "sessions",
+                              sessionIndex,
+                              "slots",
+                              slotIndex,
+                              "materialLinks",
+                            ]}
+                            label="Link tài liệu"
+                          >
+                            <CloudinaryUploadWidget
+                              onUploadSuccess={(info: unknown) => {
+                                const uploadInfo = info as {
+                                  secure_url: string;
+                                  original_filename: string;
+                                };
+                                const currentLinks =
+                                  form.getFieldValue([
+                                    "sessions",
+                                    sessionIndex,
+                                    "slots",
+                                    slotIndex,
+                                    "materialLinks",
+                                  ]) || [];
+                                form.setFieldsValue({
+                                  sessions: {
+                                    [sessionIndex]: {
+                                      slots: {
+                                        [slotIndex]: {
+                                          materialLinks: [
+                                            ...currentLinks,
+                                            uploadInfo.secure_url,
+                                          ],
+                                        },
+                                      },
+                                    },
+                                  },
+                                });
+                                message.success(
+                                  `Tải file "${uploadInfo.original_filename}" thành công`
+                                );
+                              }}
+                              onUploadFailure={(error) => {
+                                console.error("Upload failed:", error);
+                                message.error("Tải file lên thất bại");
+                              }}
+                            />
+                          </Form.Item>
+                        </>
+                      )}
                     </Card>
                   ))}{" "}
                   <Button
@@ -541,6 +735,25 @@ const AddSyllabusScreen: React.FC = () => {
 
   const next = () => {
     form.validateFields().then((values) => {
+      if (currentStep === 1) {
+        const selectedExamValues = Object.values(selectedExams);
+        const totalRequiredExams = gradeTemplates.length;
+
+        console.log('Selected exams:', selectedExamValues);
+        console.log('Required exams:', totalRequiredExams);
+
+        if (selectedExamValues.length < totalRequiredExams) {
+          message.error(`Vui lòng sử dụng tất cả ${totalRequiredExams} bài kiểm tra trong mẫu`);
+          return;
+        }
+
+        const uniqueExams = new Set(Object.values(selectedExams));
+        if (uniqueExams.size !== selectedExamValues.length) {
+          message.error('Không được chọn trùng bài kiểm tra');
+          return;
+        }
+      }
+
       setFormValues(values);
       setCurrentStep(currentStep + 1);
     });
@@ -580,8 +793,8 @@ const AddSyllabusScreen: React.FC = () => {
           form={form}
           layout="vertical"
           onFinish={onFinish}
-          onValuesChange={(allValues) => {
-            console.log("Form values changed:", allValues);
+          onValuesChange={(_, allValues) => {
+            setFormValues(allValues);
           }}
         >
           <Row gutter={24}>
