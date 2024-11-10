@@ -157,6 +157,12 @@ const CatechistScheduleScreen: React.FC = () => {
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
       setAcademicYears(response.data);
+      const currentYear = response.data.find((year: { timeStatus: string }) => year.timeStatus === "NOW");
+      if (currentYear) {
+        setSelectedYear(currentYear.year);
+      } else if (response.data.length > 0) {
+        setSelectedYear(response.data[0].year);
+      }
     } catch (error) {
       console.error("Error fetching academic years:", error);
       message.error("Failed to fetch academic years");

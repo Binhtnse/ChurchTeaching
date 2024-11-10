@@ -138,7 +138,7 @@ const StudentListScreen: React.FC = () => {
   }, [isLoggedIn, role, classId, fetchClassDetails, fetchStudents]);
 
   const handleBack = () => {
-    navigate("/classes");
+    navigate(-1);
   };
 
   useEffect(() => {

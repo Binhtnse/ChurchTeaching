@@ -129,7 +129,7 @@ const ParentScheduleScreen: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -199,11 +199,14 @@ const ParentScheduleScreen: React.FC = () => {
 
   const fetchAttendanceData = useCallback(async (studentId: number) => {
     if (!selectedStudent || !selectedYear) return;
-
+  
+    const yearId = academicYears.find(year => year.year === selectedYear)?.id;
+    if (!yearId) return;
+  
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${selectedYear}&studentId=${studentId}&gradeId=1`,
+        `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${yearId}&studentId=${studentId}&gradeId=1`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -213,7 +216,8 @@ const ParentScheduleScreen: React.FC = () => {
       console.error("Error fetching attendance data:", error);
       message.error("Không thể lấy thông tin điểm danh");
     }
-  }, [selectedStudent, selectedYear]);
+  }, [selectedStudent, selectedYear, academicYears]);
+  
 
   const getAttendanceStats = () => {
     if (!attendanceData?.attendanceDetails) return {
@@ -238,17 +242,19 @@ const ParentScheduleScreen: React.FC = () => {
   };
 
   const fetchSchedule = useCallback(async (studentId: number) => {
+    if (!selectedYear) return;
+    
     try {
       setLoading(true);
+      setScheduleData(null);
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}?academicYear=${selectedYear}`
       );
-      setScheduleData(response.data.data);
-      const matchingYear = academicYears.find(year => year.year === response.data.data.academicYear);
-      if (matchingYear) {
-        setSelectedYear(matchingYear.id);
+      if (!response.data.data) {
+        throw new Error("No data found");
       }
-
+      setScheduleData(response.data.data);
+      
       const currentDate = new Date();
       const currentWeek = response.data.data.schedule.find(
         (week: WeekSchedule) => {
@@ -265,11 +271,19 @@ const ParentScheduleScreen: React.FC = () => {
     } catch (error) {
       console.error("Error fetching schedule:", error);
       message.error("Không thể lấy lịch học");
+      setScheduleData(null);
+      setSelectedWeek(1);
     } finally {
       setLoading(false);
     }
-  }, [academicYears]);
+  }, [selectedYear]);
 
+  useEffect(() => {
+    if (selectedStudent && selectedYear) {
+      fetchSchedule(selectedStudent);
+    }
+  }, [selectedStudent, selectedYear, fetchSchedule]);
+  
   useEffect(() => {
     if (selectedStudent && selectedYear) {
       fetchAttendanceData(selectedStudent);
@@ -304,9 +318,14 @@ const ParentScheduleScreen: React.FC = () => {
 
   const handleStudentChange = (studentId: number) => {
     setSelectedStudent(studentId);
-    fetchSchedule(studentId);
+    const currentYear = academicYears.find(year => year.timeStatus === "NOW");
+    if (currentYear) {
+      setSelectedYear(currentYear.year);
+    } else if (academicYears.length > 0) {
+      setSelectedYear(academicYears[0].year);
+    }
   };
-
+  
   const createTimetable = (
     slots: Slot[]
   ): { [key: string]: { [key: string]: Slot | null } } => {
@@ -647,12 +666,12 @@ const ParentScheduleScreen: React.FC = () => {
                     <Select
                       className="w-full"
                       placeholder="Chọn niên khóa"
-                      onChange={(value) => setSelectedYear(value)}
+                      onChange={(value: string) => setSelectedYear(value)}
                       value={selectedYear}
                       allowClear
                     >
                       {academicYears.map((year) => (
-                        <Select.Option key={year.id} value={year.id}>
+                        <Select.Option key={year.id} value={year.year}>
                           {year.year}{" "}
                           {year.timeStatus === "NOW" && (
                             <Tag color="blue" className="ml-2">
