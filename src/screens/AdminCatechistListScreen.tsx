@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { message, Card, Modal, Upload, Button, Table } from "antd";
+import { message, Card, Modal, Upload, Button, Table, Alert } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import axios from "axios";
 import * as XLSX from 'xlsx';
@@ -149,6 +149,17 @@ const AdminCatechistListScreen: React.FC = () => {
 
     return (
         <div className="p-6 bg-white rounded-lg shadow-md">
+            <Alert
+                message={<span className="text-lg font-bold text-blue-700">Thông tin quan trọng</span>}
+                description={
+                    <div className="text-base bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                        Màn hình này nhằm sắp xếp giáo lý viên vào các lớp giáo lý trong khoảng từ tháng 6 đến tháng 9 cùng năm (trước khi năm học bắt đầu)
+                    </div>
+                }
+                type="info"
+                showIcon
+                className="mb-6 border-2 border-blue-200 shadow-lg"
+            />
             <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
                 Danh Sách Giáo Lý Viên
             </h1>

@@ -7,7 +7,10 @@ import {
   Select,
   Tag,
   Card,
+  Alert,
+  Upload
 } from "antd";
+import type { UploadRequestOption } from 'rc-upload/lib/interface';
 import axios from "axios";
 
 interface StudentData {
@@ -48,6 +51,8 @@ const AdminStudentList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  const [tableError, setTableError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -98,8 +103,7 @@ const AdminStudentList: React.FC = () => {
         setLoading(true);
         const token = localStorage.getItem("accessToken");
         const response = await axios.get<ApiResponse>(
-          `https://sep490-backend-production.up.railway.app/api/student-grade-year/get-student-to-prepare-arrange-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}&page=${
-            page - 1
+          `https://sep490-backend-production.up.railway.app/api/student-grade-year/get-student-to-prepare-arrange-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}&page=${page - 1
           }&size=${pageSize}`,
           {
             headers: {
@@ -136,6 +140,42 @@ const AdminStudentList: React.FC = () => {
     [selectedYear, selectedGrade]
   );
 
+  const handleUploadTimetable = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const formData = new FormData();
+      formData.append("file", file);
+
+      await axios.post(
+        "https://sep490-backend-production.up.railway.app/api/v1/timetable/import",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      message.success("Nhập thời khóa biểu thành công");
+    } catch (error) {
+      console.error("Error uploading timetable:", error);
+      message.error("Nhập thời khóa biểu thất bại");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const customRequest = (options: UploadRequestOption) => {
+    const { file, onSuccess } = options;
+    if (file instanceof File && file.name.endsWith(".xlsx")) {
+      handleUploadTimetable(file);
+      onSuccess?.("ok");
+    } else {
+      message.error("Vui lòng chọn file .xlsx");
+    }
+  };
+
   const handleAutoAssignStudents = async () => {
     if (!selectedYear || !selectedGrade) {
       message.warning("Vui lòng chọn niên khóa và khối");
@@ -143,21 +183,15 @@ const AdminStudentList: React.FC = () => {
     }
 
     try {
-      const token = localStorage.getItem("accessToken");
-      await axios.post(
+      await axios.get(
         `https://sep490-backend-production.up.railway.app/api/student-grade-year/auto-assign-student-to-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
       message.success("Xếp lớp thành công");
       fetchStudents(pagination.current, pagination.pageSize);
     } catch (error: unknown) {
       console.log(error);
       const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Xếp lớp thất bại";
+      setTableError(errorMessage);
       message.error(errorMessage);
     }
   };
@@ -217,6 +251,17 @@ const AdminStudentList: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
+      <Alert
+        message={<span className="text-lg font-bold text-blue-700">Thông tin quan trọng</span>}
+        description={
+          <div className="text-base bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+            Màn hình này nhằm sắp xếp các em thiếu nhi thánh thể (gồm đã lên lớp và đăng ký mới) vào các lớp giáo lý trong khoảng từ tháng 6 đến tháng 9 cùng năm (trước khi năm học bắt đầu)
+          </div>
+        }
+        type="info"
+        showIcon
+        className="mb-6 border-2 border-blue-200 shadow-lg"
+      />
       <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
         Danh Sách Thiếu Nhi
       </h1>
@@ -270,10 +315,34 @@ const AdminStudentList: React.FC = () => {
               Xếp thiếu nhi vào lớp
             </button>
           </div>
+          <div className="space-y-2 flex items-end">
+            <Upload
+              customRequest={customRequest}
+              showUploadList={false}
+              accept=".xlsx"
+            >
+              <button
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                disabled={isUploading}
+              >
+                {isUploading ? "Đang tải lên..." : "Nhập thời khóa biểu cho lớp"}
+              </button>
+            </Upload>
+          </div>
         </div>
       </Card>
       <Spin spinning={loading}>
+        {tableError && (
+          <Alert
+            message="Lỗi"
+            description={tableError}
+            type="error"
+            showIcon
+            className="mb-4"
+          />
+        )}
         {selectedYear && selectedGrade ? (
+
           <Table
             columns={columns}
             dataSource={students}
