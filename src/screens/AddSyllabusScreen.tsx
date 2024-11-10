@@ -99,7 +99,9 @@ const SyllabusPreview: React.FC<{
                       <Text strong>{`Buổi ${slotIndex + 1}: ${slot.name
                         }`}</Text>
                       <Text>{slot.description}</Text>
-                      <Tag color="green">{slot.type}</Tag>
+                      <Tag color="green">{slot.type === 'Lesson' ? 'Bài học' :
+                        slot.type === 'exam' ? 'Kiểm tra' :
+                          'Học và kiểm tra'}</Tag>
                     </Space>
                   </List.Item>
                 )}
