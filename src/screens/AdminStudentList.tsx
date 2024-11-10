@@ -183,10 +183,10 @@ const AdminStudentList: React.FC = () => {
     }
 
     try {
-      await axios.get(
+      const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/student-grade-year/auto-assign-student-to-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
       );
-      message.success("Xếp lớp thành công");
+      message.success(response.data.message);
       fetchStudents(pagination.current, pagination.pageSize);
     } catch (error: unknown) {
       console.log(error);

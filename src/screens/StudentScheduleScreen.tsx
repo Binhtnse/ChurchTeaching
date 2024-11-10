@@ -104,6 +104,7 @@ const StudentScheduleScreen: React.FC = () => {
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
 
   const fetchSchedule = useCallback(async () => {
+    
     try {
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
@@ -114,10 +115,14 @@ const StudentScheduleScreen: React.FC = () => {
         return;
       }
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${userId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${userId}?academicYear=${selectedYear}`
       );
+      if (!response.data.data || response.data.data.length === 0) {
+        setScheduleData(null);
+        setSelectedWeek(1);
+        return;
+      }
       setScheduleData(response.data.data);
-      setSelectedYear(response.data.data.academicYear);
       const currentDate = new Date();
       const currentWeek = response.data.data.schedule.find(
         (week: WeekSchedule) => {
@@ -131,17 +136,14 @@ const StudentScheduleScreen: React.FC = () => {
           ? currentWeek.weekNumber
           : response.data.data.schedule[0].weekNumber
       );
-      setLoading(false);
     } catch (error) {
-      console.error("Error fetching schedule:", error);
-      message.error("Failed to fetch schedule");
+      console.log(error);
+      setScheduleData(null);
+      setSelectedWeek(1);
+    } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchSchedule();
-  }, [fetchSchedule]);
+  }, [selectedYear]);  
 
   const fetchAcademicYears = async () => {
     try {
@@ -149,6 +151,10 @@ const StudentScheduleScreen: React.FC = () => {
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
       setAcademicYears(response.data);
+      const currentYear = response.data.find((year: { timeStatus: string }) => year.timeStatus === "NOW");
+      if (currentYear) {
+        setSelectedYear(currentYear.year);
+      }
     } catch (error) {
       console.error("Error fetching academic years:", error);
       message.error("Failed to fetch academic years");
@@ -158,6 +164,12 @@ const StudentScheduleScreen: React.FC = () => {
   useEffect(() => {
     fetchAcademicYears();
   }, []);
+
+  useEffect(() => {
+  if (selectedYear) {
+    fetchSchedule();
+  }
+}, [selectedYear, fetchSchedule]);
 
   const createTimetable = (
     slots: Slot[]
@@ -324,11 +336,11 @@ const StudentScheduleScreen: React.FC = () => {
             <Select
               className="w-full"
               placeholder="Chọn niên khóa"
-              onChange={(value) => setSelectedYear(value)}
+              onChange={(value: string) => setSelectedYear(value)}
               value={selectedYear}
             >
               {academicYears.map((year) => (
-                <Option key={year.id} value={year.id}>
+                <Option key={year.id} value={year.year}>
                   {year.year}{" "}
                   {year.timeStatus === "NOW" && (
                     <Tag color="blue" className="ml-2">
