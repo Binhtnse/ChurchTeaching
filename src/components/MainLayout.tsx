@@ -12,7 +12,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const { role, isLoggedIn, userName } = useAuthState();
 
   return (
-    isLoggedIn ? <Layout className="min-h-screen">
+     <Layout className="min-h-screen">
       <Header isLoggedIn={isLoggedIn} userName={userName} />
       <Layout className="flex-1 flex flex-row">
         <Sidebar role={role} />
@@ -24,7 +24,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
         </Layout>
       </Layout>
       <MyFooter />
-    </Layout> : <>{children}</>
+    </Layout> 
   );
 };
 
