@@ -113,6 +113,7 @@ const CatechistScheduleScreen: React.FC = () => {
         const userId = user?.id;
         if (!userId) {
           console.error("User ID not found");
+          setScheduleData(null);
           setLoading(false);
           return;
         }
@@ -221,6 +222,12 @@ const CatechistScheduleScreen: React.FC = () => {
     });
 
     return (
+      <div>
+      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+        <Text strong className="text-lg text-indigo-600">
+          Lớp: {classItem.className} - {classItem.grade}
+        </Text>
+      </div>
       <CalendarGrid>
         <CalendarCell />
         {days.map((day, index) => (
@@ -292,6 +299,7 @@ const CatechistScheduleScreen: React.FC = () => {
           </React.Fragment>
         ))}
       </CalendarGrid>
+      </div>
     );
   };
 
