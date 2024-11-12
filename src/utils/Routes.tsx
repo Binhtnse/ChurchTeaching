@@ -38,6 +38,7 @@ import CatechistLeaveRequestListScreen from "../screens/CatechistLeaveRequestLis
 import ParentLeaveRequestListScreen from "../screens/ParentLeaveRequestListScreen";
 import AdminLeaveRequestListScreen from "../screens/AdminLeaveRequestListScreen";
 import AdminUserDetailScreen from "../screens/AdminUserDetailScreen";
+import AdminGradeLeaderScreen from "../screens/AdminGradeLeaderScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -302,6 +303,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminStudentList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grade-leader-list"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminGradeLeaderScreen />
               </ProtectedRoute>
             }
           />
