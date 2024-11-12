@@ -16,7 +16,8 @@ import {
   CreditCardOutlined,
   AreaChartOutlined,
   FileDoneOutlined,
-  ReadOutlined
+  ReadOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -169,6 +170,11 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "admin-student-list", label: "Quản lý danh sách thiếu nhi" },
           { key: "admin-catechist-list", label: "Quản lý danh sách giáo lý viên" },
         ],
+      },
+      {
+        key: "grade-leader-list",
+        label: "Quản lý khối trưởng",
+        icon: <UserOutlined />,
       },
       {
         key: "transaction-history",
