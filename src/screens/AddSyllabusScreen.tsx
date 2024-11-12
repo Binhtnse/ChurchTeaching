@@ -41,6 +41,12 @@ interface Grade {
   name: string;
 }
 
+interface ExamIdObject {
+  label: string;
+  value: number;
+  key: string;
+}
+
 interface GradeTemplate {
   id: number;
   name: string;
@@ -61,7 +67,7 @@ interface FormValues {
       name: string;
       description: string;
       type: string;
-      examId: number;
+      examId: number | ExamIdObject;
       examName?: string;
     }>;
   }>;
@@ -218,7 +224,7 @@ const AddSyllabusScreen: React.FC = () => {
                 description: slot.description,
                 orderSlot: slotIndex + 1,
                 slotType: slot.type,
-                examId: slot.examId,
+                examId: typeof slot.examId === 'object' ? (slot.examId as ExamIdObject).value : slot.examId,
                 materialRequestDTO: {
                   name: slot.materialName || "",
                   links: slot.materialLinks || [],

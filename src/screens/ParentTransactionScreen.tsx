@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Form, Input, Button, Select, InputNumber, Card, message } from "antd";
+import {
+  Form,
+  Input,
+  Button,
+  Select,
+  InputNumber,
+  Card,
+  message,
+  Checkbox,
+} from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 
@@ -16,7 +25,8 @@ interface Policy {
 
 interface FormValues {
   childId: number;
-  amount: number;
+  churchDonation: boolean;
+  donationAmount: number;
   studentClassId: number;
 }
 
@@ -26,6 +36,8 @@ const ParentTransactionScreen: React.FC = () => {
   const [children, setChildren] = useState<Child[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [minAmount, setMinAmount] = useState<number>(0);
+  const [churchDonation, setChurchDonation] = useState(false);
+  const [donationAmount, setDonationAmount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const userString = localStorage.getItem("userLogin");
@@ -82,14 +94,12 @@ const ParentTransactionScreen: React.FC = () => {
   };
 
   const handleSubmit = async (values: FormValues) => {
-    // if (values.amount < minAmount) {
-    //   message.error(`Số tiền đóng không được nhỏ hơn ${minAmount}`);
-    //   return;
-    // }
+    const totalAmount =
+      minAmount + (values.churchDonation ? values.donationAmount : 0);
 
     const payload = {
       studentClassId: values.studentClassId,
-      amount: values.amount,
+      amount: totalAmount,
       payerId: parentId,
     };
 
@@ -150,29 +160,63 @@ const ParentTransactionScreen: React.FC = () => {
             </Form.Item>
 
             <Form.Item
-              name="amount"
               label={
-                <span className="text-base font-medium">Số tiền đóng</span>
+                <span className="text-base font-medium">Học phí cố định</span>
               }
-              rules={[
-                { required: true, message: "Vui lòng nhập số tiền" },
-                {
-                  type: "number",
-                  min: minAmount,
-                  message: `Số tiền đóng không được nhỏ hơn ${minAmount}`,
-                },
-              ]}
             >
               <InputNumber
                 className="w-full rounded-lg text-base"
                 size="large"
-                min={minAmount}
-                placeholder="0.00 VND"
+                disabled
+                value="300000 VND"
                 formatter={(value) =>
                   `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 }
               />
             </Form.Item>
+
+            <Form.Item name="churchDonation" valuePropName="checked">
+              <Checkbox onChange={(e) => setChurchDonation(e.target.checked)}>
+                Tôi muốn đóng góp cho giáo xứ
+              </Checkbox>
+            </Form.Item>
+
+            {churchDonation && (
+              <Form.Item
+                name="donationAmount"
+                label={
+                  <span className="text-base font-medium">
+                    Số tiền đóng góp
+                  </span>
+                }
+                rules={[
+                  { required: true, message: "Vui lòng nhập số tiền đóng góp" },
+                  { type: "number", min: 0, message: "Số tiền không được âm" },
+                ]}
+              >
+                <InputNumber
+                  className="w-full rounded-lg text-base"
+                  size="large"
+                  placeholder="0.00 VND"
+                  onChange={(value: number | null) =>
+                    setDonationAmount(value || 0)
+                  }
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                />
+              </Form.Item>
+            )}
+
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <p className="text-base font-medium text-blue-700">
+                Tổng tiền:{" "}
+                {(
+                  300000 + (churchDonation ? donationAmount : 0)
+                ).toLocaleString()}{" "}
+                VND
+              </p>
+            </div>
 
             <Form.Item name="studentClassId" hidden>
               <Input />
