@@ -1,8 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { Typography, Spin, Card, Row, Col, Select, Collapse, Button } from "antd";
-import { ClockCircleOutlined, UserOutlined, LinkOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import {
+  Typography,
+  Spin,
+  Card,
+  Row,
+  Col,
+  Select,
+  Collapse,
+  Button,
+} from "antd";
+import {
+  ClockCircleOutlined,
+  UserOutlined,
+  LinkOutlined,
+  ArrowLeftOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
@@ -71,24 +85,24 @@ const SyllabusDetailScreen: React.FC = () => {
     return <Text>Không tìm thấy giáo trình</Text>;
   }
 
-  const handleSessionChange = (value: number | 'all') => {
-    setSelectedSession(value === 'all' ? null : value);
+  const handleSessionChange = (value: number | "all") => {
+    setSelectedSession(value === "all" ? null : value);
     setSelectedSlot(null);
   };
 
-  const handleSlotChange = (value: number | 'all') => {
-    setSelectedSlot(value === 'all' ? null : value);
+  const handleSlotChange = (value: number | "all") => {
+    setSelectedSlot(value === "all" ? null : value);
   };
 
   const handleReturn = () => {
-    navigate('/list-syllabus');
+    navigate("/list-syllabus");
   };
 
   const getVietnameseSlotType = (slotType: string) => {
     const typeMap: Record<string, string> = {
-      'lesson': 'Bài học',
-      'activity': 'Hoạt động',
-      'prayer': 'Cầu nguyện'
+      lesson: "Bài học",
+      lesson_exam: "Học và kiểm tra",
+      exam: "Kiểm tra",
     };
     return typeMap[slotType] || slotType;
   };
@@ -108,7 +122,7 @@ const SyllabusDetailScreen: React.FC = () => {
 
   return (
     <div className="p-6">
-       <Button 
+      <Button
         type="primary"
         onClick={handleReturn}
         className="mb-4"
@@ -117,10 +131,13 @@ const SyllabusDetailScreen: React.FC = () => {
         Quay lại danh sách
       </Button>
       <Card className="mb-6">
-        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">{syllabus.name}</h1>
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+          {syllabus.name}
+        </h1>
         <Row gutter={16}>
           <Col span={12}>
-            <ClockCircleOutlined /> <Text strong>Thời gian:</Text> {syllabus.duration}
+            <ClockCircleOutlined /> <Text strong>Thời gian:</Text>{" "}
+            {syllabus.duration}
           </Col>
         </Row>
       </Card>
@@ -128,12 +145,14 @@ const SyllabusDetailScreen: React.FC = () => {
       <Row gutter={16} className="mb-6">
         <Col span={12}>
           <Select
-            style={{ width: '100%' }}
+            style={{ width: "100%" }}
             placeholder="Chọn chương"
             onChange={handleSessionChange}
             allowClear
           >
-            <Option key="all" value="all">Tất cả</Option>
+            <Option key="all" value="all">
+              Tất cả
+            </Option>
             {syllabus.sessions.map((session) => (
               <Option key={session.id} value={session.id}>
                 {session.name}
@@ -143,12 +162,14 @@ const SyllabusDetailScreen: React.FC = () => {
         </Col>
         <Col span={12}>
           <Select
-            style={{ width: '100%' }}
+            style={{ width: "100%" }}
             placeholder="Chọn tiết"
             onChange={handleSlotChange}
             allowClear
           >
-            <Option key="all" value="all">Tất cả</Option>
+            <Option key="all" value="all">
+              Tất cả
+            </Option>
             {filteredSlots.map((slot) => (
               <Option key={slot.id} value={slot.id}>
                 {slot.name}
@@ -166,25 +187,32 @@ const SyllabusDetailScreen: React.FC = () => {
               .filter((slot) => session.slots.some((s) => s.id === slot.id))
               .map((slot) => (
                 <Card key={slot.id} title={slot.name} className="mt-4">
-                  <p><Text strong>Mô tả:</Text> {slot.description}</p>
-                  <p><UserOutlined /> <Text strong>Loại tiết học:</Text> {getVietnameseSlotType(slot.slotType)}</p>
-                  {slot.materialRequestDTO && (
-                    <div>
-                      <Text strong>Tài liệu:</Text>
-                      <p>{slot.materialRequestDTO.name}</p>
-                      {slot.materialRequestDTO.links.map((link, index) => (
-                        <Button 
-                          key={index}
-                          type="link" 
-                          icon={<LinkOutlined />}
-                          href={link}
-                          target="_blank"
-                        >
-                          Link tài liệu {index + 1}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
+                  <p>
+                    <Text strong>Mô tả:</Text> {slot.description}
+                  </p>
+                  <p>
+                    <UserOutlined /> <Text strong>Loại tiết học:</Text>{" "}
+                    {getVietnameseSlotType(slot.slotType)}
+                  </p>
+                  {slot.materialRequestDTO &&
+                    slot.materialRequestDTO.links &&
+                    slot.materialRequestDTO.links.length > 0 && (
+                      <div>
+                        <Text strong>Tài liệu:</Text>
+                        <p>{slot.materialRequestDTO.name}</p>
+                        {slot.materialRequestDTO.links.map((link, index) => (
+                          <Button
+                            key={index}
+                            type="link"
+                            icon={<LinkOutlined />}
+                            href={link}
+                            target="_blank"
+                          >
+                            Link tài liệu {index + 1}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
                 </Card>
               ))}
           </Panel>

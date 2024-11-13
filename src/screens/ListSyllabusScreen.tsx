@@ -12,6 +12,7 @@ interface Syllabus {
     age: number;
   };
   syllabus: {
+    id: number;
     name: string;
     duration: string;
   };
@@ -146,7 +147,7 @@ const ListSyllabusScreen: React.FC = () => {
   const columns = [
     {
       title: "STT",
-      dataIndex: "id",
+      dataIndex: ["syllabus", "id"],
       key: "id",
     },
     {
@@ -190,7 +191,7 @@ const ListSyllabusScreen: React.FC = () => {
   ];
 
   const handleRowClick = (record: Syllabus) => {
-    navigate(`/syllabus-detail/${record.id}`);
+    navigate(`/syllabus-detail/${record.syllabus.id}`);
   };
 
   if (!isLoggedIn || role !== "ADMIN") {
