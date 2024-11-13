@@ -490,7 +490,7 @@ const AddSyllabusScreen: React.FC = () => {
                           <Select>
                             <Option value="Lesson">Bài học</Option>
                             <Option value="exam">Kiểm tra</Option>
-                            <Option value="lesson_and_exam">Học và kiểm tra</Option>
+                            <Option value="lesson_exam">Học và kiểm tra</Option>
                           </Select>
                         </Form.Item>
                         {form.getFieldValue([
@@ -537,7 +537,7 @@ const AddSyllabusScreen: React.FC = () => {
                           "slots",
                           slotIndex,
                           "type"
-                        ]) === "lesson_and_exam" ? (
+                        ]) === "lesson_exam" ? (
                           <>
                             <Form.Item
                               name={[
