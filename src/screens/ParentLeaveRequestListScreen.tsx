@@ -129,16 +129,6 @@ const ParentLeaveRequestListScreen: React.FC = () => {
             dataIndex: 'reason',
             key: 'reason',
         },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: string) => (
-                <Tag color={status === 'TRUE' ? 'green' : status === 'FALSE' ? 'red' : 'gold'}>
-                    {status === 'TRUE' ? 'Đã duyệt' : status === 'FALSE' ? 'Từ chối' : 'Chờ duyệt'}
-                </Tag>
-            ),
-        },
     ];
 
     return (

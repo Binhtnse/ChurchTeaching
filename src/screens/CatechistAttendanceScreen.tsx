@@ -6,7 +6,7 @@ import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
 import usePageTitle from "../hooks/usePageTitle";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 
 interface AttendanceRecord {
   attendanceId: number;
@@ -34,6 +34,11 @@ const CatechistAttendanceScreen: React.FC = () => {
     null
   );
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const dayOfWeek = searchParams.get("dayOfWeek");
+  const weekNumber = searchParams.get("weekNumber");
+  const time = searchParams.get("time");
+  const date = searchParams.get("date");
   const { timeTableId } = useParams<{ timeTableId: string }>();
 
   useEffect(() => {
@@ -76,6 +81,11 @@ const CatechistAttendanceScreen: React.FC = () => {
   };
 
   const handleAttendanceChange = (attendanceId: number, isAbsent: boolean) => {
+    if (date && isFutureDate(date)) {
+      message.warning("Không thể điểm danh cho buổi học chưa diễn ra");
+      return;
+    }
+
     setAttendanceData((prevData) => {
       if (!prevData) return null;
       return {
@@ -120,6 +130,14 @@ const CatechistAttendanceScreen: React.FC = () => {
     }
   };
 
+  const isFutureDate = (dateString: string | null) => {
+    if (!dateString) return false;
+    const slotDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return slotDate > today;
+  };
+
   const columns: ColumnsType<AttendanceRecord> = [
     { title: "STT", dataIndex: ["studentClass", "id"], key: "id" },
     {
@@ -138,10 +156,18 @@ const CatechistAttendanceScreen: React.FC = () => {
             onChange={(e) =>
               handleAttendanceChange(record.attendanceId, !e.target.checked)
             }
-            disabled={record.isAbsentWithPermission === "TRUE"}
+            disabled={
+              record.isAbsentWithPermission === "TRUE" ||
+              Boolean(date && isFutureDate(date))
+            }
           />
           {record.isAbsentWithPermission === "TRUE" && (
             <span className="ml-2 text-gray-500">Vắng có phép</span>
+          )}
+          {date && isFutureDate(date) && (
+            <span className="ml-2 text-yellow-500">
+              Buổi học chưa diễn ra
+            </span>
           )}
         </div>
       ),
@@ -167,9 +193,9 @@ const CatechistAttendanceScreen: React.FC = () => {
       >
         Xem danh sách đơn xin nghỉ
       </Button>
-      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4"
-      >
-        Điểm Danh Thiếu Nhi - {attendanceData?.slotName}
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+        Điểm Danh Thiếu Nhi - {attendanceData?.slotName} - Tuần {weekNumber},{" "}
+        {date}, {dayOfWeek}, {time}
       </h1>
       <div className="bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
         {loading ? (
@@ -191,7 +217,12 @@ const CatechistAttendanceScreen: React.FC = () => {
             icon={<SaveOutlined />}
             onClick={handleSaveAttendance}
             loading={saveLoading}
-            className="bg-green-500 text-white hover:bg-green-600 font-bold py-2 px-4 rounded-full transition-colors duration-300"
+            disabled={Boolean(date && isFutureDate(date))}
+            className={`${
+              date && isFutureDate(date)
+                ? "bg-gray-400"
+                : "bg-green-500 hover:bg-green-600"
+            } text-white font-bold py-2 px-4 rounded-full transition-colors duration-300`}
           >
             Lưu điểm danh
           </Button>

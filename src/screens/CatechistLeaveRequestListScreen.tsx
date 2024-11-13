@@ -78,16 +78,6 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
       dataIndex: 'reason',
       key: 'reason',
     },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <span className={`${status === 'TRUE' ? 'text-green-500' : 'text-red-500'}`}>
-          {status === 'TRUE' ? 'Đã duyệt' : 'Chưa duyệt'}
-        </span>
-      ),
-    },
   ];
 
   return (

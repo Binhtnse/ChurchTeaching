@@ -140,7 +140,7 @@ const CatechistScheduleScreen: React.FC = () => {
             : response.data.data.schedule[0].weekNumber
         );
       } catch (error) {
-        console.log(error)
+        console.log(error);
         setScheduleData(null);
         setSelectedWeek(1);
       } finally {
@@ -148,8 +148,7 @@ const CatechistScheduleScreen: React.FC = () => {
       }
     };
 
-    
-      fetchSchedule();
+    fetchSchedule();
   }, [selectedYear]);
 
   const fetchAcademicYears = async () => {
@@ -158,7 +157,9 @@ const CatechistScheduleScreen: React.FC = () => {
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
       setAcademicYears(response.data);
-      const currentYear = response.data.find((year: { timeStatus: string }) => year.timeStatus === "NOW");
+      const currentYear = response.data.find(
+        (year: { timeStatus: string }) => year.timeStatus === "NOW"
+      );
       if (currentYear) {
         setSelectedYear(currentYear.year);
       } else if (response.data.length > 0) {
@@ -223,89 +224,105 @@ const CatechistScheduleScreen: React.FC = () => {
 
     return (
       <div>
-      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-        <Text strong className="text-lg text-indigo-600">
-          Lớp: {classItem.className} - {classItem.grade}
-        </Text>
-      </div>
-      <CalendarGrid>
-        <CalendarCell />
-        {days.map((day, index) => (
-          <DayCell key={day}>
-            <div>{day}</div>
-            <div className="text-sm mt-1">{dates[index]}</div>
-          </DayCell>
-        ))}
-        {times.map((time) => (
-          <React.Fragment key={time}>
-            <TimeCell>{time}</TimeCell>
-            {days.map((day, index) => {
-              const CellComponent = index === 6 ? SundayCell : CalendarCell;
-              const slot = timetable[day] && timetable[day][time];
-              return (
-                <CellComponent
-                  key={`${day}-${time}`}
-                  onClick={() => handleCellClick(slot)}
-                  style={{ cursor: slot ? "pointer" : "default" }}
-                >
-                  {slot && (
-                    <div className="flex flex-col h-full">
-                      <Text className="text-gray-500 mb-1">
-                        Phòng: {classItem.roomNo}
-                      </Text>
-                      <strong className="text-blue-600 mb-1">
-                        {slot.name}
-                      </strong>
-                      <div className="mt-auto">
-                        <Text className="text-green-600">
-                          Chương: {slot.session.name}
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <Text strong className="text-lg text-indigo-600">
+            Lớp: {classItem.className} - {classItem.grade}
+          </Text>
+        </div>
+        <CalendarGrid>
+          <CalendarCell />
+          {days.map((day, index) => (
+            <DayCell key={day}>
+              <div>{day}</div>
+              <div className="text-sm mt-1">{dates[index]}</div>
+            </DayCell>
+          ))}
+          {times.map((time) => (
+            <React.Fragment key={time}>
+              <TimeCell>{time}</TimeCell>
+              {days.map((day, index) => {
+                const CellComponent = index === 6 ? SundayCell : CalendarCell;
+                const slot = timetable[day] && timetable[day][time];
+                return (
+                  <CellComponent
+                    key={`${day}-${time}`}
+                    onClick={() => handleCellClick(slot)}
+                    style={{ cursor: slot ? "pointer" : "default" }}
+                  >
+                    {slot && (
+                      <div className="flex flex-col h-full">
+                        <Text className="text-gray-500 mb-1">
+                          Phòng: {classItem.roomNo}
                         </Text>
-                        {slot.materials && slot.materials.length > 0 && (
-                          <div className="mt-2">
-                            <Text className="text-purple-600 font-medium">
-                              Tài liệu:
-                            </Text>
-                            <ul className="list-disc pl-4">
-                              {slot.materials.map((material, index) => (
-                                <li key={index}>
-                                  <a
-                                    href={material.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500 hover:text-blue-700 underline"
-                                    onClick={handleMaterialClick} // Add this line
-                                  >
-                                    {material.name}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                        <strong className="text-blue-600 mb-1">
+                          {slot.name}
+                        </strong>
+                        <div className="mt-auto">
+                          <Text className="text-green-600">
+                            Chương: {slot.session.name}
+                          </Text>
+                          {slot.materials && slot.materials.length > 0 && (
+                            <div className="mt-2">
+                              <Text className="text-purple-600 font-medium">
+                                Tài liệu:
+                              </Text>
+                              <ul className="list-disc pl-4">
+                                {slot.materials.map((material, index) => (
+                                  <li key={index}>
+                                    <a
+                                      href={material.link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:text-blue-700 underline"
+                                      onClick={handleMaterialClick} // Add this line
+                                    >
+                                      {material.name}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {index === 6 && (
-                    <div className="mt-2 bg-gray-100 p-2 rounded">
-                      <Text
-                        strong
-                        className="text-indigo-600"
-                      >{`${classItem.className} - ${classItem.grade}`}</Text>
-                    </div>
-                  )}
-                </CellComponent>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </CalendarGrid>
+                    )}
+                    {index === 6 && (
+                      <div className="mt-2 bg-gray-100 p-2 rounded">
+                        <Text
+                          strong
+                          className="text-indigo-600"
+                        >{`${classItem.className} - ${classItem.grade}`}</Text>
+                      </div>
+                    )}
+                  </CellComponent>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </CalendarGrid>
       </div>
     );
   };
 
   const handleCellClick = (slot: Slot | null) => {
     if (slot) {
-      navigate(`/schedule/attendance/${slot.timeTableId}`);
+      const weekStart = new Date(currentWeek!.startDate);
+      const dayIndex = [
+        "Thứ Hai",
+        "Thứ Ba",
+        "Thứ Tư",
+        "Thứ Năm",
+        "Thứ Sáu",
+        "Thứ Bảy",
+        "Chủ Nhật",
+      ].indexOf(slot.dayOfWeek);
+      const slotDate = new Date(weekStart);
+      slotDate.setDate(weekStart.getDate() + dayIndex);
+
+      const formattedDate = slotDate.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+      navigate(
+        `/schedule/attendance/${slot.timeTableId}?dayOfWeek=${slot.dayOfWeek}&weekNumber=${selectedWeek}&time=${slot.time}&date=${formattedDate}`
+      );
     }
   };
 

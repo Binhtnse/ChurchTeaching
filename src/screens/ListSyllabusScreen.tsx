@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Table, Tag, message, Select, Spin, Card } from "antd";
+import { Table, Tag, message, Select, Card } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -17,6 +17,7 @@ interface Syllabus {
     duration: string;
   };
   academicYear: {
+    id: number;
     year: string;
   };
   isCurrent: string;
@@ -25,7 +26,7 @@ interface Syllabus {
 
 const ListSyllabusScreen: React.FC = () => {
   const [syllabuses, setSyllabuses] = useState<Syllabus[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
   const { role, isLoggedIn } = useAuthState();
   const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
   const [academicYears, setAcademicYears] = useState<
@@ -79,11 +80,16 @@ const ListSyllabusScreen: React.FC = () => {
 
   const fetchSyllabuses = useCallback(
     async (page: number = 1, pageSize: number = 10, gradeId: number = 0) => {
+      setTableLoading(true);
       try {
-        const yearId = selectedYear ? `&yearId=${selectedYear}` : "";
-        const status = selectedStatus ? `status=${selectedStatus}` : "";
+        const params = new URLSearchParams();
+        if (selectedYear) params.append('yearId', selectedYear.toString());
+        if (selectedStatus) params.append('status', selectedStatus);
+        params.append('page', page.toString());
+        params.append('size', pageSize.toString());
+        params.append('gradeId', gradeId.toString());
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/syllabus?${status}&page=${page}&size=${pageSize}&gradeId=${gradeId}${yearId}`
+          `https://sep490-backend-production.up.railway.app/api/syllabus?${params.toString()}`
         );
         if (response.data.status === "success") {
           setSyllabuses(response.data.data);
@@ -100,7 +106,7 @@ const ListSyllabusScreen: React.FC = () => {
         console.error("Error fetching syllabuses:", error);
         message.error("An error occurred while fetching syllabuses");
       } finally {
-        setLoading(false);
+        setTableLoading(false);
       }
     },
     [selectedYear, selectedStatus]
@@ -198,14 +204,6 @@ const ListSyllabusScreen: React.FC = () => {
     return <ForbiddenScreen />;
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-6">
@@ -277,7 +275,7 @@ const ListSyllabusScreen: React.FC = () => {
             columns={columns}
             dataSource={syllabuses}
             rowKey="id"
-            loading={loading}
+            loading={tableLoading}
             className="bg-white rounded-lg shadow"
             pagination={{
               current: pagination.current,
