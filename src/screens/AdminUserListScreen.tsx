@@ -525,6 +525,7 @@ const AdminUserListScreen: React.FC = () => {
         onCancel={() => setIsModalVisible(false)}
         confirmLoading={isUploading}
         okText={isUploading ? "Đang tải lên..." : "Tải lên"}
+        okButtonProps={{ disabled: invalidRecords.length > 0 }}
         width={1000}
         style={{ top: 20 }}
         bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}

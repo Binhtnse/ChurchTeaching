@@ -154,33 +154,27 @@ const AdminCatechistListScreen: React.FC = () => {
   };
 
   const handleConfirmUpload = async () => {
-    if (!selectedFile || validRecords.length === 0) {
+    if (!selectedFile) {
+      message.warning("Vui lòng chọn file để tải lên");
+      return;
+    }
+  
+    if (invalidRecords.length > 0) {
+      message.error(`Không thể tải lên khi có ${invalidRecords.length} bản ghi không hợp lệ`);
+      return;
+    }
+  
+    if (validRecords.length === 0) {
       message.warning("Không có dữ liệu hợp lệ để tải lên");
       return;
     }
-
+  
     setIsUploading(true);
     try {
       const token = localStorage.getItem("accessToken");
       const formData = new FormData();
-
-      // Create a new workbook with only valid records
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(validRecords);
-      XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
-      // Convert workbook to blob
-      const blob = new Blob(
-        [XLSX.write(wb, { bookType: "xlsx", type: "array" })],
-        {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        }
-      );
-
-      // Create file from blob
-      const file = new File([blob], "valid_records.xlsx", { type: blob.type });
-      formData.append("file", file);
-
+      formData.append("file", selectedFile);
+  
       await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/import-catechist",
         formData,
@@ -191,7 +185,7 @@ const AdminCatechistListScreen: React.FC = () => {
           },
         }
       );
-
+  
       setImportedData(validRecords);
       message.success(`Tải lên thành công ${validRecords.length} bản ghi`);
       setIsModalVisible(false);
@@ -205,7 +199,7 @@ const AdminCatechistListScreen: React.FC = () => {
     } finally {
       setIsUploading(false);
     }
-  };
+  };  
 
   useEffect(() => {
     if (
@@ -291,7 +285,7 @@ const AdminCatechistListScreen: React.FC = () => {
             key="confirm"
             type="primary"
             loading={isUploading}
-            disabled={!selectedFile}
+            disabled={!selectedFile || invalidRecords.length > 0}
             onClick={handleConfirmUpload}
             className="bg-blue-600"
           >
