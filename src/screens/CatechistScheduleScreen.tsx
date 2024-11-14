@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message, Tag } from "antd";
+import { Card, Typography, Spin, Select, message, Tag, Button } from "antd";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
+
+interface ClassData {
+  id: number;
+  name: string;
+  numberOfCatechist: number | null;
+  gradeName: string;
+  academicYear: string;
+  status: string;
+}
 
 interface Material {
   name: string;
@@ -99,6 +108,8 @@ const CatechistScheduleScreen: React.FC = () => {
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>("");
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -106,6 +117,7 @@ const CatechistScheduleScreen: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchClasses();
     const fetchSchedule = async () => {
       try {
         const userString = localStorage.getItem("userLogin");
@@ -149,6 +161,7 @@ const CatechistScheduleScreen: React.FC = () => {
     };
 
     fetchSchedule();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   const fetchAcademicYears = async () => {
@@ -184,6 +197,35 @@ const CatechistScheduleScreen: React.FC = () => {
       timetable[slot.dayOfWeek][slot.time] = slot;
     });
     return timetable;
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const userString = localStorage.getItem("userLogin");
+      const user = userString ? JSON.parse(userString) : null;
+      const userId = user ? user.id : null;
+
+      if (!userId || !selectedYear) return;
+
+      const yearObj = academicYears.find((year) => year.year === selectedYear);
+      if (!yearObj) return;
+
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/class/catechist/${userId}?page=1&size=100&academicYearId=${yearObj.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      if (response.data.data) {
+        setClasses(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      message.error("Không thể tải danh sách lớp học");
+    }
   };
 
   const currentWeek = scheduleData?.schedule.find(
@@ -246,8 +288,6 @@ const CatechistScheduleScreen: React.FC = () => {
                 return (
                   <CellComponent
                     key={`${day}-${time}`}
-                    onClick={() => handleCellClick(slot)}
-                    style={{ cursor: slot ? "pointer" : "default" }}
                   >
                     {slot && (
                       <div className="flex flex-col h-full">
@@ -283,6 +323,40 @@ const CatechistScheduleScreen: React.FC = () => {
                               </ul>
                             </div>
                           )}
+                          <div className="mt-2">
+                            <Button
+                              type="primary"
+                              size="middle"
+                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                const weekStart = new Date(
+                                  currentWeek!.startDate
+                                );
+                                const dayIndex = [
+                                  "Thứ Hai",
+                                  "Thứ Ba",
+                                  "Thứ Tư",
+                                  "Thứ Năm",
+                                  "Thứ Sáu",
+                                  "Thứ Bảy",
+                                  "Chủ Nhật",
+                                ].indexOf(slot.dayOfWeek);
+                                const slotDate = new Date(weekStart);
+                                slotDate.setDate(
+                                  weekStart.getDate() + dayIndex
+                                );
+                                const formattedDate = slotDate
+                                  .toISOString()
+                                  .split("T")[0];
+                                navigate(
+                                  `/schedule/attendance/${slot.timeTableId}?dayOfWeek=${slot.dayOfWeek}&weekNumber=${selectedWeek}&time=${slot.time}&date=${formattedDate}`
+                                );
+                              }}
+                            >
+                              Điểm danh
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -302,28 +376,6 @@ const CatechistScheduleScreen: React.FC = () => {
         </CalendarGrid>
       </div>
     );
-  };
-
-  const handleCellClick = (slot: Slot | null) => {
-    if (slot) {
-      const weekStart = new Date(currentWeek!.startDate);
-      const dayIndex = [
-        "Thứ Hai",
-        "Thứ Ba",
-        "Thứ Tư",
-        "Thứ Năm",
-        "Thứ Sáu",
-        "Thứ Bảy",
-        "Chủ Nhật",
-      ].indexOf(slot.dayOfWeek);
-      const slotDate = new Date(weekStart);
-      slotDate.setDate(weekStart.getDate() + dayIndex);
-
-      const formattedDate = slotDate.toISOString().split("T")[0]; // Format: YYYY-MM-DD
-      navigate(
-        `/schedule/attendance/${slot.timeTableId}?dayOfWeek=${slot.dayOfWeek}&weekNumber=${selectedWeek}&time=${slot.time}&date=${formattedDate}`
-      );
-    }
   };
 
   if (loading) {
@@ -382,6 +434,22 @@ const CatechistScheduleScreen: React.FC = () => {
               ))}
             </Select>
           </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">Lớp</label>
+            <Select
+              className="w-full"
+              placeholder="Chọn lớp"
+              onChange={(value) => setSelectedClass(value)}
+              value={selectedClass}
+            >
+              {classes.map((classItem) => (
+                <Select.Option key={classItem.id} value={classItem.name}>
+                  {classItem.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
         </div>
       </Card>
 
@@ -393,20 +461,27 @@ const CatechistScheduleScreen: React.FC = () => {
           Tuần: {selectedWeek}
         </Text>
       </div>
-
-      {currentWeek && (
+      {currentWeek && !selectedClass && (
+        <div className="text-center text-gray-500 py-8">
+          <p className="text-lg font-semibold">Vui lòng chọn lớp</p>
+          <p className="text-sm">Chọn một lớp để xem lịch giảng dạy</p>
+        </div>
+      )}
+      {currentWeek && selectedClass && (
         <div className="mt-4">
           <Text>
             Từ {currentWeek.startDate} đến {currentWeek.endDate}
           </Text>
-          {currentWeek.classes.map((classItem, index) => {
-            const timetable = createTimetable(classItem.slots);
-            return (
-              <Card key={index} className="mb-4 mt-4">
-                {renderCalendar(timetable, classItem)}
-              </Card>
-            );
-          })}
+          {currentWeek.classes
+            .filter((classItem) => classItem.className === selectedClass)
+            .map((classItem, index) => {
+              const timetable = createTimetable(classItem.slots);
+              return (
+                <Card key={index} className="mb-4 mt-4">
+                  {renderCalendar(timetable, classItem)}
+                </Card>
+              );
+            })}
         </div>
       )}
     </div>

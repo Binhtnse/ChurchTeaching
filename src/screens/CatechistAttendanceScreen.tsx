@@ -188,7 +188,9 @@ const CatechistAttendanceScreen: React.FC = () => {
         Quay lại lịch dạy
       </Button>
       <Button
-        onClick={() => navigate(`/leave-requests/${timeTableId}`)}
+        onClick={() => navigate(`/leave-requests/${timeTableId}`, {
+          state: { weekNumber, date, dayOfWeek, time }
+        })}
         className="mb-4 ml-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 border rounded shadow"
       >
         Xem danh sách đơn xin nghỉ

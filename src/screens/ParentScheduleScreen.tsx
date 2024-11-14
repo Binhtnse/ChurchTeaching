@@ -224,7 +224,7 @@ const AbsenceRequestModal: React.FC<AbsenceRequestModalProps> = React.memo(
                 </div>
                 <div className="flex items-center">
                   <Text strong className="w-48">
-                    Tổng số buổi học:
+                    Tổng số buổi đã học:
                   </Text>
                   <Text>{stats.totalSessions}</Text>
                 </div>
@@ -507,11 +507,21 @@ const ParentScheduleScreen: React.FC = () => {
   const stats = getAttendanceStats();
 
   const showModal = (slot: Slot, classItem: Class) => {
+    const weekStart = new Date(currentWeek!.startDate);
+    const dayIndex = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"].indexOf(slot.dayOfWeek);
+    const slotDate = new Date(weekStart);
+    slotDate.setDate(weekStart.getDate() + dayIndex);
+    
+    const updatedSlot = {
+      ...slot,
+      actualDate: slotDate
+    };
+    
     setModalKey((prev) => prev + 1);
-    setSelectedSlot(slot);
+    setSelectedSlot(updatedSlot);
     setSelectedClass(classItem);
     setIsModalVisible(true);
-
+  
     const userString = localStorage.getItem("userLogin");
     const user = userString ? JSON.parse(userString) : null;
     if (user?.id) {

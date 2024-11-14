@@ -1,27 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Spin } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import dayjs from 'dayjs';
-import usePageTitle from '../hooks/usePageTitle';
-
+import React, { useState, useEffect } from "react";
+import { Table, Button, Spin } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import axios from "axios";
+import dayjs from "dayjs";
+import usePageTitle from "../hooks/usePageTitle";
 
 interface LeaveRequest {
-  id: number;
+  leaveRequestId: number;
   requestTime: string;
   reason: string;
   studentName: string;
   className: string;
-  status: string;
+  statusOfLeave: string;
+  studentClass: number;
+  timeTableId: number;
   timeTableName: string;
   timeTableTime: string;
 }
 
 const CatechistLeaveRequestListScreen: React.FC = () => {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [approvingIds, setApprovingIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { timeTableId } = useParams<{ timeTableId: string }>();
   const { setPageTitle } = usePageTitle();
 
@@ -32,16 +35,16 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
   useEffect(() => {
     const fetchLeaveRequests = async () => {
       try {
-        const accessToken = localStorage.getItem('accessToken');
+        const accessToken = localStorage.getItem("accessToken");
         const response = await axios.get(
           `https://sep490-backend-production.up.railway.app/api/v1/leave-requests/catechist/${timeTableId}`,
           {
-            headers: { Authorization: `Bearer ${accessToken}` }
+            headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
         setLeaveRequests(response.data.data);
       } catch (error) {
-        console.error('Error fetching leave requests:', error);
+        console.error("Error fetching leave requests:", error);
       } finally {
         setLoading(false);
       }
@@ -50,33 +53,107 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
     fetchLeaveRequests();
   }, [timeTableId]);
 
+  const handleApprove = async (record: LeaveRequest) => {
+    setApprovingIds((prev) => [...prev, record.leaveRequestId]);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.put(
+        "https://sep490-backend-production.up.railway.app/api/v1/leave-requests/approve",
+        {
+          leaveRequestId: record.leaveRequestId,
+          timeTableId: record.timeTableId,
+          studentClassId: record.studentClass,
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      // Refresh the leave requests list
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/leave-requests/catechist/${timeTableId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setLeaveRequests(response.data.data);
+    } catch (error) {
+      console.error("Error approving leave request:", error);
+    } finally {
+      setApprovingIds((prev) =>
+        prev.filter((id) => id !== record.leaveRequestId)
+      );
+    }
+  };
+
+  const { weekNumber, date, dayOfWeek, time } = location.state || {};
+
   const columns = [
     {
-      title: 'Tên thiếu nhi',
-      dataIndex: 'studentName',
-      key: 'studentName',
+      title: "Tên thiếu nhi",
+      dataIndex: "studentName",
+      key: "studentName",
     },
     {
-      title: 'Lớp',
-      dataIndex: 'className',
-      key: 'className',
+      title: "Lớp",
+      dataIndex: "className",
+      key: "className",
     },
     {
-      title: 'Thời gian xin nghỉ',
-      dataIndex: 'timeTableTime',
-      key: 'timeTableTime',
-      render: (time: string) => dayjs(time).format('DD/MM/YYYY HH:mm'),
+      title: "Thời gian xin nghỉ",
+      dataIndex: "timeTableTime",
+      key: "timeTableTime",
+      render: (time: string) => dayjs(time).format("DD/MM/YYYY HH:mm"),
     },
     {
-      title: 'Thời gian gửi đơn',
-      dataIndex: 'requestTime',
-      key: 'requestTime',
-      render: (time: string) => dayjs(time).format('DD/MM/YYYY HH:mm'),
+      title: "Thời gian gửi đơn",
+      dataIndex: "requestTime",
+      key: "requestTime",
+      render: (time: string) => dayjs(time).format("DD/MM/YYYY HH:mm"),
     },
     {
-      title: 'Lý do',
-      dataIndex: 'reason',
-      key: 'reason',
+      title: "Lý do",
+      dataIndex: "reason",
+      key: "reason",
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "statusOfLeave",
+      key: "statusOfLeave",
+      render: (status: string) => {
+        switch (status) {
+          case "ACTIVE":
+            return <span className="text-green-600">Đã duyệt</span>;
+          case "PENDING":
+            return <span className="text-yellow-600">Chưa duyệt</span>;
+          default:
+            return status;
+        }
+      },
+    },
+    {
+      title: "Hành động",
+      key: "action",
+      render: (record: LeaveRequest) => (
+        <Button
+          type="primary"
+          onClick={() => handleApprove(record)}
+          disabled={
+            record.statusOfLeave === "ACTIVE" ||
+            approvingIds.includes(record.leaveRequestId)
+          }
+          className={`${
+            record.statusOfLeave === "ACTIVE"
+              ? "bg-gray-400"
+              : "bg-blue-600 hover:bg-blue-700"
+          } text-white`}
+          loading={approvingIds.includes(record.leaveRequestId)}
+        >
+          {approvingIds.includes(record.leaveRequestId)
+            ? "Đang duyệt"
+            : "Duyệt đơn"}
+        </Button>
+      ),
     },
   ];
 
@@ -84,12 +161,12 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
     <div className="p-6 bg-white rounded-lg shadow-md">
       <Button
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate(`/schedule/attendance/${timeTableId}`)}
+        onClick={() => navigate(`/schedule/attendance/${timeTableId}?dayOfWeek=${dayOfWeek}&weekNumber=${weekNumber}&time=${time}&date=${date}`)}
         className="mb-4 bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
       >
         Quay lại điểm danh
       </Button>
-      
+
       <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
         Danh sách đơn xin nghỉ
       </h1>

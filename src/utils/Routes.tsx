@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Routes, Route, createBrowserRouter} from "react-router-dom";
+import { Routes, Route, createBrowserRouter } from "react-router-dom";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
 import EnrollScreen from "../screens/EnrollScreen";
@@ -193,7 +193,7 @@ export const AppRoutes = createBrowserRouter([
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/dashboard"
             element={
@@ -354,14 +354,19 @@ export const AppRoutes = createBrowserRouter([
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/post/:id"
+            element={
+              <ProtectedRoute
+                allowedRoles={["GUEST", "PARENT", "STUDENT", "CATECHIST"]}
+              >
+                <PostDetail />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-
       </Layout>
     ),
-  },
-  {
-    path: "/post/:id",
-    element: <PostDetail />,
   },
   {
     path: "/login",
