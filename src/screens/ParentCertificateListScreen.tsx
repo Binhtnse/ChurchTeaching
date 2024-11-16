@@ -113,7 +113,10 @@ const ParentCertificateListScreen: React.FC = () => {
 
   const fetchCertificates = useCallback(
     async (page: number = 1, pageSize: number = 10) => {
-      if (!selectedChild || !selectedYear || !selectedGrade) return;
+      if (!selectedChild || !selectedYear || !selectedGrade) {
+        setCertificates([]);
+        return;
+      }
       try {
         setLoading(true);
         const response = await axios.get<ApiResponse>(
@@ -124,7 +127,7 @@ const ParentCertificateListScreen: React.FC = () => {
             },
           }
         );
-
+  
         if (response.data.status === "SUCCESS") {
           setCertificates(response.data.data);
           setPagination((prev) => ({
@@ -132,10 +135,13 @@ const ParentCertificateListScreen: React.FC = () => {
             total: response.data.pageResponse.totalPage * pageSize,
             current: page,
           }));
+        } else {
+          setCertificates([]);
         }
       } catch (error) {
-        console.log(error)
+        console.log(error);
         message.error("Cannot load certificates list");
+        setCertificates([]);
       } finally {
         setLoading(false);
       }
@@ -157,6 +163,10 @@ const ParentCertificateListScreen: React.FC = () => {
       fetchCertificates();
     }
   }, [fetchCertificates, selectedChild, selectedYear, selectedGrade]);
+
+  useEffect(() => {
+    setCertificates([]);
+  }, [selectedYear, selectedGrade, selectedChild]);  
 
   const handleChildChange = (value: number) => {
     setSelectedChild(value);

@@ -85,7 +85,10 @@ const AdminCertificateListScreen: React.FC = () => {
 
   const fetchCertificates = useCallback(
     async (page: number = 1, pageSize: number = 10) => {
-      if (!selectedYear || !selectedGrade) return;
+      if (!selectedYear || !selectedGrade) {
+        setCertificates([]);
+        return;
+      }
       try {
         setLoading(true);
         const accessToken = localStorage.getItem("accessToken");
@@ -97,7 +100,7 @@ const AdminCertificateListScreen: React.FC = () => {
             },
           }
         );
-
+  
         if (response.data.status === "SUCCESS") {
           setCertificates(response.data.data);
           setPagination((prev) => ({
@@ -105,10 +108,13 @@ const AdminCertificateListScreen: React.FC = () => {
             total: response.data.pageResponse.totalPage * pageSize,
             current: page,
           }));
+        } else {
+          setCertificates([]);
         }
       } catch (error) {
         console.error("Error fetching certificates:", error);
         message.error("Cannot load certificates list");
+        setCertificates([]);
       } finally {
         setLoading(false);
       }
@@ -120,6 +126,10 @@ const AdminCertificateListScreen: React.FC = () => {
     fetchAcademicYears();
     fetchGrades();
   }, []);
+
+  useEffect(() => {
+    setCertificates([]);
+  }, [selectedYear, selectedGrade]);
 
   useEffect(() => {
     if (selectedYear && selectedGrade) {

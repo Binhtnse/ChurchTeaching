@@ -88,7 +88,10 @@ const StudentCertificateListScreen: React.FC = () => {
 
   const fetchCertificates = useCallback(
     async (page: number = 1, pageSize: number = 10) => {
-      if (!selectedYear || !selectedGrade) return;
+      if (!selectedYear || !selectedGrade) {
+        setCertificates([]);
+        return;
+      }
       try {
         setLoading(true);
         const response = await axios.get<ApiResponse>(
@@ -99,7 +102,7 @@ const StudentCertificateListScreen: React.FC = () => {
             },
           }
         );
-
+  
         if (response.data.status === "SUCCESS") {
           setCertificates(response.data.data);
           setPagination((prev) => ({
@@ -107,10 +110,15 @@ const StudentCertificateListScreen: React.FC = () => {
             total: response.data.pageResponse.totalPage * pageSize,
             current: page,
           }));
+        } else {
+          // Clear certificates if response status is not SUCCESS
+          setCertificates([]);
         }
       } catch (error) {
         console.log(error);
         message.error("Cannot load certificates list");
+        // Clear certificates on error
+        setCertificates([]);
       } finally {
         setLoading(false);
       }
@@ -122,6 +130,10 @@ const StudentCertificateListScreen: React.FC = () => {
     fetchAcademicYears();
     fetchGrades();
   }, [fetchGrades]);
+
+  useEffect(() => {
+    setCertificates([]);
+  }, [selectedYear, selectedGrade]);
 
   useEffect(() => {
     if (selectedYear && selectedGrade) {

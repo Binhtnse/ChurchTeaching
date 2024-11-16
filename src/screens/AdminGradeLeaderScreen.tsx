@@ -12,6 +12,7 @@ import {
   Form,
   Radio,
   Space,
+  Input,
 } from "antd";
 import axios from "axios";
 
@@ -105,7 +106,10 @@ const AdminGradeLeaderScreen: React.FC = () => {
 
   const fetchGradeLeaders = useCallback(
     async (page: number = 1, pageSize: number = 10) => {
-      if (!selectedYear || !selectedGrade) return;
+      if (!selectedYear || !selectedGrade) {
+        setGradeLeaders([]); // Clear existing data
+        return;
+      }
       try {
         setLoading(true);
         const accessToken = localStorage.getItem("accessToken");
@@ -119,16 +123,20 @@ const AdminGradeLeaderScreen: React.FC = () => {
         );
 
         if (response.data.status === "success") {
-          setGradeLeaders(response.data.data);
+          // Set empty array if no data returned
+          setGradeLeaders(response.data.data || []);
           setPagination((prev) => ({
             ...prev,
             total: response.data.pageResponse.totalPage * pageSize,
             current: page,
           }));
+        } else {
+          setGradeLeaders([]); // Clear data on failed response
         }
       } catch (error) {
         console.error("Error fetching grade leaders:", error);
         message.error("Cannot load grade leaders list");
+        setGradeLeaders([]); // Clear data on error
       } finally {
         setLoading(false);
       }
@@ -239,7 +247,12 @@ const AdminGradeLeaderScreen: React.FC = () => {
     setEditModalVisible(true);
   };
 
-  const handleEditSubmit = async (values: { isPrimary: string }) => {
+  const handleEditSubmit = async (values: { 
+    isPrimary: string,
+    gradeId: number,
+    gradeLeaderAcademicYearId: number,
+    academicYearId: number 
+  }) => {
     setEditLoading(true);
     try {
       if (
@@ -252,20 +265,20 @@ const AdminGradeLeaderScreen: React.FC = () => {
             leader.status === "ACTIVE" &&
             leader.id !== editingGradeLeader?.id
         );
-
+  
         if (existingPrimary) {
           message.error("Khối này đã có trưởng khối!");
           return;
         }
       }
-
+  
       const response = await axios.put(
         "https://sep490-backend-production.up.railway.app/api/v1/grade-leader/update",
         {
           gradeLeaderAcademicYearId: editingGradeLeader?.id,
           isPrimary: values.isPrimary,
           academicYearId: selectedYear,
-          gradeId: selectedGrade,
+          gradeId: values.gradeId
         },
         {
           headers: {
@@ -273,7 +286,7 @@ const AdminGradeLeaderScreen: React.FC = () => {
           },
         }
       );
-
+  
       if (response.data.status === "success") {
         message.success("Cập nhật thành công");
         setEditModalVisible(false);
@@ -299,8 +312,10 @@ const AdminGradeLeaderScreen: React.FC = () => {
       );
 
       if (response.data.status === "success") {
+        setGradeLeaders((prevLeaders) =>
+          prevLeaders.filter((leader) => leader.id !== id)
+        );
         message.success("Xóa thành công");
-        fetchGradeLeaders();
       }
     } catch (error) {
       console.error(error);
@@ -308,11 +323,13 @@ const AdminGradeLeaderScreen: React.FC = () => {
     }
   };
 
-  const sortedGradeLeaders = [...gradeLeaders].sort((a, b) => {
-    if (a.isPrimary === "PRIMARY" && b.isPrimary !== "PRIMARY") return -1;
-    if (a.isPrimary !== "PRIMARY" && b.isPrimary === "PRIMARY") return 1;
-    return 0;
-  });
+  const sortedGradeLeaders = [...gradeLeaders]
+    .filter((leader) => leader.status === "ACTIVE")
+    .sort((a, b) => {
+      if (a.isPrimary === "PRIMARY" && b.isPrimary !== "PRIMARY") return -1;
+      if (a.isPrimary !== "PRIMARY" && b.isPrimary === "PRIMARY") return 1;
+      return 0;
+    });
 
   const handleYearChange = (value: number) => {
     setSelectedYear(value);
@@ -539,7 +556,35 @@ const AdminGradeLeaderScreen: React.FC = () => {
           onFinish={handleEditSubmit}
           layout="vertical"
           className="mt-4"
+          initialValues={{
+            gradeLeaderAcademicYearId: editingGradeLeader?.id,
+            isPrimary: editingGradeLeader?.isPrimary,
+            academicYearId: selectedYear,
+            gradeId: selectedGrade,
+          }}
         >
+          <Form.Item name="gradeLeaderAcademicYearId" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item name="academicYearId" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="gradeId"
+            label={<span className="text-base font-medium">Khối</span>}
+            rules={[{ required: true, message: "Vui lòng chọn khối" }]}
+          >
+            <Select placeholder="Chọn khối">
+              {grades.map((grade) => (
+                <Select.Option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
           <Form.Item
             name="isPrimary"
             label={<span className="text-base font-medium">Vai trò</span>}
