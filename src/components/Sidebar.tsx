@@ -17,7 +17,8 @@ import {
   AreaChartOutlined,
   FileDoneOutlined,
   ReadOutlined,
-  UserOutlined
+  UserOutlined,
+  FilePdfOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -60,6 +61,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "transaction-history-user",
         label: "Lịch sử giao dịch",
         icon: <AccountBookOutlined />,
+      },
+      {
+        key: "student-certificate-list",
+        label: "Danh sách chứng chỉ lên lớp",
+        icon: <FilePdfOutlined />,
       },
     ],
     CATECHIST: [
@@ -121,6 +127,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "enroll",
         label: "Đăng ký học",
         icon: <FormOutlined />,
+      },
+      {
+        key: "parent-certificate-list",
+        label: "Danh sách chứng chỉ lên lớp",
+        icon: <FilePdfOutlined />,
       },
     ],
     ADMIN: [
@@ -194,6 +205,11 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "policy-list", label: "Xem tất cả quy định" },
           { key: "add-policy", label: "Thêm quy định" },
         ],
+      },
+      {
+        key: "certificate-list",
+        label: "Danh sách chứng chỉ lên lớp",
+        icon: <FilePdfOutlined />,
       },
     ],
     GUEST: [

@@ -193,15 +193,26 @@ const EnrollScreen: React.FC = () => {
                   name={question.questionId}
                   label={question.questionText}
                   rules={[
-                    // Remove required rule for the "Thông tin liên quan khác" group
                     ...(groupIndex !== 2
                       ? [
-                        {
-                          required: true,
-                          message: `Vui lòng trả lời câu hỏi này!`,
-                        },
-                      ]
-                      : []),
+                          {
+                            required: true,
+                            message: `Vui lòng trả lời câu hỏi này!`,
+                          },
+                          ...(question.questionId === 6 ? [
+                            {
+                              pattern: /^[0-9]{10}$/,
+                              message: 'Số điện thoại phải có 10 chữ số!'
+                            }
+                          ] : []),
+                          ...(question.questionId === 5 ? [
+                            {
+                              type: 'email' as const,
+                              message: 'Vui lòng nhập đúng định dạng email!'
+                            }
+                          ] : [])
+                        ]
+                      : [])
                   ]}
                 >
                   {question.questionId === 9 ||
@@ -217,7 +228,15 @@ const EnrollScreen: React.FC = () => {
                       }}
                     />
                   ) : question.questionType === "text" ? (
-                    <Input />
+                    <Input {...(question.questionId === 6 ? {
+                      maxLength: 10,
+                      onKeyPress: (e) => {
+                        const isNumber = /[0-9]/.test(e.key);
+                        if (!isNumber) {
+                          e.preventDefault();
+                        }
+                      }
+                    } : {})}/>
                   ) : (
                     <Select placeholder="Chọn một lựa chọn">
                       {question.options?.map((option) => (
@@ -476,7 +495,7 @@ const EnrollScreen: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <div style={{ marginLeft: "450px", padding: "20px" }}>
+      <div className="max-w-2xl mx-auto p-6">
         <Form
           {...formItemLayout}
           form={form}

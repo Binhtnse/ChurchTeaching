@@ -39,6 +39,9 @@ import ParentLeaveRequestListScreen from "../screens/ParentLeaveRequestListScree
 import AdminLeaveRequestListScreen from "../screens/AdminLeaveRequestListScreen";
 import AdminUserDetailScreen from "../screens/AdminUserDetailScreen";
 import AdminGradeLeaderScreen from "../screens/AdminGradeLeaderScreen";
+import AdminCertificateListScreen from "../screens/AdminCertificateListScreen";
+import ParentCertificateListScreen from "../screens/ParentCertificateListScreen";
+import StudentCertificateListScreen from "../screens/StudentCertificateListScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -126,6 +129,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["PARENT"]}>
                 <ParentLeaveRequestListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/parent-certificate-list"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentCertificateListScreen />
               </ProtectedRoute>
             }
           />
@@ -243,6 +254,14 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/student-certificate-list"
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT"]}>
+                <StudentCertificateListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/user-list"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
@@ -303,6 +322,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminStudentList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/certificate-list"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminCertificateListScreen />
               </ProtectedRoute>
             }
           />
