@@ -41,6 +41,7 @@ interface Slot {
     description: string;
   };
   materials: Material[];
+  exams?: string;
 }
 
 interface Class {
@@ -110,10 +111,11 @@ const CatechistScheduleScreen: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>("");
+  const savedWeek = localStorage.getItem('selectedWeek');
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
-  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [selectedWeek, setSelectedWeek] = useState<number>(savedWeek ? parseInt(savedWeek) : 1);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -134,10 +136,10 @@ const CatechistScheduleScreen: React.FC = () => {
         );
         if (!response.data.data || response.data.data.length === 0) {
           setScheduleData(null);
-          setSelectedWeek(1);
           return;
         }
         setScheduleData(response.data.data);
+        
         const currentDate = new Date();
         const currentWeek = response.data.data.schedule.find(
           (week: WeekSchedule) => {
@@ -146,23 +148,32 @@ const CatechistScheduleScreen: React.FC = () => {
             return currentDate >= startDate && currentDate <= endDate;
           }
         );
-        setSelectedWeek(
-          currentWeek
-            ? currentWeek.weekNumber
-            : response.data.data.schedule[0].weekNumber
-        );
+  
+        // Get saved week from localStorage
+        const savedWeek = localStorage.getItem('selectedWeek');
+        
+        // Priority: 1. Saved week 2. Current week 3. First week
+        const weekToSelect = savedWeek 
+          ? parseInt(savedWeek)
+          : currentWeek 
+            ? currentWeek.weekNumber 
+            : response.data.data.schedule[0].weekNumber;
+            
+        setSelectedWeek(weekToSelect);
+        localStorage.setItem('selectedWeek', weekToSelect.toString());
       } catch (error) {
         console.log(error);
         setScheduleData(null);
-        setSelectedWeek(1);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchSchedule();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear]);
+  
+    if (selectedYear) {
+      fetchSchedule();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]); 
 
   const fetchAcademicYears = async () => {
     try {
@@ -286,9 +297,7 @@ const CatechistScheduleScreen: React.FC = () => {
                 const CellComponent = index === 6 ? SundayCell : CalendarCell;
                 const slot = timetable[day] && timetable[day][time];
                 return (
-                  <CellComponent
-                    key={`${day}-${time}`}
-                  >
+                  <CellComponent key={`${day}-${time}`}>
                     {slot && (
                       <div className="flex flex-col h-full">
                         <Text className="text-gray-500 mb-1">
@@ -301,6 +310,11 @@ const CatechistScheduleScreen: React.FC = () => {
                           <Text className="text-green-600">
                             Chương: {slot.session.name}
                           </Text>
+                          {slot.exams && (
+                            <Text className="text-red-600 block mt-1">
+                              Kiểm tra: {slot.exams}
+                            </Text>
+                          )}
                           {slot.materials && slot.materials.length > 0 && (
                             <div className="mt-2">
                               <Text className="text-purple-600 font-medium">
@@ -424,7 +438,10 @@ const CatechistScheduleScreen: React.FC = () => {
             <Select
               className="w-full"
               value={selectedWeek}
-              onChange={(value) => setSelectedWeek(value)}
+              onChange={(value) => {
+                setSelectedWeek(value);
+                localStorage.setItem('selectedWeek', value.toString());
+              }}
               placeholder="Chọn tuần"
             >
               {scheduleData?.schedule.map((week) => (

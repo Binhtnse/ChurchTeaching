@@ -72,6 +72,7 @@ interface Slot {
   };
   materials: Material[];
   attendance: Attendance;
+  exams?: string;
 }
 
 interface Attendance {
@@ -601,6 +602,11 @@ const ParentScheduleScreen: React.FC = () => {
                         <Text className="text-green-600">
                           Chương: {slot.session.name}
                         </Text>
+                        {slot.exams && (
+                          <Text className="text-red-600 block mt-1">
+                            Kiểm tra: {slot.exams}
+                          </Text>
+                        )}
                         {slot.materials && slot.materials.length > 0 && (
                           <div className="mt-2">
                             <Text className="text-purple-600 font-medium">
