@@ -24,6 +24,12 @@ interface Transaction {
   };
 }
 
+interface Class {
+  id: number;
+  name: string;
+  gradeName: string;
+}
+
 interface ApiResponse {
   status: string;
   message: string | null;
@@ -48,6 +54,8 @@ const UserTransactionHistoryScreen: React.FC = () => {
     { id: number; year: string; timeStatus: string }[]
   >([]);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -86,6 +94,29 @@ const UserTransactionHistoryScreen: React.FC = () => {
     }
   };
 
+  const fetchClasses = useCallback(async () => {
+    if (!selectedYear || !selectedGrade) return;
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedYear}&gradeId=${selectedGrade}`
+      );
+      if (!response.data.data || response.data.data.length === 0) {
+        setClasses([]);
+        return;
+      }
+      setClasses(response.data.data);
+    } catch (error) {
+      console.log(error);
+      setClasses([]);
+    }
+  }, [selectedYear, selectedGrade]);
+
+  useEffect(() => {
+    if (selectedYear && selectedGrade) {
+      fetchClasses();
+    }
+  }, [selectedYear, selectedGrade, fetchClasses]);
+
   useEffect(() => {
     fetchAcademicYears();
     fetchGrades();
@@ -112,6 +143,9 @@ const UserTransactionHistoryScreen: React.FC = () => {
         }
         if (selectedGrade) {
           url += `&gradeId=${selectedGrade}`;
+        }
+        if (selectedClass) {
+          url += `&classId=${selectedClass}`;
         }
 
         const response = await axios.get<ApiResponse>(url, {
@@ -145,7 +179,7 @@ const UserTransactionHistoryScreen: React.FC = () => {
         setLoading(false);
       }
     },
-    [selectedYear, selectedGrade]
+    [selectedYear, selectedGrade, selectedClass]
   );
 
   useEffect(() => {
@@ -236,7 +270,7 @@ const UserTransactionHistoryScreen: React.FC = () => {
           Lịch sử giao dịch
         </h1>
         <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-600">
                 Niên khóa
@@ -277,6 +311,26 @@ const UserTransactionHistoryScreen: React.FC = () => {
                 {grades.map((grade) => (
                   <Select.Option key={grade.id} value={grade.id}>
                     {grade.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">Lớp</label>
+              <Select
+                className="w-full"
+                placeholder="Chọn lớp"
+                onChange={(value) => {
+                  setSelectedClass(value);
+                  fetchTransactions(1, pagination.pageSize);
+                }}
+                value={selectedClass}
+                disabled={!selectedYear || !selectedGrade}
+                allowClear
+              >
+                {classes.map((cls) => (
+                  <Select.Option key={cls.id} value={cls.id}>
+                    {cls.name}
                   </Select.Option>
                 ))}
               </Select>
