@@ -8,9 +8,9 @@ import {
   Card,
   message,
   Checkbox,
+  Spin,
 } from "antd";
 import axios from "axios";
-import { useAuthState } from "../hooks/useAuthState";
 
 const { Option } = Select;
 
@@ -32,13 +32,13 @@ interface FormValues {
 
 const ParentTransactionScreen: React.FC = () => {
   const [form] = Form.useForm();
-  const { isLoggedIn } = useAuthState();
   const [children, setChildren] = useState<Child[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [minAmount, setMinAmount] = useState<number>(0);
   const [churchDonation, setChurchDonation] = useState(false);
   const [donationAmount, setDonationAmount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isLoadingPolicy, setIsLoadingPolicy] = useState(false);
 
   const userString = localStorage.getItem("userLogin");
   const parentId = userString ? JSON.parse(userString).id : null;
@@ -46,50 +46,52 @@ const ParentTransactionScreen: React.FC = () => {
   const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchChildren = async () => {
       try {
-        const [childrenRes, policiesRes] = await Promise.all([
-          axios.get(
-            `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          ),
-          axios.get(
-            "https://sep490-backend-production.up.railway.app/api/v1/policy"
-          ),
-        ]);
-
+        const childrenRes = await axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setChildren(childrenRes.data.data);
-        setPolicies(policiesRes.data.data);
-        if (policiesRes.data.length > 0) {
-          const tuitionFee = policiesRes.data.data[0].tuitionFee;
-          setMinAmount(tuitionFee);
-          form.setFieldsValue({ amount: tuitionFee });
-        }
       } catch (error) {
-        message.error("Failed to fetch required data");
+        message.error("Failed to fetch children data");
         console.log(error);
       }
     };
 
-    fetchData();
-  }, [isLoggedIn, parentId, token, form]);
+    fetchChildren();
+  }, [parentId, token]);
 
   console.log(policies);
 
   const handleChildSelect = async (childId: number) => {
+    setIsLoadingPolicy(true);
     try {
-      const response = await axios.get(
+      const classResponse = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/class/student/${childId}`
       );
-      const studentClassId = response.data.data;
-      form.setFieldsValue({ studentClassId });
+      const studentClassId = classResponse.data.data;
+
+      const policyResponse = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/policy/student/${childId}`
+      );
+
+      const policyData = policyResponse.data;
+      setPolicies([policyData]);
+      setMinAmount(policyData.tuitionFee);
+      form.setFieldsValue({
+        studentClassId,
+        amount: policyData.tuitionFee,
+      });
     } catch (error) {
-      message.error("Failed to fetch student class information");
+      message.error("Failed to fetch student information");
       console.log(error);
+    } finally {
+      setIsLoadingPolicy(false);
     }
   };
 
@@ -159,88 +161,95 @@ const ParentTransactionScreen: React.FC = () => {
               </Select>
             </Form.Item>
 
-            <Form.Item
-              label={
-                <span className="text-base font-medium">Học phí cố định</span>
-              }
-            >
-              <InputNumber
-                className="w-full rounded-lg text-base"
-                size="large"
-                disabled
-                value="300000 VND"
-                formatter={(value) =>
-                  `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                }
-              />
-            </Form.Item>
-
-            <Form.Item name="churchDonation" valuePropName="checked">
-              <Checkbox onChange={(e) => setChurchDonation(e.target.checked)}>
-                Tôi muốn đóng góp cho giáo xứ
-              </Checkbox>
-            </Form.Item>
-
-            {churchDonation && (
-              <Form.Item
-                name="donationAmount"
-                label={
-                  <span className="text-base font-medium">
-                    Số tiền đóng góp
-                  </span>
-                }
-                rules={[
-                  { required: true, message: "Vui lòng nhập số tiền đóng góp" },
-                  { type: "number", min: 0, message: "Số tiền không được âm" },
-                ]}
-              >
-                <InputNumber
-                  className="w-full rounded-lg text-base"
-                  size="large"
-                  placeholder="0.00 VND"
-                  onChange={(value: number | null) =>
-                    setDonationAmount(value || 0)
+            {form.getFieldValue("childId") && (
+              <Spin spinning={isLoadingPolicy}>
+                <Form.Item
+                  label={
+                    <span className="text-base font-medium">
+                      Học phí cố định
+                    </span>
                   }
-                  formatter={(value) =>
-                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                  }
-                />
-              </Form.Item>
+                >
+                  <InputNumber
+                    className="w-full rounded-lg text-base"
+                    size="large"
+                    disabled
+                    value={minAmount}
+                    formatter={(value) =>
+                      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    }
+                  />
+                </Form.Item>
+
+                <Form.Item name="churchDonation" valuePropName="checked">
+                  <Checkbox
+                    onChange={(e) => setChurchDonation(e.target.checked)}
+                  >
+                    Tôi muốn đóng góp cho giáo xứ
+                  </Checkbox>
+                </Form.Item>
+
+                {churchDonation && (
+                  <Form.Item
+                    name="donationAmount"
+                    label={
+                      <span className="text-base font-medium">
+                        Số tiền đóng góp
+                      </span>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng nhập số tiền đóng góp",
+                      },
+                      {
+                        type: "number",
+                        min: 0,
+                        message: "Số tiền không được âm",
+                      },
+                    ]}
+                  >
+                    <InputNumber
+                      className="w-full rounded-lg text-base"
+                      size="large"
+                      placeholder="0.00 VND"
+                      onChange={(value: number | null) =>
+                        setDonationAmount(value || 0)
+                      }
+                      formatter={(value) =>
+                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                    />
+                  </Form.Item>
+                )}
+
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg mb-8">
+                  <p className="text-base font-medium text-blue-700">
+                    Tổng tiền:{" "}
+                    {(
+                      minAmount + (churchDonation ? donationAmount : 0)
+                    ).toLocaleString()}{" "}
+                    VND
+                  </p>
+                </div>
+
+                <Form.Item name="studentClassId" hidden>
+                  <Input />
+                </Form.Item>
+
+                <Form.Item className="mb-0">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg h-14 text-lg font-semibold transition-colors duration-200"
+                  >
+                    {loading ? "Đang xử lý..." : "Thanh toán"}
+                  </Button>
+                </Form.Item>
+              </Spin>
             )}
-
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <p className="text-base font-medium text-blue-700">
-                Tổng tiền:{" "}
-                {(
-                  300000 + (churchDonation ? donationAmount : 0)
-                ).toLocaleString()}{" "}
-                VND
-              </p>
-            </div>
-
-            <Form.Item name="studentClassId" hidden>
-              <Input />
-            </Form.Item>
-
-            <Form.Item className="mb-0">
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg h-14 text-lg font-semibold transition-colors duration-200"
-              >
-                {loading ? "Đang xử lý..." : "Thanh toán"}
-              </Button>
-            </Form.Item>
           </Form>
-
-          {minAmount > 0 && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
-                Số tiền tối thiểu cần đóng: {minAmount.toLocaleString()} VND
-              </p>
-            </div>
-          )}
         </Card>
       </div>
     </div>

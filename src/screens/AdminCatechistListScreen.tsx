@@ -14,6 +14,7 @@ import { InboxOutlined } from "@ant-design/icons";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import { UploadRequestOption } from "rc-upload/lib/interface";
+import { ColumnsType } from 'antd/es/table';
 
 const { Dragger } = Upload;
 
@@ -51,19 +52,81 @@ const AdminCatechistListScreen: React.FC = () => {
   >([]);
   console.log(isUploading);
 
-  const columns = [
-    { title: "Mã", dataIndex: "code", key: "code" },
-    { title: "Họ tên", dataIndex: "fullName", key: "fullName" },
-    { title: "Giới tính", dataIndex: "gender", key: "gender" },
-    { title: "Ngày sinh", dataIndex: "dateOfBirth", key: "dateOfBirth" },
-    { title: "Nơi sinh", dataIndex: "birthPlace", key: "birthPlace" },
-    { title: "Họ tên bố", dataIndex: "fatherName", key: "fatherName" },
-    { title: "SĐT bố", dataIndex: "fatherPhone", key: "fatherPhone" },
-    { title: "Họ tên mẹ", dataIndex: "motherName", key: "motherName" },
-    { title: "SĐT mẹ", dataIndex: "motherPhone", key: "motherPhone" },
-    { title: "Địa chỉ", dataIndex: "address", key: "address" },
-    { title: "Cấp", dataIndex: "level", key: "level" },
-    { title: "Email", dataIndex: "email", key: "email" },
+  const columns: ColumnsType<CatechistData> = [
+    { 
+      title: "Mã", 
+      dataIndex: "code", 
+      key: "code",
+      width: 100,
+      fixed: 'left' as const
+    },
+    { 
+      title: "Họ tên", 
+      dataIndex: "fullName", 
+      key: "fullName",
+      width: 150,
+      fixed: 'left' as const
+    },
+    { 
+      title: "Giới tính", 
+      dataIndex: "gender", 
+      key: "gender",
+      width: 100 
+    },
+    { 
+      title: "Ngày sinh", 
+      dataIndex: "dateOfBirth", 
+      key: "dateOfBirth",
+      width: 120 
+    },
+    { 
+      title: "Nơi sinh", 
+      dataIndex: "birthPlace", 
+      key: "birthPlace",
+      width: 150 
+    },
+    { 
+      title: "Họ tên bố", 
+      dataIndex: "fatherName", 
+      key: "fatherName",
+      width: 150
+    },
+    { 
+      title: "SĐT bố", 
+      dataIndex: "fatherPhone", 
+      key: "fatherPhone",
+      width: 120
+    },
+    { 
+      title: "Họ tên mẹ", 
+      dataIndex: "motherName", 
+      key: "motherName",
+      width: 150
+    },
+    { 
+      title: "SĐT mẹ", 
+      dataIndex: "motherPhone", 
+      key: "motherPhone",
+      width: 120
+    },
+    { 
+      title: "Địa chỉ", 
+      dataIndex: "address", 
+      key: "address",
+      width: 200
+    },
+    { 
+      title: "Cấp", 
+      dataIndex: "level", 
+      key: "level",
+      width: 100
+    },
+    { 
+      title: "Email", 
+      dataIndex: "email", 
+      key: "email",
+      width: 200
+    }
   ];
 
   const customRequest = (options: UploadRequestOption) => {
@@ -334,7 +397,7 @@ const AdminCatechistListScreen: React.FC = () => {
                         dataSource={validRecords}
                         columns={columns}
                         pagination={false}
-                        scroll={{ x: true, y: 300 }}
+                        scroll={{ x: 1500, y: 300 }}
                         size="small"
                         className="border rounded-lg"
                       />
@@ -359,7 +422,7 @@ const AdminCatechistListScreen: React.FC = () => {
                           { title: "Lỗi", dataIndex: "error", key: "error" },
                         ]}
                         pagination={false}
-                        scroll={{ x: true, y: 300 }}
+                        scroll={{ x: 1500, y: 300}}
                         size="small"
                         className="border rounded-lg"
                       />

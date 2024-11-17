@@ -3,26 +3,33 @@ import { Layout, Button, Typography, Space, Dropdown, Menu } from "antd";
 import { BellOutlined, UserOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuthState } from "../hooks/useAuthState";
 
 const { Header: AntHeader } = Layout;
 const { Title } = Typography;
 
 const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedIn, userName }) => {
   const navigate = useNavigate();
+  const { setIsLoggedIn, setRole, setUserName } = useAuthState();
 
   const handleMenuClick = async (e: { key: string }) => {
-    if (e.key === "login") {
-      navigate("/login");
-    } else if (e.key === "logout") {
+    if (e.key === "logout") {
       try {
+        const accessToken = localStorage.getItem("accessToken");
         await axios.post(
-          "https://sep490-backend-production.up.railway.app/api/v1/user/logout"
+          "https://sep490-backend-production.up.railway.app/api/v1/user/logout",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
         );
-        // Clear user data from localStorage
-        localStorage.removeItem("userLogin");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        navigate("/login");
+        localStorage.clear();
+        setIsLoggedIn(false);
+        setRole("GUEST");
+        setUserName("");
+        window.location.href = "/";
       } catch (error) {
         console.error("Logout failed:", error);
       }
@@ -33,14 +40,8 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
 
   const menu = (
     <Menu onClick={handleMenuClick}>
-      {isLoggedIn ? (
-        <>
-          <Menu.Item key="account">Thông tin tài khoản</Menu.Item>
-          <Menu.Item key="logout">Đăng xuất</Menu.Item>
-        </>
-      ) : (
-        <Menu.Item key="login">Đăng nhập</Menu.Item>
-      )}
+      <Menu.Item key="account">Thông tin tài khoản</Menu.Item>
+      <Menu.Item key="logout">Đăng xuất</Menu.Item>
     </Menu>
   );
 
@@ -64,11 +65,20 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
             /* Handle notifications */
           }}
         />
-        <Dropdown overlay={menu} placement="bottomRight">
-          <Button icon={<UserOutlined />}>
-            {isLoggedIn ? userName || "Account" : "Login"}
+        {isLoggedIn ? (
+          <Dropdown overlay={menu} placement="bottomRight">
+            <Button icon={<UserOutlined />}>
+              {userName || "Account"}
+            </Button>
+          </Dropdown>
+        ) : (
+          <Button 
+            icon={<UserOutlined />}
+            onClick={() => navigate("/login")}
+          >
+            Đăng nhập
           </Button>
-        </Dropdown>
+        )}
       </Space>
     </AntHeader>
   );

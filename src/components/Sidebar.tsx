@@ -214,6 +214,15 @@ const getMenuItems = (role: string): MenuItem[] => {
     ],
     GUEST: [
       {
+        key: "",
+        label: "Trang chủ",
+        icon: <HomeOutlined />,
+      },
+      {
+        type: "divider",
+        style: { color: "black" },
+      },
+      {
         key: "enroll",
         label: "Đăng ký học",
         icon: <FormOutlined />,

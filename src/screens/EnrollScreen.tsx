@@ -506,7 +506,7 @@ const EnrollScreen: React.FC = () => {
           style={{ maxWidth: 600 }}
           scrollToFirstError
         >
-          <h1 className="text-3xl font-bold text-blue-500 text-center mb-6 pb-3 border-b-2 border-blue-500">
+          <h1 className="text-3xl font-bold text-blue-500 text-center mb-6 pb-3 border-b-2 border-blue-500 whitespace-nowrap">
             Bảng điền thông tin phụ huynh và thiếu nhi
           </h1>
           {renderQuestionGroup(currentGroup, 0)}
