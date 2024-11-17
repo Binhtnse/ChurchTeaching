@@ -39,9 +39,13 @@ const getMenuItems = (role: string): MenuItem[] => {
         style: { color: "black" },
       },
       {
-        key: "student-schedule",
-        label: "Lịch học",
+        key: "timetable",
+        label: "Thời khóa biểu",
         icon: <CalendarOutlined />,
+        children: [
+          { key: "student-schedule", label: "Lịch học" },
+          { key: "student-schedule-exam", label: "Lịch kiểm tra" },
+        ],
       },
       {
         key: "progress",
@@ -84,9 +88,13 @@ const getMenuItems = (role: string): MenuItem[] => {
         icon: <TeamOutlined />,
       },
       {
-        key: "schedule",
-        label: "Lịch giảng dạy",
+        key: "timetable",
+        label: "Thời khóa biểu",
         icon: <CalendarOutlined />,
+        children: [
+          { key: "schedule", label: "Lịch giảng dạy" },
+          { key: "schedule-exam", label: "Lịch kiểm tra" },
+        ],
       },
     ],
     PARENT: [
@@ -100,9 +108,13 @@ const getMenuItems = (role: string): MenuItem[] => {
         style: { color: "black" },
       },
       {
-        key: "parent-schedule",
-        label: "Lịch học của con",
+        key: "timetable",
+        label: "Thời khóa biểu",
         icon: <CalendarOutlined />,
+        children: [
+          { key: "parent-schedule", label: "Lịch học của con" },
+          { key: "parent-schedule-exam", label: "Lịch kiểm tra của con" },
+        ],
       },
       {
         key: "progress",

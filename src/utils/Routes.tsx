@@ -42,6 +42,9 @@ import AdminGradeLeaderScreen from "../screens/AdminGradeLeaderScreen";
 import AdminCertificateListScreen from "../screens/AdminCertificateListScreen";
 import ParentCertificateListScreen from "../screens/ParentCertificateListScreen";
 import StudentCertificateListScreen from "../screens/StudentCertificateListScreen";
+import StudentExamScheduleScreen from "../screens/StudentExamScheduleScreen";
+import ParentExamScheduleScreen from "../screens/ParentExamScheduleScreen";
+import CatechistExamScheduleScreen from "../screens/CatechistExamScheduleScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -97,6 +100,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["PARENT"]}>
                 <ParentScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/parent-schedule-exam"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentExamScheduleScreen />
               </ProtectedRoute>
             }
           />
@@ -165,6 +176,14 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/schedule-exam"
+            element={
+              <ProtectedRoute allowedRoles={["CATECHIST"]}>
+                <CatechistExamScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/schedule/attendance/:timeTableId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
@@ -226,6 +245,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["STUDENT"]}>
                 <StudentScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student-schedule-exam"
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT"]}>
+                <StudentExamScheduleScreen />
               </ProtectedRoute>
             }
           />
