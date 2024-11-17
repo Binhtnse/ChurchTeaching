@@ -69,7 +69,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
       setStudents(response.data.data);
     } catch (error) {
       console.log(error);
-      message.error("Không thể lấy danh sách học sinh");
+      message.error("Không thể lấy danh sách thiếu nhi");
     }
   }, []);
 
@@ -343,7 +343,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
                   {attendanceData.className}
                 </div>
                 <div className="text-sm text-gray-500">
-                  Học sinh: {attendanceData.studentName} (
+                  Thiếu nhi: {attendanceData.studentName} (
                   {attendanceData.studentAccount})
                 </div>
               </div>

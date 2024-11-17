@@ -73,7 +73,7 @@ const ParentGradesProgressScreen: React.FC = () => {
       setStudents(response.data.data);
     } catch (error) {
       console.log(error);
-      message.error("Không thể lấy danh sách học sinh");
+      message.error("Không thể lấy danh sách thiếu nhi");
     }
   }, []);
 

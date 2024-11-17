@@ -182,7 +182,7 @@ const AbsenceRequestModal: React.FC<AbsenceRequestModalProps> = React.memo(
               <div className="space-y-2">
                 <div className="flex items-center">
                   <Text strong className="w-32">
-                    Học sinh:
+                    Thiếu nhi:
                   </Text>
                   <Text className="text-blue-600">
                     {selectedStudent?.fullName}
@@ -317,10 +317,9 @@ const ParentScheduleScreen: React.FC = () => {
         }
       );
       setStudents(response.data.data);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching students:", error);
-      message.error("Không thể lấy danh sách học sinh");
+      message.error("Không thể lấy danh sách thiếu nhi");
       setLoading(false);
     }
   }, []);
@@ -402,11 +401,13 @@ const ParentScheduleScreen: React.FC = () => {
 
   const fetchSchedule = useCallback(
     async (studentId: number) => {
-      if (!selectedYear) return;
+      if (!selectedYear) {
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
-        // Clear existing schedule data before fetching new data
         setScheduleData(null);
         setSelectedWeek(1);
 
@@ -414,7 +415,6 @@ const ParentScheduleScreen: React.FC = () => {
           `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}?academicYear=${selectedYear}`
         );
 
-        // Only set new data if it exists
         if (response.data.data && response.data.data.schedule?.length > 0) {
           setScheduleData(response.data.data);
 
@@ -722,7 +722,7 @@ const ParentScheduleScreen: React.FC = () => {
       <div className="flex flex-col space-y-6 mb-6">
         <Select
           style={{ width: 300 }}
-          placeholder="Chọn học sinh"
+          placeholder="Chọn thiếu nhi"
           onChange={handleStudentChange}
           value={selectedStudent}
           className="shadow-sm"
@@ -735,12 +735,20 @@ const ParentScheduleScreen: React.FC = () => {
           ))}
         </Select>
 
-        {loading ? (
+        {loading && selectedStudent ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>
         ) : (
           <>
+            {!selectedStudent && (
+              <div className="text-center text-gray-500 py-8">
+                <p className="text-lg font-semibold">Vui lòng chọn thiếu nhi</p>
+                <p className="text-sm">
+                  Vui lòng chọn thiếu nhi để xem lịch học
+                </p>
+              </div>
+            )}
             {selectedStudent && (
               <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
@@ -807,14 +815,6 @@ const ParentScheduleScreen: React.FC = () => {
                 </div>
               )}
 
-            {!selectedStudent && (
-              <div className="text-center text-gray-500 py-8">
-                <p className="text-lg font-semibold">Vui lòng chọn thiếu nhi</p>
-                <p className="text-sm">
-                  Vui lòng chọn thiếu nhi để xem lịch học
-                </p>
-              </div>
-            )}
             <AbsenceRequestModal
               isVisible={isModalVisible}
               onClose={() => setIsModalVisible(false)}

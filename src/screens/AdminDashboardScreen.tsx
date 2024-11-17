@@ -173,7 +173,7 @@ const AdminDashboardScreen: React.FC = () => {
             <Col xs={24} sm={12} lg={6}>
               <Card className="hover:shadow-lg transition-shadow" loading={loading}>
                 <Statistic
-                  title="Tổng số học sinh"
+                  title="Tổng số thiếu nhi thánh thể"
                   value={statistics.totalStudents}
                   prefix={<TeamOutlined />}
                   valueStyle={{ color: "#1890ff" }}

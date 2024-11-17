@@ -296,7 +296,7 @@ const StudentAttendanceProgressScreen: React.FC = () => {
                   {attendanceData.className}
                 </div>
                 <div className="text-sm text-gray-500">
-                  Học sinh: {attendanceData.studentName} (
+                  Thiếu nhi: {attendanceData.studentName} (
                   {attendanceData.studentAccount})
                 </div>
               </div>

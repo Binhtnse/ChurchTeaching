@@ -110,7 +110,7 @@ const AdminLeaveRequestListScreen: React.FC = () => {
       render: (_: unknown, __: unknown, index: number) => index + 1,
     },
     {
-      title: "Học sinh",
+      title: "Thiếu nhi",
       dataIndex: "studentName",
       key: "studentName",
     },
