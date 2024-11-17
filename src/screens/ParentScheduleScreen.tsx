@@ -406,33 +406,37 @@ const ParentScheduleScreen: React.FC = () => {
 
       try {
         setLoading(true);
+        // Clear existing schedule data before fetching new data
         setScheduleData(null);
+        setSelectedWeek(1);
+
         const response = await axios.get(
           `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}?academicYear=${selectedYear}`
         );
-        if (!response.data.data) {
-          throw new Error("No data found");
-        }
-        setScheduleData(response.data.data);
 
-        const currentDate = new Date();
-        const currentWeek = response.data.data.schedule.find(
-          (week: WeekSchedule) => {
-            const startDate = new Date(week.startDate);
-            const endDate = new Date(week.endDate);
-            return currentDate >= startDate && currentDate <= endDate;
-          }
-        );
-        setSelectedWeek(
-          currentWeek
-            ? currentWeek.weekNumber
-            : response.data.data.schedule[0].weekNumber
-        );
+        // Only set new data if it exists
+        if (response.data.data && response.data.data.schedule?.length > 0) {
+          setScheduleData(response.data.data);
+
+          const currentDate = new Date();
+          const currentWeek = response.data.data.schedule.find(
+            (week: WeekSchedule) => {
+              const startDate = new Date(week.startDate);
+              const endDate = new Date(week.endDate);
+              return currentDate >= startDate && currentDate <= endDate;
+            }
+          );
+          setSelectedWeek(
+            currentWeek
+              ? currentWeek.weekNumber
+              : response.data.data.schedule[0].weekNumber
+          );
+        } else {
+          message.info("Không tìm thấy lịch học cho thời gian đã chọn");
+        }
       } catch (error) {
         console.error("Error fetching schedule:", error);
         message.error("Không thể lấy lịch học");
-        setScheduleData(null);
-        setSelectedWeek(1);
       } finally {
         setLoading(false);
       }
@@ -508,20 +512,28 @@ const ParentScheduleScreen: React.FC = () => {
 
   const showModal = (slot: Slot, classItem: Class) => {
     const weekStart = new Date(currentWeek!.startDate);
-    const dayIndex = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"].indexOf(slot.dayOfWeek);
+    const dayIndex = [
+      "Thứ Hai",
+      "Thứ Ba",
+      "Thứ Tư",
+      "Thứ Năm",
+      "Thứ Sáu",
+      "Thứ Bảy",
+      "Chủ Nhật",
+    ].indexOf(slot.dayOfWeek);
     const slotDate = new Date(weekStart);
     slotDate.setDate(weekStart.getDate() + dayIndex);
-    
+
     const updatedSlot = {
       ...slot,
-      actualDate: slotDate
+      actualDate: slotDate,
     };
-    
+
     setModalKey((prev) => prev + 1);
     setSelectedSlot(updatedSlot);
     setSelectedClass(classItem);
     setIsModalVisible(true);
-  
+
     const userString = localStorage.getItem("userLogin");
     const user = userString ? JSON.parse(userString) : null;
     if (user?.id) {
@@ -714,6 +726,7 @@ const ParentScheduleScreen: React.FC = () => {
           onChange={handleStudentChange}
           value={selectedStudent}
           className="shadow-sm"
+          allowClear
         >
           {students.map((student) => (
             <Option key={student.id} value={student.id}>
@@ -728,7 +741,7 @@ const ParentScheduleScreen: React.FC = () => {
           </div>
         ) : (
           <>
-            {selectedStudent && scheduleData && (
+            {selectedStudent && (
               <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
                   <div className="space-y-2">
@@ -764,8 +777,9 @@ const ParentScheduleScreen: React.FC = () => {
                       value={selectedWeek}
                       onChange={(value) => setSelectedWeek(value)}
                       placeholder="Chọn tuần"
+                      disabled={!scheduleData?.schedule?.length}
                     >
-                      {scheduleData.schedule.map((week) => (
+                      {scheduleData?.schedule?.map((week) => (
                         <Select.Option
                           key={week.weekNumber}
                           value={week.weekNumber}
@@ -778,6 +792,20 @@ const ParentScheduleScreen: React.FC = () => {
                 </div>
               </Card>
             )}
+
+            {selectedStudent &&
+              selectedYear &&
+              !scheduleData?.schedule?.length &&
+              !loading && (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                  <Title level={4} className="text-gray-600">
+                    Không tìm thấy lịch học
+                  </Title>
+                  <Text className="text-gray-500">
+                    Vui lòng chọn niên khóa khác để xem lịch học
+                  </Text>
+                </div>
+              )}
 
             {!selectedStudent && (
               <div className="text-center text-gray-500 py-8">
