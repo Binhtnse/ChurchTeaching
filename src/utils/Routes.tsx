@@ -30,7 +30,7 @@ import ParentGradesProgressScreen from "../screens/ParentGradesProgressScreen";
 import StudentGradesProgressScreen from "../screens/StudentGradesProgressScreen";
 import ParentAttendanceProgressScreen from "../screens/ParentAttendanceProgressScreen";
 import StudentAttendanceProgressScreen from "../screens/StudentAttendanceProgressScreen";
-import { PostDetail } from "../screens/PostDetailScreen";
+import  PostDetail  from "../screens/PostDetailScreen";
 import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 import AdminCatechistListScreen from "../screens/AdminCatechistListScreen";
 import StudentTransactionScreen from "../screens/StudentTransactionScreen";

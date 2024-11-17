@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Carousel, List, Card, message, Spin} from 'antd';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 // const { Content } = Layout;
 
@@ -21,6 +22,7 @@ const HomeScreen: React.FC = () => {
   const [gridPosts, setGridPosts] = useState<PostDTO[]>([]);
   const [latestPosts, setLatestPosts] = useState<PostDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPosts();
@@ -69,7 +71,7 @@ const HomeScreen: React.FC = () => {
             {spotlightPosts.map((post, index) => (
               <div key={index}>
                 <Card
-                  onClick={() => (window.location.href = `/post/${post.id}`)}
+                  onClick={() => (navigate(`/post/${post.id}`))}
                   hoverable
                   className="spotlight-card"
                   cover={
@@ -138,7 +140,7 @@ const HomeScreen: React.FC = () => {
                           color: '#1890ff',
                           transition: 'color 0.3s'
                         }}
-                        onClick={() => (window.location.href = `/post/${item.id}`)}
+                        onClick={() => (navigate(`/post/${item.id}`))}
                         onMouseOver={(e) => e.currentTarget.style.color = '#40a9ff'}
                         onMouseOut={(e) => e.currentTarget.style.color = '#1890ff'}
                       >
@@ -182,7 +184,7 @@ const HomeScreen: React.FC = () => {
           renderItem={item => (
             <List.Item>
               <Card
-                onClick={() => (window.location.href = `/post/${item.id}`)}
+                onClick={() => (navigate(`/post/${item.id}`))}
                 hoverable
                 style={{ 
                   borderRadius: '8px',
