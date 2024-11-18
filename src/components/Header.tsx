@@ -15,15 +15,9 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
   const handleMenuClick = async (e: { key: string }) => {
     if (e.key === "logout") {
       try {
-        const accessToken = localStorage.getItem("accessToken");
         await axios.post(
           "https://sep490-backend-production.up.railway.app/api/v1/user/logout",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
+          {},      
         );
         localStorage.clear();
         setIsLoggedIn(false);
