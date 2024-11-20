@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Carousel, List, Card, message, Spin} from 'antd';
+import { Row, Col, Carousel, List, Card, message, Spin } from 'antd';
 import axios from 'axios';
-
-// const { Content } = Layout;
+import styled from 'styled-components';
 
 interface PostDTO {
   id: number;
@@ -44,10 +43,18 @@ const HomeScreen: React.FC = () => {
     }
   };
 
+  const truncateContent = (content: string) => {
+    const lines = content.split('\n');
+    if (lines.length > 5) {
+      return lines.slice(0, 5).join('\n') + '...';
+    }
+    return content;
+  };
+
   if (loading) return <Spin size="large" style={{ display: 'block', margin: '20px auto' }} />;
 
   return (
-    <div style={{ minHeight: '100vh', width: '70%', margin: '0 auto', padding: '32px 0' }}>
+    <div style={{ minHeight: '100vh', width: '97%', margin: 'auto', padding: '20px 0' }}>
       <Row gutter={32}>
         <Col span={16}>
           <Carousel autoplay dots>
@@ -56,20 +63,13 @@ const HomeScreen: React.FC = () => {
                 <Card
                   onClick={() => (window.location.href = `/post/${post.id}`)}
                   hoverable
-                  cover={<img src={post.linkImage} alt={post.title} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />}
+                  cover={<StyledImage src={post.linkImage} alt={post.title} />}
                 >
                   <Card.Meta 
                     title={post.title} 
                     description={
-                      <div
-                        style={{
-                          display: '-webkit-box',
-                          WebkitBoxOrient: 'vertical',
-                          WebkitLineClamp: 4,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                        dangerouslySetInnerHTML={{ __html: post.content }}
+                      <ContentTruncate
+                        dangerouslySetInnerHTML={{ __html: truncateContent(post.content) }}
                       />
                     } 
                   />
@@ -112,23 +112,20 @@ const HomeScreen: React.FC = () => {
             dataSource={gridPosts}
             renderItem={item => (
               <List.Item>
-                <Card
+                <StyledCard
                   onClick={() => (window.location.href = `/post/${item.id}`)}
                   hoverable
-                  cover={<img src={item.linkImage} alt={item.title} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />}
-                  title={item.title}
+                  cover={<StyledImage src={item.linkImage} alt={item.title} />}
                 >
-                  <div
-                    style={{
-                      display: '-webkit-box',
-                      WebkitBoxOrient: 'vertical',
-                      WebkitLineClamp: 4,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    dangerouslySetInnerHTML={{ __html: item.content }}
+                  <Card.Meta 
+                    title={item.title} 
+                    description={
+                      <ContentTruncate
+                        dangerouslySetInnerHTML={{ __html: truncateContent(item.content) }}
+                      />
+                    }
                   />
-                </Card>
+                </StyledCard>
               </List.Item>
             )}
           />
@@ -139,3 +136,27 @@ const HomeScreen: React.FC = () => {
 };
 
 export default HomeScreen;
+
+// Styled Components
+const ContentTruncate = styled.div`
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4; /* Giới hạn số dòng hiển thị */
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const StyledCard = styled(Card)`
+  height: 330px; /* Chiều cao cố định cho các thẻ Card */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden; /* Đảm bảo nội dung không vượt quá khung */
+`;
+
+const StyledImage = styled.img`
+  width: 100%;
+  height: 140px; /* Chiều cao cố định cho hình ảnh */
+  object-fit: cover; /* Đảm bảo hình ảnh không bị tràn ra ngoài */
+  border-radius: 8px 8px 0 0; /* Tùy chỉnh góc bo tròn nếu cần */
+`;

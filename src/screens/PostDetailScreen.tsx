@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from "react";
-import { Alert, Card, Spin, Layout } from "antd";
+import { Alert, Card, Spin } from "antd";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-
-const { Content } = Layout;
 
 interface PostDTO {
   id: number;
@@ -54,20 +52,17 @@ export const PostDetail: React.FC = () => {
   if (error) return <Alert message={error} type="error" showIcon style={{ textAlign: "center" }} />;
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      {/* Content */}
-      <Content style={{ width: "70%", margin: "0 auto", padding: "32px 0" }}>
-        {post ? (
-          <Card style={{ width: "100%", textAlign: "center" }}>
-            <h1 className="my-5">{post.title}</h1>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <img src={post.linkImage} alt={post.title} style={{ width: "300px", height: "300px" }} />
-            </div>
-            <div dangerouslySetInnerHTML={{ __html: post.content }} style={{ marginTop: "16px" }} />
-          </Card>
-        ) : null}
-      </Content>
-    </Layout>
+    <div style={{ minHeight: "100vh", width: "70%", margin: "0 auto", padding: "32px 0" }}>
+      {post ? (
+        <Card style={{ width: "100%", textAlign: "center" }}>
+          <h1 className="my-5">{post.title}</h1>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <img src={post.linkImage} alt={post.title} style={{ width: "300px", height: "300px" }} />
+          </div>
+          <div dangerouslySetInnerHTML={{ __html: post.content }} style={{ marginTop: "16px" }} />
+        </Card>
+      ) : null}
+    </div>
   );
 };
 
