@@ -223,6 +223,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         label: "Danh sách chứng chỉ lên lớp",
         icon: <FilePdfOutlined />,
       },
+      {
+        key: "assign-schedule",
+        label: "Sắp xếp lịch học",
+        icon: <CalendarOutlined />,
+      },
     ],
     GUEST: [
       {
