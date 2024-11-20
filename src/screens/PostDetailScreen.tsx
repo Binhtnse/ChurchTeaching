@@ -13,7 +13,13 @@ interface PostDTO {
   customCSS: string;
   categoryId: number;
   userId: number;
+  user: {
+    id: number;
+    fullName: string;
+  };
   category: any;
+  createdDate: string; // Add createdDate field
+  author: string; // Add author field
 }
 
 export const PostDetail: React.FC = () => {
@@ -38,8 +44,11 @@ export const PostDetail: React.FC = () => {
         content: postData.content,
         customCSS: postData.customCSS,
         categoryId: postData.category.id,
-        userId: postData.userId,
-        category: postData.category
+        userId: postData.user.id,
+        user: postData.user, // Include user field
+        category: postData.category,
+        createdDate: postData.createdDate, // Set createdDate field
+        author: postData.user.fullName // Set author field
       });
     } catch (err) {
       setError("Failed to load post details.");
@@ -59,6 +68,7 @@ export const PostDetail: React.FC = () => {
           <div style={{ display: "flex", justifyContent: "center" }}>
             <img src={post.linkImage} alt={post.title} style={{ width: "300px", height: "300px" }} />
           </div>
+          <p>By {post.author} on {new Date(post.createdDate).toLocaleDateString('en-GB')}</p> {/* Display author and date */}
           <div dangerouslySetInnerHTML={{ __html: post.content }} style={{ marginTop: "16px" }} />
         </Card>
       ) : null}

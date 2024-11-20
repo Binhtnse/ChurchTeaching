@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Carousel, List, Card, message, Spin } from 'antd';
-import axios from 'axios';
-import styled from 'styled-components';
+import React, { useEffect, useState } from "react";
+import { Row, Col, Carousel, List, Card, message, Spin } from "antd";
+import axios from "axios";
+import styled from "styled-components";
+
+interface UserDTO {
+  id: number;
+  fullName: string;
+}
 
 interface PostDTO {
   id: number;
@@ -13,6 +18,8 @@ interface PostDTO {
   categoryId: number;
   userId: number;
   category: any;
+  createdDate?: string; // Ngày đăng bài
+  user?: UserDTO; // Thông tin người đăng bài
 }
 
 const HomeScreen: React.FC = () => {
@@ -36,7 +43,7 @@ const HomeScreen: React.FC = () => {
       setGridPosts(fetchedPosts.filter((post) => post.category.id === 4));
       setLatestPosts(fetchedPosts.slice(0, 5));
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching posts:", error);
       message.error("Failed to fetch posts");
     } finally {
       setLoading(false);
@@ -44,17 +51,32 @@ const HomeScreen: React.FC = () => {
   };
 
   const truncateContent = (content: string) => {
-    const lines = content.split('\n');
+    const lines = content.split("\n");
     if (lines.length > 5) {
-      return lines.slice(0, 5).join('\n') + '...';
+      return lines.slice(0, 5).join("\n") + "...";
     }
     return content;
   };
 
-  if (loading) return <Spin size="large" style={{ display: 'block', margin: '20px auto' }} />;
+  const formatDate = (dateString?: string) => {
+    if (!dateString) {
+      return "No date available";
+    }
+    const date = new Date(dateString);
+    return isNaN(date.getTime())
+      ? "Invalid Date"
+      : date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+  };
+
+  if (loading)
+    return <Spin size="large" style={{ display: "block", margin: "20px auto" }} />;
 
   return (
-    <div style={{ minHeight: '100vh', width: '97%', margin: 'auto', padding: '20px 0' }}>
+    <div style={{ minHeight: "100vh", width: "97%", margin: "auto", padding: "20px 0" }}>
       <Row gutter={32}>
         <Col span={16}>
           <Carousel autoplay dots>
@@ -65,34 +87,49 @@ const HomeScreen: React.FC = () => {
                   hoverable
                   cover={<StyledImage src={post.linkImage} alt={post.title} />}
                 >
-                  <Card.Meta 
-                    title={post.title} 
+                  <Card.Meta
+                    title={post.title}
                     description={
-                      <ContentTruncate
-                        dangerouslySetInnerHTML={{ __html: truncateContent(post.content) }}
-                      />
-                    } 
+                      <>
+                        <small style={{ color: "gray", fontStyle: "italic" }}>
+                          Published on: {formatDate(post.createdDate)} by {post.user?.fullName || "Unknown"}
+                        </small>
+                        <ContentTruncate
+                          dangerouslySetInnerHTML={{ __html: truncateContent(post.content) }}
+                        />
+                      </>
+                    }
                   />
                 </Card>
               </div>
             ))}
           </Carousel>
         </Col>
-        <Col span={8} style={{ maxHeight: '300px', overflowY: 'auto' }}>
+        <Col span={8} style={{ maxHeight: "300px", overflowY: "auto" }}>
           <List
             header={<h2><b>Bài Viết Mới Nhất</b></h2>}
             itemLayout="horizontal"
             dataSource={latestPosts}
-            renderItem={item => (
+            renderItem={(item) => (
               <List.Item>
                 <List.Item.Meta
                   title={
                     <div
-                      style={{ textAlign: 'center', cursor: 'pointer', textDecoration: 'underline', color: 'blue' }}
+                      style={{
+                        textAlign: "center",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                        color: "blue",
+                      }}
                       onClick={() => (window.location.href = `/post/${item.id}`)}
                     >
                       {item.title}
                     </div>
+                  }
+                  description={
+                    <small style={{ color: "gray", fontStyle: "italic" }}>
+                      Published on: {formatDate(item.createdDate)} by {item.user?.fullName || "Unknown"}
+                    </small>
                   }
                 />
               </List.Item>
@@ -100,7 +137,7 @@ const HomeScreen: React.FC = () => {
           />
         </Col>
       </Row>
-      <Row gutter={32} style={{ marginTop: '32px' }}>
+      <Row gutter={32} style={{ marginTop: "32px" }}>
         <Col span={24}>
           <List
             grid={{ gutter: 16, column: 4 }}
@@ -110,19 +147,24 @@ const HomeScreen: React.FC = () => {
               showSizeChanger: false,
             }}
             dataSource={gridPosts}
-            renderItem={item => (
+            renderItem={(item) => (
               <List.Item>
                 <StyledCard
                   onClick={() => (window.location.href = `/post/${item.id}`)}
                   hoverable
                   cover={<StyledImage src={item.linkImage} alt={item.title} />}
                 >
-                  <Card.Meta 
-                    title={item.title} 
+                  <Card.Meta
+                    title={item.title}
                     description={
-                      <ContentTruncate
-                        dangerouslySetInnerHTML={{ __html: truncateContent(item.content) }}
-                      />
+                      <>
+                        <small style={{ color: "gray", fontStyle: "italic" }}>
+                          Published on: {formatDate(item.createdDate)} by {item.user?.fullName || "Unknown"}
+                        </small>
+                        <ContentTruncate
+                          dangerouslySetInnerHTML={{ __html: truncateContent(item.content) }}
+                        />
+                      </>
                     }
                   />
                 </StyledCard>
