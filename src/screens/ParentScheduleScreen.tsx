@@ -73,6 +73,7 @@ interface Slot {
   materials: Material[];
   attendance: Attendance;
   exams?: string;
+  noteOfSlot: string | null;
 }
 
 interface Attendance {
@@ -349,7 +350,7 @@ const ParentScheduleScreen: React.FC = () => {
     async (studentId: number) => {
       if (!selectedStudent || !selectedYear) return;
 
-      const yearId = academicYears.find(
+      const yearId = academicYears?.find(
         (year) => year.year === selectedYear
       )?.id;
       if (!yearId) return;
@@ -417,10 +418,14 @@ const ParentScheduleScreen: React.FC = () => {
         );
 
         if (response.data.data && response.data.data.schedule?.length > 0) {
-          setScheduleData(response.data.data);
+          const adjustedSchedule = {
+            ...response.data.data,
+            schedule: response.data.data.schedule.map(adjustWeekDates),
+          };
+          setScheduleData(adjustedSchedule);
 
           const currentDate = new Date();
-          const currentWeek = response.data.data.schedule.find(
+          const currentWeek = adjustedSchedule.schedule?.find(
             (week: WeekSchedule) => {
               const startDate = new Date(week.startDate);
               const endDate = new Date(week.endDate);
@@ -430,7 +435,7 @@ const ParentScheduleScreen: React.FC = () => {
           setSelectedWeek(
             currentWeek
               ? currentWeek.weekNumber
-              : response.data.data.schedule[0].weekNumber
+              : adjustedSchedule.schedule[0].weekNumber
           );
         } else {
           message.info("Không tìm thấy lịch học cho thời gian đã chọn");
@@ -482,10 +487,21 @@ const ParentScheduleScreen: React.FC = () => {
     }
   };
 
+  const adjustWeekDates = (weekData: WeekSchedule) => {
+    const endDate = new Date(weekData.endDate);
+    endDate.setDate(endDate.getDate() - 1);
+    return {
+      ...weekData,
+      endDate: endDate.toISOString().split("T")[0],
+    };
+  };
+
   const handleStudentChange = (studentId: number) => {
     setSelectedStudent(studentId);
     // Immediately set the year and trigger schedule fetch
-    const currentYear = academicYears.find((year) => year.timeStatus === "NOW");
+    const currentYear = academicYears?.find(
+      (year) => year.timeStatus === "NOW"
+    );
     const yearToSet = currentYear ? currentYear.year : academicYears[0]?.year;
 
     if (yearToSet) {
@@ -499,13 +515,42 @@ const ParentScheduleScreen: React.FC = () => {
   const createTimetable = (
     slots: Slot[]
   ): { [key: string]: { [key: string]: Slot | null } } => {
-    const timetable: { [key: string]: { [key: string]: Slot | null } } = {};
+    const apiSunday = slots[0].dayOfWeek;
+    const days = [
+      "Thứ Hai",
+      "Thứ Ba",
+      "Thứ Tư",
+      "Thứ Năm",
+      "Thứ Sáu",
+      "Thứ Bảy",
+      apiSunday,
+    ];
+    const times = [...new Set(slots.map((slot) => slot.time))].sort();
+
+    const timetable = days.reduce((acc, day) => {
+      acc[day] = times.reduce((timeAcc, time) => {
+        timeAcc[time] = null;
+        return timeAcc;
+      }, {} as { [key: string]: Slot | null });
+      return acc;
+    }, {} as { [key: string]: { [key: string]: Slot | null } });
+
+    // Add string comparison logs
+    console.log(
+      "API Sunday:",
+      [...slots[0].dayOfWeek].map((c) => c.charCodeAt(0))
+    );
+    console.log(
+      "Our Sunday:",
+      [..."Chủ nhật"].map((c) => c.charCodeAt(0))
+    );
+
     slots.forEach((slot) => {
-      if (!timetable[slot.dayOfWeek]) {
-        timetable[slot.dayOfWeek] = {};
+      if (timetable[slot.dayOfWeek] && times.includes(slot.time)) {
+        timetable[slot.dayOfWeek][slot.time] = slot;
       }
-      timetable[slot.dayOfWeek][slot.time] = slot;
     });
+
     return timetable;
   };
 
@@ -520,7 +565,7 @@ const ParentScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      "Chủ Nhật",
+      "Chủ nhật",
     ].indexOf(slot.dayOfWeek);
     const slotDate = new Date(weekStart);
     slotDate.setDate(weekStart.getDate() + dayIndex);
@@ -553,6 +598,8 @@ const ParentScheduleScreen: React.FC = () => {
     timetable: { [key: string]: { [key: string]: Slot | null } },
     classItem: Class
   ) => {
+    console.log("Timetable for Sunday:", timetable["Chủ nhật"]);
+    console.log("All slots:", classItem.slots);
     const days = [
       "Thứ Hai",
       "Thứ Ba",
@@ -560,11 +607,26 @@ const ParentScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      "Chủ Nhật",
+      classItem.slots[0].dayOfWeek,
     ];
-    const times = Array.from(
-      new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
-    ).sort();
+
+    const times = [...new Set(classItem.slots.map((slot) => slot.time))].sort();
+
+    days.forEach((day) => {
+      if (!timetable[day]) {
+        timetable[day] = {};
+      }
+      times.forEach((time) => {
+        if (timetable[day] && !timetable[day][time]) {
+          timetable[day][time] = null;
+        }
+      });
+    });
+
+    console.log(
+      "Sunday slot data:",
+      timetable["Chủ nhật"] && timetable["Chủ nhật"]["08:00 - 11:00"]
+    );
 
     const weekStart = new Date(currentWeek!.startDate);
     const dates = days.map((_, index) => {
@@ -587,7 +649,7 @@ const ParentScheduleScreen: React.FC = () => {
             <TimeCell>{time}</TimeCell>
             {days.map((day, index) => {
               const CellComponent = index === 6 ? SundayCell : CalendarCell;
-              const slot = timetable[day] && timetable[day][time];
+              const slot = timetable[day]?.[time] ?? null;
               return (
                 <CellComponent key={`${day}-${time}`}>
                   {slot && (
@@ -599,9 +661,16 @@ const ParentScheduleScreen: React.FC = () => {
                         {slot.name}
                       </strong>
                       <div className="mt-auto">
-                        <Text className="text-green-600">
-                          Chương: {slot.session.name}
-                        </Text>
+                        {slot.session && (
+                          <Text className="text-green-600">
+                            Chương: {slot.session.name}
+                          </Text>
+                        )}
+                        {slot.noteOfSlot && (
+                          <Text className="text-orange-600 block mt-1">
+                            Ghi chú: {slot.noteOfSlot}
+                          </Text>
+                        )}
                         {slot.exams && (
                           <Text className="text-red-600 block mt-1">
                             Kiểm tra: {slot.exams}
@@ -681,7 +750,7 @@ const ParentScheduleScreen: React.FC = () => {
     );
   };
 
-  const currentWeek = scheduleData?.schedule.find(
+  const currentWeek = scheduleData?.schedule?.find(
     (week) => week.weekNumber === selectedWeek
   );
 
@@ -734,7 +803,7 @@ const ParentScheduleScreen: React.FC = () => {
           className="shadow-sm"
           allowClear
         >
-          {students.map((student) => (
+          {students?.map((student) => (
             <Option key={student.id} value={student.id}>
               {student.fullName} ({student.account})
             </Option>
@@ -825,7 +894,7 @@ const ParentScheduleScreen: React.FC = () => {
               isVisible={isModalVisible}
               onClose={() => setIsModalVisible(false)}
               onSubmit={handleSubmitLeaveRequest}
-              selectedStudent={students.find((s) => s.id === selectedStudent)}
+              selectedStudent={students?.find((s) => s.id === selectedStudent)}
               selectedSlot={selectedSlot}
               selectedClass={selectedClass}
               parentDetails={parentDetails}

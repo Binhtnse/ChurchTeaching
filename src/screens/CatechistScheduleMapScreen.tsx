@@ -13,8 +13,8 @@ interface Lesson {
 
 const slotTypeMap: Record<string, string> = {
   exam: "Kiểm tra",
-  lesson_and_exam: "Học và kiểm tra",
-  Lesson: "Bài học",
+  lesson_exam: "Học và kiểm tra",
+  lesson: "Bài học",
 };
 
 interface Schedule {
@@ -346,7 +346,7 @@ const AdminScheduleMapScreen: React.FC = () => {
       dataIndex: "lessonName",
       key: "lessonName",
       render: (_: string, record: PreviewItem) => {
-        const lesson = lessons.find(l => l.name === record.lessonName);
+        const lesson = lessons.find((l) => l.name === record.lessonName);
         if (lesson?.examName) {
           return (
             <div>
@@ -356,7 +356,7 @@ const AdminScheduleMapScreen: React.FC = () => {
           );
         }
         return record.lessonName;
-      }
+      },
     },
     {
       title: "Hoạt động bổ sung",
@@ -491,15 +491,17 @@ const AdminScheduleMapScreen: React.FC = () => {
                     pagination={false}
                   />
                 </div>
-                <Button
-                  type="primary"
-                  onClick={() => setIsConfirmModalVisible(true)}
-                  className={`${customStyles.actionButton} ml-4`}
-                  size="large"
-                  disabled={!mappingResults.length}
-                >
-                  Lưu lịch học
-                </Button>
+                <div className="mt-6">
+                  <Button
+                    type="primary"
+                    onClick={() => setIsConfirmModalVisible(true)}
+                    className={`${customStyles.actionButton} ml-4`}
+                    size="large"
+                    disabled={!mappingResults?.length}
+                  >
+                    Lưu lịch học
+                  </Button>
+                </div>
 
                 <Modal
                   title="Xác nhận lưu lịch học"

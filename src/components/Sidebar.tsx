@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 type MenuItem = Required<MenuProps>["items"][number];
 
 const getMenuItems = (role: string): MenuItem[] => {
+  const leaderType = localStorage.getItem("leaderType");
   const roleSpecificItems: Record<string, MenuItem[]> = {
     STUDENT: [
       {
@@ -96,6 +97,13 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "schedule-exam", label: "Lịch kiểm tra" },
         ],
       },
+      ...(leaderType === 'PRIMARY' ? [
+        {
+          key: "assign-schedule",
+          label: "Sắp xếp lịch học",
+          icon: <CalendarOutlined />,
+        }
+      ] : [])
     ],
     PARENT: [
       {
@@ -222,11 +230,6 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "certificate-list",
         label: "Danh sách chứng chỉ lên lớp",
         icon: <FilePdfOutlined />,
-      },
-      {
-        key: "assign-schedule",
-        label: "Sắp xếp lịch học",
-        icon: <CalendarOutlined />,
       },
     ],
     GUEST: [

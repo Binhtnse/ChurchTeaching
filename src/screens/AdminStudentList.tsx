@@ -53,6 +53,7 @@ const AdminStudentList: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [tableError, setTableError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -68,7 +69,10 @@ const AdminStudentList: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      setAcademicYears(response.data);
+      const nextYears = response.data.filter(
+        (year: { timeStatus: string }) => year.timeStatus === "NEXT"
+      );
+      setAcademicYears(nextYears);
     } catch (error) {
       console.error("Error fetching academic years:", error);
       message.error("Failed to fetch academic years");
@@ -181,7 +185,7 @@ const AdminStudentList: React.FC = () => {
       message.warning("Vui lòng chọn niên khóa và khối");
       return;
     }
-
+    setIsAssigning(true);
     try {
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/student-grade-year/auto-assign-student-to-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
@@ -193,6 +197,8 @@ const AdminStudentList: React.FC = () => {
       const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Xếp lớp thất bại";
       setTableError(errorMessage);
       message.error(errorMessage);
+    }finally {
+      setIsAssigning(false);
     }
   };
   useEffect(() => {
@@ -311,8 +317,9 @@ const AdminStudentList: React.FC = () => {
             <button
               onClick={handleAutoAssignStudents}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+              disabled={isAssigning}
             >
-              Xếp thiếu nhi vào lớp
+              {isAssigning ? "Đang xếp lớp..." : "Xếp thiếu nhi vào lớp"}
             </button>
           </div>
           <div className="space-y-2 flex items-end">

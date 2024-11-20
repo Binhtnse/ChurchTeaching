@@ -26,6 +26,7 @@ interface Slot {
   materials: Material[];
   attendance: Attendance;
   exams?: string;
+  noteOfSlot: string | null;
 }
 
 interface Attendance {
@@ -99,12 +100,14 @@ const StudentScheduleScreen: React.FC = () => {
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
+  const [scheduleLoading, setScheduleLoading] = useState(false);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
 
   const fetchSchedule = useCallback(async () => {
+    setScheduleLoading(true);
     try {
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
@@ -122,7 +125,12 @@ const StudentScheduleScreen: React.FC = () => {
         setSelectedWeek(1);
         return;
       }
-      setScheduleData(response.data.data);
+      const adjustedSchedule = {
+        ...response.data.data,
+        schedule: response.data.data.schedule.map(adjustWeekDates),
+      };
+
+      setScheduleData(adjustedSchedule);
       const currentDate = new Date();
       const currentWeek = response.data.data.schedule.find(
         (week: WeekSchedule) => {
@@ -141,7 +149,7 @@ const StudentScheduleScreen: React.FC = () => {
       setScheduleData(null);
       setSelectedWeek(1);
     } finally {
-      setLoading(false);
+      setScheduleLoading(false);
     }
   }, [selectedYear]);
 
@@ -176,14 +184,42 @@ const StudentScheduleScreen: React.FC = () => {
   const createTimetable = (
     slots: Slot[]
   ): { [key: string]: { [key: string]: Slot | null } } => {
-    const timetable: { [key: string]: { [key: string]: Slot | null } } = {};
+    const apiSunday = slots[0].dayOfWeek;
+    const days = [
+      "Thứ Hai",
+      "Thứ Ba",
+      "Thứ Tư",
+      "Thứ Năm",
+      "Thứ Sáu",
+      "Thứ Bảy",
+      apiSunday,
+    ];
+    const times = [...new Set(slots.map((slot) => slot.time))].sort();
+
+    const timetable = days.reduce((acc, day) => {
+      acc[day] = times.reduce((timeAcc, time) => {
+        timeAcc[time] = null;
+        return timeAcc;
+      }, {} as { [key: string]: Slot | null });
+      return acc;
+    }, {} as { [key: string]: { [key: string]: Slot | null } });
+
     slots.forEach((slot) => {
-      if (!timetable[slot.dayOfWeek]) {
-        timetable[slot.dayOfWeek] = {};
+      if (timetable[slot.dayOfWeek] && times.includes(slot.time)) {
+        timetable[slot.dayOfWeek][slot.time] = slot;
       }
-      timetable[slot.dayOfWeek][slot.time] = slot;
     });
+
     return timetable;
+  };
+
+  const adjustWeekDates = (weekData: WeekSchedule) => {
+    const endDate = new Date(weekData.endDate);
+    endDate.setDate(endDate.getDate() - 1);
+    return {
+      ...weekData,
+      endDate: endDate.toISOString().split("T")[0],
+    };
   };
 
   const currentWeek = scheduleData?.schedule.find(
@@ -208,11 +244,20 @@ const StudentScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      "Chủ Nhật",
+      classItem.slots[0].dayOfWeek,
     ];
-    const times = Array.from(
-      new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
-    ).sort();
+    const times = [...new Set(classItem.slots.map((slot) => slot.time))].sort();
+
+    days.forEach((day) => {
+      if (!timetable[day]) {
+        timetable[day] = {};
+      }
+      times.forEach((time) => {
+        if (timetable[day] && !timetable[day][time]) {
+          timetable[day][time] = null;
+        }
+      });
+    });
 
     const weekStart = new Date(currentWeek!.startDate);
     const dates = days.map((_, index) => {
@@ -247,9 +292,16 @@ const StudentScheduleScreen: React.FC = () => {
                         {slot.name}
                       </strong>
                       <div className="mt-auto">
-                        <Text className="text-green-600">
-                          Chương: {slot.session.name}
-                        </Text>
+                        {slot.session && (
+                          <Text className="text-green-600">
+                            Chương: {slot.session.name}
+                          </Text>
+                        )}
+                        {slot.noteOfSlot && (
+                          <Text className="text-orange-600 block mt-1">
+                            Ghi chú: {slot.noteOfSlot}
+                          </Text>
+                        )}
                         {slot.exams && (
                           <Text className="text-red-600 block mt-1">
                             Kiểm tra: {slot.exams}
@@ -386,24 +438,30 @@ const StudentScheduleScreen: React.FC = () => {
         </Text>
       </div>
 
-      {currentWeek && (
-        <div className="mt-4">
-          <Text>
-            Từ {currentWeek.startDate} đến {currentWeek.endDate}
-          </Text>
-          {currentWeek.classes.map((classItem, index) => {
-            const timetable = createTimetable(classItem.slots);
-            return (
-              <Card key={index} className="mb-4 mt-4">
-                <Title
-                  level={4}
-                >{`${classItem.className} - ${classItem.grade}`}</Title>
-                <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
-                {renderCalendar(timetable, classItem)}
-              </Card>
-            );
-          })}
+      {scheduleLoading ? (
+        <div className="flex justify-center items-center mt-8">
+          <Spin size="large" tip="Đang tải lịch học..." />
         </div>
+      ) : (
+        currentWeek && (
+          <div className="mt-4">
+            <Text>
+              Từ {currentWeek.startDate} đến {currentWeek.endDate}
+            </Text>
+            {currentWeek.classes.map((classItem, index) => {
+              const timetable = createTimetable(classItem.slots);
+              return (
+                <Card key={index} className="mb-4 mt-4">
+                  <Title
+                    level={4}
+                  >{`${classItem.className} - ${classItem.grade}`}</Title>
+                  <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
+                  {renderCalendar(timetable, classItem)}
+                </Card>
+              );
+            })}
+          </div>
+        )
       )}
     </div>
   );

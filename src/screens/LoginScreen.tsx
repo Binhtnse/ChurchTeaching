@@ -85,8 +85,11 @@ const LoginScreen: React.FC = () => {
       }
 
       setIsLoggedIn(true);
-      const userRole = response.data.data.userLogin.roleName?.toUpperCase() || "";
+      const userRole =
+        response.data.data.userLogin.roleName?.toUpperCase() || "";
       setRole(userRole);
+      const leaderType = response.data.data.userLogin.leaderType || "";
+      localStorage.setItem("leaderType", leaderType);
       setUserName(response.data.data.userLogin.name || "");
       if (userRole === "ADMIN") {
         navigate("/dashboard");

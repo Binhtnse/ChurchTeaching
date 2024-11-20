@@ -42,6 +42,7 @@ interface Slot {
   };
   materials: Material[];
   exams?: string;
+  noteOfSlot: string | null;
 }
 
 interface Class {
@@ -111,16 +112,20 @@ const CatechistScheduleScreen: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>("");
-  const savedWeek = localStorage.getItem('selectedWeek');
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const savedWeek = localStorage.getItem("selectedWeek");
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
-  const [selectedWeek, setSelectedWeek] = useState<number>(savedWeek ? parseInt(savedWeek) : 1);
+  const [selectedWeek, setSelectedWeek] = useState<number>(
+    savedWeek ? parseInt(savedWeek) : 1
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchClasses();
     const fetchSchedule = async () => {
+      setScheduleLoading(true);
       try {
         const userString = localStorage.getItem("userLogin");
         const user = userString ? JSON.parse(userString) : null;
@@ -138,8 +143,12 @@ const CatechistScheduleScreen: React.FC = () => {
           setScheduleData(null);
           return;
         }
-        setScheduleData(response.data.data);
-        
+        const adjustedSchedule = {
+          ...response.data.data,
+          schedule: response.data.data.schedule.map(adjustWeekDates),
+        };
+        setScheduleData(adjustedSchedule);
+
         const currentDate = new Date();
         const currentWeek = response.data.data.schedule.find(
           (week: WeekSchedule) => {
@@ -148,32 +157,32 @@ const CatechistScheduleScreen: React.FC = () => {
             return currentDate >= startDate && currentDate <= endDate;
           }
         );
-  
+
         // Get saved week from localStorage
-        const savedWeek = localStorage.getItem('selectedWeek');
-        
+        const savedWeek = localStorage.getItem("selectedWeek");
+
         // Priority: 1. Saved week 2. Current week 3. First week
-        const weekToSelect = savedWeek 
+        const weekToSelect = savedWeek
           ? parseInt(savedWeek)
-          : currentWeek 
-            ? currentWeek.weekNumber 
-            : response.data.data.schedule[0].weekNumber;
-            
+          : currentWeek
+          ? currentWeek.weekNumber
+          : response.data.data.schedule[0].weekNumber;
+
         setSelectedWeek(weekToSelect);
-        localStorage.setItem('selectedWeek', weekToSelect.toString());
+        localStorage.setItem("selectedWeek", weekToSelect.toString());
       } catch (error) {
         console.log(error);
         setScheduleData(null);
       } finally {
-        setLoading(false);
+        setScheduleLoading(false);
       }
     };
-  
+
     if (selectedYear) {
       fetchSchedule();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear]); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -198,6 +207,15 @@ const CatechistScheduleScreen: React.FC = () => {
   useEffect(() => {
     fetchAcademicYears();
   }, []);
+
+  const adjustWeekDates = (weekData: WeekSchedule) => {
+    const endDate = new Date(weekData.endDate);
+    endDate.setDate(endDate.getDate() - 1);
+    return {
+      ...weekData,
+      endDate: endDate.toISOString().split("T")[0],
+    };
+  };
 
   const createTimetable = (slots: Slot[]): Timetable => {
     const timetable: Timetable = {};
@@ -307,9 +325,16 @@ const CatechistScheduleScreen: React.FC = () => {
                           {slot.name}
                         </strong>
                         <div className="mt-auto">
-                          <Text className="text-green-600">
-                            Chương: {slot.session.name}
-                          </Text>
+                          {slot.session && (
+                            <Text className="text-green-600">
+                              Chương: {slot.session.name}
+                            </Text>
+                          )}
+                          {slot.noteOfSlot && (
+                            <Text className="text-orange-600 block mt-1">
+                              Ghi chú: {slot.noteOfSlot}
+                            </Text>
+                          )}
                           {slot.exams && (
                             <Text className="text-red-600 block mt-1">
                               Kiểm tra: {slot.exams}
@@ -440,7 +465,7 @@ const CatechistScheduleScreen: React.FC = () => {
               value={selectedWeek}
               onChange={(value) => {
                 setSelectedWeek(value);
-                localStorage.setItem('selectedWeek', value.toString());
+                localStorage.setItem("selectedWeek", value.toString());
               }}
               placeholder="Chọn tuần"
             >
@@ -484,22 +509,29 @@ const CatechistScheduleScreen: React.FC = () => {
           <p className="text-sm">Chọn một lớp để xem lịch giảng dạy</p>
         </div>
       )}
-      {currentWeek && selectedClass && (
-        <div className="mt-4">
-          <Text>
-            Từ {currentWeek.startDate} đến {currentWeek.endDate}
-          </Text>
-          {currentWeek.classes
-            .filter((classItem) => classItem.className === selectedClass)
-            .map((classItem, index) => {
-              const timetable = createTimetable(classItem.slots);
-              return (
-                <Card key={index} className="mb-4 mt-4">
-                  {renderCalendar(timetable, classItem)}
-                </Card>
-              );
-            })}
+      {scheduleLoading ? (
+        <div className="flex justify-center items-center mt-8">
+          <Spin size="large" tip="Đang tải lịch học..." />
         </div>
+      ) : (
+        currentWeek &&
+        selectedClass && (
+          <div className="mt-4">
+            <Text>
+              Từ {currentWeek.startDate} đến {currentWeek.endDate}
+            </Text>
+            {currentWeek.classes
+              .filter((classItem) => classItem.className === selectedClass)
+              .map((classItem, index) => {
+                const timetable = createTimetable(classItem.slots);
+                return (
+                  <Card key={index} className="mb-4 mt-4">
+                    {renderCalendar(timetable, classItem)}
+                  </Card>
+                );
+              })}
+          </div>
+        )
       )}
     </div>
   );
