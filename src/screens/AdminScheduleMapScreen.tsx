@@ -34,6 +34,7 @@ interface PreviewItem {
   orderSchedule: number;
   lessonName: string;
   additionalActivity?: string;
+  examName: string | null;
 }
 
 const customStyles = {
@@ -93,7 +94,10 @@ const AdminScheduleMapScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      setAcademicYears(response.data);
+      const nextYears = response.data.filter(
+        (year: { timeStatus: string }) => year.timeStatus === "NEXT"
+      );
+      setAcademicYears(nextYears);
     } catch (error) {
       console.log(error);
       message.error("Failed to fetch academic years");
@@ -245,6 +249,7 @@ const AdminScheduleMapScreen: React.FC = () => {
         orderSchedule: result.orderSchedule,
         lessonName: lesson ? lesson.name : "Hoạt động khác",
         additionalActivity: result.note,
+        examName: lesson ? lesson.examName : "",
       };
     });
     setPreviewData(preview);
@@ -253,18 +258,20 @@ const AdminScheduleMapScreen: React.FC = () => {
 
   const handleSubmitSchedule = async () => {
     try {
-      const formattedResults = mappingResults.map(result => ({
+      const formattedResults = mappingResults.map((result) => ({
         orderSchedule: result.orderSchedule,
         idSlot: result.idSlot || null,
-        note: result.note || ""
+        note: result.note || "",
       }));
-  
+
       const response = await axios.post(
         `https://sep490-backend-production.up.railway.app/api/time-table-detail?gradeId=${selectedGrade}&yearId=${selectedYear}`,
         formattedResults
       );
-  
-      message.success(response.data.message || "Lịch học đã được lưu thành công");
+
+      message.success(
+        response.data.message || "Lịch học đã được lưu thành công"
+      );
       setIsConfirmModalVisible(false);
     } catch (error) {
       console.log(error);
@@ -274,7 +281,13 @@ const AdminScheduleMapScreen: React.FC = () => {
 
   const lessonColumns = [
     {
-      title: "Tên",
+      title: "STT",
+      key: "index",
+      render: (_: unknown, __: unknown, index: number) => index + 1,
+      width: 70,
+    },
+    {
+      title: "Tên bài",
       dataIndex: "name",
       key: "name",
     },
@@ -296,6 +309,12 @@ const AdminScheduleMapScreen: React.FC = () => {
   ];
 
   const scheduleColumns = [
+    {
+      title: "STT",
+      key: "index",
+      render: (_: unknown, __: unknown, index: number) => index + 1,
+      width: 70,
+    },
     {
       title: "Thời gian",
       dataIndex: "time",
@@ -326,6 +345,18 @@ const AdminScheduleMapScreen: React.FC = () => {
       title: "Nội dung",
       dataIndex: "lessonName",
       key: "lessonName",
+      render: (_: string, record: PreviewItem) => {
+        const lesson = lessons.find(l => l.name === record.lessonName);
+        if (lesson?.examName) {
+          return (
+            <div>
+              <div>{record.lessonName}</div>
+              <Tag color="orange">{lesson.examName}</Tag>
+            </div>
+          );
+        }
+        return record.lessonName;
+      }
     },
     {
       title: "Hoạt động bổ sung",
@@ -356,11 +387,6 @@ const AdminScheduleMapScreen: React.FC = () => {
                 {academicYears.map((year) => (
                   <Select.Option key={year.id} value={year.id}>
                     {year.year}
-                    {year.timeStatus === "NOW" && (
-                      <Tag color="blue" className="ml-2">
-                        Hiện tại
-                      </Tag>
-                    )}
                   </Select.Option>
                 ))}
               </Select>
@@ -422,7 +448,9 @@ const AdminScheduleMapScreen: React.FC = () => {
                 </div>
               </div>
               <div>
-                <h2 className={customStyles.sectionTitle}>Lịch học</h2>
+                <h2 className={customStyles.sectionTitle}>
+                  Danh sách buổi học
+                </h2>
                 <div className={customStyles.tableWrapper}>
                   <Table
                     columns={scheduleColumns}
@@ -442,6 +470,12 @@ const AdminScheduleMapScreen: React.FC = () => {
               onClick={handleAutoMap}
               className={customStyles.actionButton}
               size="large"
+              disabled={remainingSlots !== 0}
+              title={
+                remainingSlots !== 0
+                  ? "Vui lòng điền đầy đủ hoạt động cho các buổi trống trước khi phân bổ"
+                  : ""
+              }
             >
               Tự động phân bổ
             </Button>
@@ -477,8 +511,9 @@ const AdminScheduleMapScreen: React.FC = () => {
                 >
                   <p>Bạn có chắc chắn muốn lưu lịch học này?</p>
                   <p className="text-red-500">
-                    Lưu ý: Hành động này chỉ có thể thực hiện một lần và không
-                    thể thay đổi sau khi đã lưu.
+                    Lưu ý: Việc sắp xếp lịch học chỉ có thể thực hiện một lần
+                    trước khi năm học bắt đầu và không thể thay đổi sau khi đã
+                    lưu.
                   </p>
                 </Modal>
               </div>
