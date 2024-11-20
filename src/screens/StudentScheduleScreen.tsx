@@ -25,6 +25,7 @@ interface Slot {
   };
   materials: Material[];
   attendance: Attendance;
+  exams?: string;
 }
 
 interface Attendance {
@@ -104,7 +105,6 @@ const StudentScheduleScreen: React.FC = () => {
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
 
   const fetchSchedule = useCallback(async () => {
-    
     try {
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
@@ -143,7 +143,7 @@ const StudentScheduleScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedYear]);  
+  }, [selectedYear]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -151,7 +151,9 @@ const StudentScheduleScreen: React.FC = () => {
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
       setAcademicYears(response.data);
-      const currentYear = response.data.find((year: { timeStatus: string }) => year.timeStatus === "NOW");
+      const currentYear = response.data.find(
+        (year: { timeStatus: string }) => year.timeStatus === "NOW"
+      );
       if (currentYear) {
         setSelectedYear(currentYear.year);
       }
@@ -166,10 +168,10 @@ const StudentScheduleScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-  if (selectedYear) {
-    fetchSchedule();
-  }
-}, [selectedYear, fetchSchedule]);
+    if (selectedYear) {
+      fetchSchedule();
+    }
+  }, [selectedYear, fetchSchedule]);
 
   const createTimetable = (
     slots: Slot[]
@@ -248,6 +250,11 @@ const StudentScheduleScreen: React.FC = () => {
                         <Text className="text-green-600">
                           Chương: {slot.session.name}
                         </Text>
+                        {slot.exams && (
+                          <Text className="text-red-600 block mt-1">
+                            Kiểm tra: {slot.exams}
+                          </Text>
+                        )}
                         {slot.materials && slot.materials.length > 0 && (
                           <div className="mt-2">
                             <Text className="text-purple-600 font-medium">

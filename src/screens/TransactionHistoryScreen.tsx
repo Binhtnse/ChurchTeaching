@@ -26,6 +26,12 @@ interface Transaction {
   };
 }
 
+interface Class {
+  id: number;
+  name: string;
+  gradeName: string;
+}
+
 interface ApiResponse {
   status: string;
   message: string | null;
@@ -52,6 +58,8 @@ const TransactionHistoryScreen: React.FC = () => {
     number | null
   >(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [selectedClass, setSelectedClass] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAcademicYears();
@@ -88,14 +96,38 @@ const TransactionHistoryScreen: React.FC = () => {
     }
   };
 
+  const fetchClasses = useCallback(async () => {
+    if (!selectedAcademicYear || !selectedGrade) return;
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`
+      );
+      if (!response.data.data || response.data.data.length === 0) {
+        setClasses([]);
+        return;
+      }
+      setClasses(response.data.data);
+    } catch (error) {
+      console.log(error);
+      setClasses([]);
+    }
+  }, [selectedAcademicYear, selectedGrade]);
+
+  useEffect(() => {
+    if (selectedAcademicYear && selectedGrade) {
+      fetchClasses();
+    }
+  }, [selectedAcademicYear, selectedGrade, fetchClasses]);
+
   const fetchTransactions = useCallback(async () => {
     if (!selectedAcademicYear) return;
 
     try {
       setLoading(true);
       const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
+      const classParam = selectedClass ? `&classId=${selectedClass}` : "";
       const response = await axios.get<ApiResponse>(
-        `https://sep490-backend-production.up.railway.app/api/v1/tuition/admin/transactions?page=1&size=10&academicYearId=${selectedAcademicYear}${gradeParam}`
+        `https://sep490-backend-production.up.railway.app/api/v1/tuition/admin/transactions?page=1&size=10&academicYearId=${selectedAcademicYear}${gradeParam}${classParam}`
       );
       setTransactions(response.data.data);
     } catch (error) {
@@ -103,7 +135,7 @@ const TransactionHistoryScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedAcademicYear, selectedGrade]);
+  }, [selectedAcademicYear, selectedGrade, selectedClass]);
 
   useEffect(() => {
     if (selectedAcademicYear) {
@@ -178,7 +210,7 @@ const TransactionHistoryScreen: React.FC = () => {
           Lịch sử giao dịch
         </h1>
         <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-600">
                 Niên khóa
@@ -212,6 +244,23 @@ const TransactionHistoryScreen: React.FC = () => {
                 {grades.map((grade) => (
                   <Option key={grade.id} value={grade.id}>
                     {grade.name}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">Lớp</label>
+              <Select
+                className="w-full"
+                placeholder="Chọn lớp"
+                onChange={(value) => setSelectedClass(value)}
+                value={selectedClass}
+                disabled={!selectedAcademicYear || !selectedGrade}
+                allowClear
+              >
+                {classes.map((cls) => (
+                  <Option key={cls.id} value={cls.id}>
+                    {cls.name}
                   </Option>
                 ))}
               </Select>

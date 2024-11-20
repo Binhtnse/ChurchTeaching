@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message, Tag } from "antd";
+import { Card, Typography, Spin, Select, message, Tag, Button } from "antd";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
+
+interface ClassData {
+  id: number;
+  name: string;
+  numberOfCatechist: number | null;
+  gradeName: string;
+  academicYear: string;
+  status: string;
+}
 
 interface Material {
   name: string;
@@ -32,6 +41,7 @@ interface Slot {
     description: string;
   };
   materials: Material[];
+  exams?: string;
 }
 
 interface Class {
@@ -99,13 +109,17 @@ const CatechistScheduleScreen: React.FC = () => {
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>("");
+  const savedWeek = localStorage.getItem('selectedWeek');
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
-  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [selectedWeek, setSelectedWeek] = useState<number>(savedWeek ? parseInt(savedWeek) : 1);
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchClasses();
     const fetchSchedule = async () => {
       try {
         const userString = localStorage.getItem("userLogin");
@@ -113,6 +127,7 @@ const CatechistScheduleScreen: React.FC = () => {
         const userId = user?.id;
         if (!userId) {
           console.error("User ID not found");
+          setScheduleData(null);
           setLoading(false);
           return;
         }
@@ -121,10 +136,10 @@ const CatechistScheduleScreen: React.FC = () => {
         );
         if (!response.data.data || response.data.data.length === 0) {
           setScheduleData(null);
-          setSelectedWeek(1);
           return;
         }
         setScheduleData(response.data.data);
+        
         const currentDate = new Date();
         const currentWeek = response.data.data.schedule.find(
           (week: WeekSchedule) => {
@@ -133,23 +148,32 @@ const CatechistScheduleScreen: React.FC = () => {
             return currentDate >= startDate && currentDate <= endDate;
           }
         );
-        setSelectedWeek(
-          currentWeek
-            ? currentWeek.weekNumber
-            : response.data.data.schedule[0].weekNumber
-        );
+  
+        // Get saved week from localStorage
+        const savedWeek = localStorage.getItem('selectedWeek');
+        
+        // Priority: 1. Saved week 2. Current week 3. First week
+        const weekToSelect = savedWeek 
+          ? parseInt(savedWeek)
+          : currentWeek 
+            ? currentWeek.weekNumber 
+            : response.data.data.schedule[0].weekNumber;
+            
+        setSelectedWeek(weekToSelect);
+        localStorage.setItem('selectedWeek', weekToSelect.toString());
       } catch (error) {
-        console.log(error)
+        console.log(error);
         setScheduleData(null);
-        setSelectedWeek(1);
       } finally {
         setLoading(false);
       }
     };
-
-    
+  
+    if (selectedYear) {
       fetchSchedule();
-  }, [selectedYear]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]); 
 
   const fetchAcademicYears = async () => {
     try {
@@ -157,7 +181,9 @@ const CatechistScheduleScreen: React.FC = () => {
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
       setAcademicYears(response.data);
-      const currentYear = response.data.find((year: { timeStatus: string }) => year.timeStatus === "NOW");
+      const currentYear = response.data.find(
+        (year: { timeStatus: string }) => year.timeStatus === "NOW"
+      );
       if (currentYear) {
         setSelectedYear(currentYear.year);
       } else if (response.data.length > 0) {
@@ -182,6 +208,35 @@ const CatechistScheduleScreen: React.FC = () => {
       timetable[slot.dayOfWeek][slot.time] = slot;
     });
     return timetable;
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const userString = localStorage.getItem("userLogin");
+      const user = userString ? JSON.parse(userString) : null;
+      const userId = user ? user.id : null;
+
+      if (!userId || !selectedYear) return;
+
+      const yearObj = academicYears.find((year) => year.year === selectedYear);
+      if (!yearObj) return;
+
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/class/catechist/${userId}?page=1&size=100&academicYearId=${yearObj.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      if (response.data.data) {
+        setClasses(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      message.error("Không thể tải danh sách lớp học");
+    }
   };
 
   const currentWeek = scheduleData?.schedule.find(
@@ -221,84 +276,120 @@ const CatechistScheduleScreen: React.FC = () => {
     });
 
     return (
-      <CalendarGrid>
-        <CalendarCell />
-        {days.map((day, index) => (
-          <DayCell key={day}>
-            <div>{day}</div>
-            <div className="text-sm mt-1">{dates[index]}</div>
-          </DayCell>
-        ))}
-        {times.map((time) => (
-          <React.Fragment key={time}>
-            <TimeCell>{time}</TimeCell>
-            {days.map((day, index) => {
-              const CellComponent = index === 6 ? SundayCell : CalendarCell;
-              const slot = timetable[day] && timetable[day][time];
-              return (
-                <CellComponent
-                  key={`${day}-${time}`}
-                  onClick={() => handleCellClick(slot)}
-                  style={{ cursor: slot ? "pointer" : "default" }}
-                >
-                  {slot && (
-                    <div className="flex flex-col h-full">
-                      <Text className="text-gray-500 mb-1">
-                        Phòng: {classItem.roomNo}
-                      </Text>
-                      <strong className="text-blue-600 mb-1">
-                        {slot.name}
-                      </strong>
-                      <div className="mt-auto">
-                        <Text className="text-green-600">
-                          Chương: {slot.session.name}
+      <div>
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <Text strong className="text-lg text-indigo-600">
+            Lớp: {classItem.className} - {classItem.grade}
+          </Text>
+        </div>
+        <CalendarGrid>
+          <CalendarCell />
+          {days.map((day, index) => (
+            <DayCell key={day}>
+              <div>{day}</div>
+              <div className="text-sm mt-1">{dates[index]}</div>
+            </DayCell>
+          ))}
+          {times.map((time) => (
+            <React.Fragment key={time}>
+              <TimeCell>{time}</TimeCell>
+              {days.map((day, index) => {
+                const CellComponent = index === 6 ? SundayCell : CalendarCell;
+                const slot = timetable[day] && timetable[day][time];
+                return (
+                  <CellComponent key={`${day}-${time}`}>
+                    {slot && (
+                      <div className="flex flex-col h-full">
+                        <Text className="text-gray-500 mb-1">
+                          Phòng: {classItem.roomNo}
                         </Text>
-                        {slot.materials && slot.materials.length > 0 && (
-                          <div className="mt-2">
-                            <Text className="text-purple-600 font-medium">
-                              Tài liệu:
+                        <strong className="text-blue-600 mb-1">
+                          {slot.name}
+                        </strong>
+                        <div className="mt-auto">
+                          <Text className="text-green-600">
+                            Chương: {slot.session.name}
+                          </Text>
+                          {slot.exams && (
+                            <Text className="text-red-600 block mt-1">
+                              Kiểm tra: {slot.exams}
                             </Text>
-                            <ul className="list-disc pl-4">
-                              {slot.materials.map((material, index) => (
-                                <li key={index}>
-                                  <a
-                                    href={material.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500 hover:text-blue-700 underline"
-                                    onClick={handleMaterialClick} // Add this line
-                                  >
-                                    {material.name}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
+                          )}
+                          {slot.materials && slot.materials.length > 0 && (
+                            <div className="mt-2">
+                              <Text className="text-purple-600 font-medium">
+                                Tài liệu:
+                              </Text>
+                              <ul className="list-disc pl-4">
+                                {slot.materials.map((material, index) => (
+                                  <li key={index}>
+                                    <a
+                                      href={material.link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:text-blue-700 underline"
+                                      onClick={handleMaterialClick} // Add this line
+                                    >
+                                      {material.name}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          <div className="mt-2">
+                            <Button
+                              type="primary"
+                              size="middle"
+                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                const weekStart = new Date(
+                                  currentWeek!.startDate
+                                );
+                                const dayIndex = [
+                                  "Thứ Hai",
+                                  "Thứ Ba",
+                                  "Thứ Tư",
+                                  "Thứ Năm",
+                                  "Thứ Sáu",
+                                  "Thứ Bảy",
+                                  "Chủ Nhật",
+                                ].indexOf(slot.dayOfWeek);
+                                const slotDate = new Date(weekStart);
+                                slotDate.setDate(
+                                  weekStart.getDate() + dayIndex
+                                );
+                                const formattedDate = slotDate
+                                  .toISOString()
+                                  .split("T")[0];
+                                navigate(
+                                  `/schedule/attendance/${slot.timeTableId}?dayOfWeek=${slot.dayOfWeek}&weekNumber=${selectedWeek}&time=${slot.time}&date=${formattedDate}`
+                                );
+                              }}
+                            >
+                              Điểm danh
+                            </Button>
                           </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {index === 6 && (
-                    <div className="mt-2 bg-gray-100 p-2 rounded">
-                      <Text
-                        strong
-                        className="text-indigo-600"
-                      >{`${classItem.className} - ${classItem.grade}`}</Text>
-                    </div>
-                  )}
-                </CellComponent>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </CalendarGrid>
+                    )}
+                    {index === 6 && (
+                      <div className="mt-2 bg-gray-100 p-2 rounded">
+                        <Text
+                          strong
+                          className="text-indigo-600"
+                        >{`${classItem.className} - ${classItem.grade}`}</Text>
+                      </div>
+                    )}
+                  </CellComponent>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </CalendarGrid>
+      </div>
     );
-  };
-
-  const handleCellClick = (slot: Slot | null) => {
-    if (slot) {
-      navigate(`/schedule/attendance/${slot.timeTableId}`);
-    }
   };
 
   if (loading) {
@@ -347,12 +438,31 @@ const CatechistScheduleScreen: React.FC = () => {
             <Select
               className="w-full"
               value={selectedWeek}
-              onChange={(value) => setSelectedWeek(value)}
+              onChange={(value) => {
+                setSelectedWeek(value);
+                localStorage.setItem('selectedWeek', value.toString());
+              }}
               placeholder="Chọn tuần"
             >
               {scheduleData?.schedule.map((week) => (
                 <Select.Option key={week.weekNumber} value={week.weekNumber}>
                   Tuần {week.weekNumber}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">Lớp</label>
+            <Select
+              className="w-full"
+              placeholder="Chọn lớp"
+              onChange={(value) => setSelectedClass(value)}
+              value={selectedClass}
+            >
+              {classes.map((classItem) => (
+                <Select.Option key={classItem.id} value={classItem.name}>
+                  {classItem.name}
                 </Select.Option>
               ))}
             </Select>
@@ -368,20 +478,27 @@ const CatechistScheduleScreen: React.FC = () => {
           Tuần: {selectedWeek}
         </Text>
       </div>
-
-      {currentWeek && (
+      {currentWeek && !selectedClass && (
+        <div className="text-center text-gray-500 py-8">
+          <p className="text-lg font-semibold">Vui lòng chọn lớp</p>
+          <p className="text-sm">Chọn một lớp để xem lịch giảng dạy</p>
+        </div>
+      )}
+      {currentWeek && selectedClass && (
         <div className="mt-4">
           <Text>
             Từ {currentWeek.startDate} đến {currentWeek.endDate}
           </Text>
-          {currentWeek.classes.map((classItem, index) => {
-            const timetable = createTimetable(classItem.slots);
-            return (
-              <Card key={index} className="mb-4 mt-4">
-                {renderCalendar(timetable, classItem)}
-              </Card>
-            );
-          })}
+          {currentWeek.classes
+            .filter((classItem) => classItem.className === selectedClass)
+            .map((classItem, index) => {
+              const timetable = createTimetable(classItem.slots);
+              return (
+                <Card key={index} className="mb-4 mt-4">
+                  {renderCalendar(timetable, classItem)}
+                </Card>
+              );
+            })}
         </div>
       )}
     </div>

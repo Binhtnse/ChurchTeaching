@@ -12,6 +12,9 @@ import {
   Upload,
   Tabs,
   Space,
+  Form,
+  Select,
+  DatePicker,
 } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
@@ -28,6 +31,16 @@ interface User {
   email: string;
   role: string;
   status: string;
+}
+
+interface NewUser {
+  fullName: string;
+  email: string;
+  dob: string;
+  address: string;
+  gender: "MALE" | "FEMALE";
+  phoneNumber: string;
+  role: "ADMIN" | "CATECHIST" | "PARENT" | "STUDENT";
 }
 
 interface UserImportData {
@@ -69,7 +82,7 @@ const columnTitleMap: { [key: string]: string } = {
   confirmationDate: "Ngày thêm sức",
   confirmationBishop: "Đức Giám Mục thêm sức",
   gradeName: "Tên khối",
-  error: "Lỗi"
+  error: "Lỗi",
 };
 
 interface ValidationResponse {
@@ -88,6 +101,9 @@ const AdminUserListScreen: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [validRecords, setValidRecords] = useState<UserImportData[]>([]);
   const [invalidRecords, setInvalidRecords] = useState<UserImportData[]>([]);
+  const [isAddUserModalVisible, setIsAddUserModalVisible] = useState(false);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [newUserForm] = Form.useForm();
   const navigate = useNavigate();
   const [pagination, setPagination] = useState({
     current: 1,
@@ -161,13 +177,66 @@ const AdminUserListScreen: React.FC = () => {
 
   const roleFilterMenu = (
     <Menu onClick={({ key }) => setRoleFilter(key as string)}>
-      <Menu.Item key={null}>Tất cả vai trò</Menu.Item>
+      <Menu.Item key="">Tất cả vai trò</Menu.Item>
       <Menu.Item key="ADMIN">ADMIN</Menu.Item>
       <Menu.Item key="CATECHIST">Giáo lý viên</Menu.Item>
       <Menu.Item key="PARENT">Phụ huynh</Menu.Item>
       <Menu.Item key="STUDENT">Thiếu nhi thánh thể</Menu.Item>
     </Menu>
   );
+
+  const invalidRecordsColumns = [
+    {
+      title: columnTitleMap['fatherName'],
+      dataIndex: 'fatherName',
+      key: 'fatherName',
+    },
+    {
+      title: columnTitleMap['fatherSaintName'],
+      dataIndex: 'fatherSaintName',
+      key: 'fatherSaintName',
+    },
+    {
+      title: columnTitleMap['motherName'],
+      dataIndex: 'motherName',
+      key: 'motherName',
+    },
+    {
+      title: columnTitleMap['motherSaintName'],
+      dataIndex: 'motherSaintName',
+      key: 'motherSaintName',
+    },
+    {
+      title: columnTitleMap['parentEmail'],
+      dataIndex: 'parentEmail',
+      key: 'parentEmail',
+    },
+    {
+      title: columnTitleMap['parentPhoneNumber'],
+      dataIndex: 'parentPhoneNumber',
+      key: 'parentPhoneNumber',
+    },
+    {
+      title: columnTitleMap['childName'],
+      dataIndex: 'childName',
+      key: 'childName',
+    },
+    {
+      title: columnTitleMap['childGender'],
+      dataIndex: 'childGender',
+      key: 'childGender',
+    },
+    {
+      title: columnTitleMap['childDob'],
+      dataIndex: 'childDob',
+      key: 'childDob',
+    },
+    {
+      title: columnTitleMap['error'],
+      dataIndex: 'error',
+      key: 'error',
+    }
+  ];  
 
   const handleDownloadTemplate = async () => {
     try {
@@ -194,6 +263,31 @@ const AdminUserListScreen: React.FC = () => {
     }
   };
 
+  const handleCreateUser = async (values: NewUser) => {
+    setIsCreatingUser(true);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.post(
+        "https://sep490-backend-production.up.railway.app/api/v1/user",
+        values,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      message.success("Tạo người dùng thành công");
+      setIsAddUserModalVisible(false);
+      newUserForm.resetFields();
+      fetchUsers(pagination.current, pagination.pageSize);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      message.error("Tạo người dùng thất bại");
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
   const handleUploadTemplate = async (file: File) => {
     setIsUploading(true);
     try {
@@ -212,8 +306,14 @@ const AdminUserListScreen: React.FC = () => {
         }
       );
 
+      const filteredInvalidRecords = validationResponse.data.invalidRecords.filter(record => 
+        Object.values(record).some(value => 
+          value !== "" && value !== record.error
+        )
+      );
+
       setValidRecords(validationResponse.data.validRecords);
-      setInvalidRecords(validationResponse.data.invalidRecords);
+      setInvalidRecords(filteredInvalidRecords);
       message.success("Xác thực thông tin thành công");
     } catch (error) {
       console.error("Error validating file:", error);
@@ -222,6 +322,7 @@ const AdminUserListScreen: React.FC = () => {
       setIsUploading(false);
     }
   };
+  
 
   const handleImportUsers = async () => {
     setIsUploading(true);
@@ -370,6 +471,9 @@ const AdminUserListScreen: React.FC = () => {
               Lọc theo vai trò <DownOutlined className="ml-2" />
             </Button>
           </Dropdown>
+          <Button type="primary" onClick={() => setIsAddUserModalVisible(true)}>
+            Thêm người dùng
+          </Button>
         </div>
         <Dropdown
           overlay={
@@ -421,6 +525,7 @@ const AdminUserListScreen: React.FC = () => {
         onCancel={() => setIsModalVisible(false)}
         confirmLoading={isUploading}
         okText={isUploading ? "Đang tải lên..." : "Tải lên"}
+        okButtonProps={{ disabled: invalidRecords.length > 0 }}
         width={1000}
         style={{ top: 20 }}
         bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
@@ -480,51 +585,133 @@ const AdminUserListScreen: React.FC = () => {
                   ),
                   children: (
                     <div className="border rounded-b-lg p-4">
-                      <AntTable
+                      <AntTable<UserImportData>
                         dataSource={validRecords}
-                        columns={Object.keys(validRecords[0] || {}).map((key) => ({
-                          title: columnTitleMap[key] || key,
-                          dataIndex: key,
-                          key: key,
-                          ellipsis: true,
-                        }))}
+                        columns={Object.keys(validRecords[0] || {}).map(
+                          (key) => ({
+                            title: columnTitleMap[key] || key,
+                            dataIndex: key,
+                            key: key,
+                            ellipsis: true,
+                            render: (text, record, index) => {
+                              console.log(`Rendering row ${index}:`, record);
+                              return text;
+                            }                           
+                          })
+                        )}
                         pagination={false}
                         scroll={{ x: true, y: 300 }}
                         size="small"
                         className="border rounded-lg"
                       />
                     </div>
-                  )
+                  ),
                 },
                 {
                   key: "2",
                   label: (
                     <span className="px-2">
-                      <Tag color="red">Không hợp lệ ({invalidRecords.length})</Tag>
+                      <Tag color="red">
+                        Không hợp lệ ({invalidRecords.length})
+                      </Tag>
                     </span>
                   ),
                   children: (
                     <div className="border rounded-b-lg p-4">
-                      <AntTable
+                      <AntTable<UserImportData>
                         dataSource={invalidRecords}
-                        columns={Object.keys(validRecords[0] || {}).map((key) => ({
-                          title: columnTitleMap[key] || key,
-                          dataIndex: key,
-                          key: key,
-                          ellipsis: true,
-                        }))}
+                        columns={invalidRecordsColumns}
                         pagination={false}
                         scroll={{ x: true, y: 300 }}
                         size="small"
                         className="border rounded-lg"
                       />
                     </div>
-                  )
-                }
+                  ),
+                },
               ]}
             />
           </div>
         )}
+      </Modal>
+      <Modal
+        title="Thêm người dùng mới"
+        visible={isAddUserModalVisible}
+        onCancel={() => setIsAddUserModalVisible(false)}
+        footer={null}
+      >
+        <Form form={newUserForm} layout="vertical" onFinish={handleCreateUser}>
+          <Form.Item
+            name="fullName"
+            label="Họ và tên"
+            rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: "Vui lòng nhập email" },
+              { type: "email", message: "Email không hợp lệ" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="dob"
+            label="Ngày sinh"
+            rules={[{ required: true, message: "Vui lòng chọn ngày sinh" }]}
+          >
+            <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Địa chỉ"
+            rules={[{ required: true, message: "Vui lòng nhập địa chỉ" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="gender"
+            label="Giới tính"
+            rules={[{ required: true, message: "Vui lòng chọn giới tính" }]}
+          >
+            <Select>
+              <Select.Option value="MALE">Nam</Select.Option>
+              <Select.Option value="FEMALE">Nữ</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="phoneNumber"
+            label="Số điện thoại"
+            rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="role"
+            label="Vai trò"
+            rules={[{ required: true, message: "Vui lòng chọn vai trò" }]}
+          >
+            <Select>
+              <Select.Option value="ADMIN">Admin</Select.Option>
+              <Select.Option value="CATECHIST">Giáo lý viên</Select.Option>
+              <Select.Option value="PARENT">Phụ huynh</Select.Option>
+              <Select.Option value="STUDENT">Thiếu nhi thánh thể</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={isCreatingUser}
+              block
+            >
+              {isCreatingUser ? "Đang tạo..." : "Tạo người dùng"}
+            </Button>
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

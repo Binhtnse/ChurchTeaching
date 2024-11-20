@@ -16,7 +16,9 @@ import {
   CreditCardOutlined,
   AreaChartOutlined,
   FileDoneOutlined,
-  ReadOutlined
+  ReadOutlined,
+  UserOutlined,
+  FilePdfOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -37,9 +39,13 @@ const getMenuItems = (role: string): MenuItem[] => {
         style: { color: "black" },
       },
       {
-        key: "student-schedule",
-        label: "Lịch học",
+        key: "timetable",
+        label: "Thời khóa biểu",
         icon: <CalendarOutlined />,
+        children: [
+          { key: "student-schedule", label: "Lịch học" },
+          { key: "student-schedule-exam", label: "Lịch kiểm tra" },
+        ],
       },
       {
         key: "progress",
@@ -60,6 +66,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         label: "Lịch sử giao dịch",
         icon: <AccountBookOutlined />,
       },
+      {
+        key: "student-certificate-list",
+        label: "Danh sách chứng chỉ lên lớp",
+        icon: <FilePdfOutlined />,
+      },
     ],
     CATECHIST: [
       {
@@ -77,9 +88,13 @@ const getMenuItems = (role: string): MenuItem[] => {
         icon: <TeamOutlined />,
       },
       {
-        key: "schedule",
-        label: "Lịch giảng dạy",
+        key: "timetable",
+        label: "Thời khóa biểu",
         icon: <CalendarOutlined />,
+        children: [
+          { key: "schedule", label: "Lịch giảng dạy" },
+          { key: "schedule-exam", label: "Lịch kiểm tra" },
+        ],
       },
     ],
     PARENT: [
@@ -93,9 +108,13 @@ const getMenuItems = (role: string): MenuItem[] => {
         style: { color: "black" },
       },
       {
-        key: "parent-schedule",
-        label: "Lịch học của con",
+        key: "timetable",
+        label: "Thời khóa biểu",
         icon: <CalendarOutlined />,
+        children: [
+          { key: "parent-schedule", label: "Lịch học của con" },
+          { key: "parent-schedule-exam", label: "Lịch kiểm tra của con" },
+        ],
       },
       {
         key: "progress",
@@ -120,6 +139,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "enroll",
         label: "Đăng ký học",
         icon: <FormOutlined />,
+      },
+      {
+        key: "parent-certificate-list",
+        label: "Danh sách chứng chỉ lên lớp",
+        icon: <FilePdfOutlined />,
       },
     ],
     ADMIN: [
@@ -171,6 +195,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         ],
       },
       {
+        key: "grade-leader-list",
+        label: "Quản lý khối trưởng",
+        icon: <UserOutlined />,
+      },
+      {
         key: "transaction-history",
         label: "Lịch sử giao dịch",
         icon: <AccountBookOutlined />,
@@ -189,8 +218,27 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "add-policy", label: "Thêm quy định" },
         ],
       },
+      {
+        key: "certificate-list",
+        label: "Danh sách chứng chỉ lên lớp",
+        icon: <FilePdfOutlined />,
+      },
+      {
+        key: "assign-schedule",
+        label: "Sắp xếp lịch học",
+        icon: <CalendarOutlined />,
+      },
     ],
     GUEST: [
+      {
+        key: "",
+        label: "Trang chủ",
+        icon: <HomeOutlined />,
+      },
+      {
+        type: "divider",
+        style: { color: "black" },
+      },
       {
         key: "enroll",
         label: "Đăng ký học",

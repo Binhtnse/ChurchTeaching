@@ -85,7 +85,7 @@ const AdminDashboardScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   useEffect(() => {
     fetchAcademicYears();
@@ -161,7 +161,7 @@ const AdminDashboardScreen: React.FC = () => {
         <>
           <Row gutter={[16, 16]} className="mb-6">
             <Col xs={24} sm={12} lg={6}>
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card className="hover:shadow-lg transition-shadow" loading={loading}>
                 <Statistic
                   title="Tổng số lớp"
                   value={statistics.totalClasses}
@@ -171,9 +171,9 @@ const AdminDashboardScreen: React.FC = () => {
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card className="hover:shadow-lg transition-shadow" loading={loading}>
                 <Statistic
-                  title="Tổng số học sinh"
+                  title="Tổng số thiếu nhi thánh thể"
                   value={statistics.totalStudents}
                   prefix={<TeamOutlined />}
                   valueStyle={{ color: "#1890ff" }}
@@ -181,7 +181,7 @@ const AdminDashboardScreen: React.FC = () => {
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card className="hover:shadow-lg transition-shadow" loading={loading}>
                 <Statistic
                   title="Tổng số phụ huynh"
                   value={statistics.totalParents}
@@ -191,7 +191,7 @@ const AdminDashboardScreen: React.FC = () => {
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card className="hover:shadow-lg transition-shadow" loading={loading}>
                 <Statistic
                   title="Tổng số giáo lý viên"
                   value={statistics.totalCatechists}
@@ -203,8 +203,8 @@ const AdminDashboardScreen: React.FC = () => {
           </Row>
 
           <Row gutter={[16, 16]} className="mb-6">
-            <Col xs={24} sm={12} lg={8}>
-              <Card className="hover:shadow-lg transition-shadow">
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="hover:shadow-lg transition-shadow" loading={loading}>
                 <Statistic
                   title="Đậu"
                   value={statistics.totalPassed}
@@ -213,8 +213,8 @@ const AdminDashboardScreen: React.FC = () => {
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card className="hover:shadow-lg transition-shadow">
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="hover:shadow-lg transition-shadow" loading={loading}>
                 <Statistic
                   title="Rớt"
                   value={statistics.totalFailed}
@@ -223,21 +223,31 @@ const AdminDashboardScreen: React.FC = () => {
                 />
               </Card>
             </Col>
-            <Col xs={24} lg={8}>
-              <Card className="hover:shadow-lg transition-shadow">
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="hover:shadow-lg transition-shadow" loading={loading}>
                 <Statistic
                   title="Tổng học phí"
-                  value={statistics.totalTuition}
+                  value={`${statistics.totalTuition} VND`}
                   prefix={<DollarOutlined />}
                   valueStyle={{ color: "#1890ff" }}
                 />
               </Card>
             </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="hover:shadow-lg transition-shadow" loading={loading}>
+                <Statistic
+                  title="Tổng tiền quyên góp"
+                  value={`${statistics.totalDonations} VND`}
+                  prefix={<DollarOutlined />}
+                  valueStyle={{ color: "#52c41a" }}
+                />
+              </Card>
+            </Col>
           </Row>
 
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="hover:shadow-lg transition-shadow" loading={loading}>
             <h3 className="text-lg font-semibold mb-4">Số lớp theo khối</h3>
-            <GradeBarChart data={statistics.classesPerGrade} />
+            <GradeBarChart data={statistics?.classesPerGrade || {}} />
           </Card>
         </>
       ) : (

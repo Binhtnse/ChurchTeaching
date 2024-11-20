@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Routes, Route, createBrowserRouter} from "react-router-dom";
+import { Routes, Route, createBrowserRouter } from "react-router-dom";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
 import EnrollScreen from "../screens/EnrollScreen";
@@ -30,7 +30,7 @@ import ParentGradesProgressScreen from "../screens/ParentGradesProgressScreen";
 import StudentGradesProgressScreen from "../screens/StudentGradesProgressScreen";
 import ParentAttendanceProgressScreen from "../screens/ParentAttendanceProgressScreen";
 import StudentAttendanceProgressScreen from "../screens/StudentAttendanceProgressScreen";
-import { PostDetail } from "../screens/PostDetailScreen";
+import  PostDetail  from "../screens/PostDetailScreen";
 import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 import AdminCatechistListScreen from "../screens/AdminCatechistListScreen";
 import StudentTransactionScreen from "../screens/StudentTransactionScreen";
@@ -38,6 +38,14 @@ import CatechistLeaveRequestListScreen from "../screens/CatechistLeaveRequestLis
 import ParentLeaveRequestListScreen from "../screens/ParentLeaveRequestListScreen";
 import AdminLeaveRequestListScreen from "../screens/AdminLeaveRequestListScreen";
 import AdminUserDetailScreen from "../screens/AdminUserDetailScreen";
+import AdminGradeLeaderScreen from "../screens/AdminGradeLeaderScreen";
+import AdminCertificateListScreen from "../screens/AdminCertificateListScreen";
+import ParentCertificateListScreen from "../screens/ParentCertificateListScreen";
+import StudentCertificateListScreen from "../screens/StudentCertificateListScreen";
+import StudentExamScheduleScreen from "../screens/StudentExamScheduleScreen";
+import ParentExamScheduleScreen from "../screens/ParentExamScheduleScreen";
+import CatechistExamScheduleScreen from "../screens/CatechistExamScheduleScreen";
+import AdminScheduleMapScreen from "../screens/AdminScheduleMapScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -97,6 +105,14 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/parent-schedule-exam"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentExamScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/transaction-pay-parent"
             element={
               <ProtectedRoute allowedRoles={["PARENT"]}>
@@ -129,6 +145,14 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/parent-certificate-list"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentCertificateListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/classes-catechist/:classId"
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
@@ -149,6 +173,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["CATECHIST"]}>
                 <CatechistScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/schedule-exam"
+            element={
+              <ProtectedRoute allowedRoles={["CATECHIST"]}>
+                <CatechistExamScheduleScreen />
               </ProtectedRoute>
             }
           />
@@ -192,7 +224,7 @@ export const AppRoutes = createBrowserRouter([
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/dashboard"
             element={
@@ -218,6 +250,14 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/student-schedule-exam"
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT"]}>
+                <StudentExamScheduleScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/study-grades"
             element={
               <ProtectedRoute allowedRoles={["STUDENT"]}>
@@ -238,6 +278,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["STUDENT"]}>
                 <StudentTransactionScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student-certificate-list"
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT"]}>
+                <StudentCertificateListScreen />
               </ProtectedRoute>
             }
           />
@@ -306,6 +354,30 @@ export const AppRoutes = createBrowserRouter([
             }
           />
           <Route
+            path="/assign-schedule"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminScheduleMapScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/certificate-list"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminCertificateListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grade-leader-list"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminGradeLeaderScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin-catechist-list"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
@@ -345,14 +417,19 @@ export const AppRoutes = createBrowserRouter([
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/post/:id"
+            element={
+              <ProtectedRoute
+                allowedRoles={["GUEST", "PARENT", "STUDENT", "CATECHIST"]}
+              >
+                <PostDetail />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-
       </Layout>
     ),
-  },
-  {
-    path: "/post/:id",
-    element: <PostDetail />,
   },
   {
     path: "/login",

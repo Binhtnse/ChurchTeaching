@@ -28,6 +28,23 @@ interface AttendanceData {
 interface AttendanceDetail {
   isAbsent: "ABSENT" | "FUTURE" | "FALSE";
   isAbsentWithPermission: "TRUE" | "FALSE";
+  time: string;
+}
+
+interface AbsenceRequestModalProps {
+  isVisible: boolean;
+  onClose: () => void;
+  onSubmit: (values: { reason: string }) => Promise<void>;
+  selectedStudent: Student | undefined;
+  selectedSlot: Slot | null;
+  selectedClass: Class | null;
+  parentDetails: { email: string; phoneNumber: string } | null;
+  submitting: boolean;
+  stats: {
+    absentWithPermission: number;
+    absentWithoutPermission: number;
+    totalSessions: number;
+  };
 }
 
 interface Student {
@@ -55,6 +72,7 @@ interface Slot {
   };
   materials: Material[];
   attendance: Attendance;
+  exams?: string;
 }
 
 interface Attendance {
@@ -124,6 +142,135 @@ const DayCell = styled(CalendarCell)`
   color: white;
 `;
 
+const AbsenceRequestModal: React.FC<AbsenceRequestModalProps> = React.memo(
+  ({
+    isVisible,
+    onClose,
+    onSubmit,
+    selectedStudent,
+    selectedSlot,
+    selectedClass,
+    parentDetails,
+    submitting,
+    stats,
+  }) => {
+    const [form] = Form.useForm();
+
+    return (
+      <Modal
+        title={
+          <div className="text-xl font-bold text-blue-600 mb-4">
+            Đơn Xin Nghỉ Học
+          </div>
+        }
+        open={isVisible}
+        onOk={() => form.submit()}
+        onCancel={onClose}
+        width={600}
+        confirmLoading={submitting}
+        okText="Gửi đơn"
+        cancelText="Hủy"
+        className="custom-modal"
+        okButtonProps={{
+          className: "bg-blue-600 hover:bg-blue-700",
+          size: "large",
+        }}
+        cancelButtonProps={{ size: "large" }}
+      >
+        <Form form={form} layout="vertical" onFinish={onSubmit}>
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Text strong className="w-32">
+                    Thiếu nhi:
+                  </Text>
+                  <Text className="text-blue-600">
+                    {selectedStudent?.fullName}
+                  </Text>
+                </div>
+                <div className="flex items-center">
+                  <Text strong className="w-32">
+                    Ngày nghỉ:
+                  </Text>
+                  <Text>
+                    {selectedSlot?.dayOfWeek} - {selectedSlot?.time}
+                  </Text>
+                </div>
+                <div className="flex items-center">
+                  <Text strong className="w-32">
+                    Lớp:
+                  </Text>
+                  <Text>
+                    {selectedClass?.className} - {selectedClass?.grade}
+                  </Text>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Text strong className="w-48">
+                    Số buổi vắng có phép:
+                  </Text>
+                  <Text className="text-orange-600">
+                    {stats.absentWithPermission}
+                  </Text>
+                </div>
+                <div className="flex items-center">
+                  <Text strong className="w-48">
+                    Số buổi vắng không phép:
+                  </Text>
+                  <Text className="text-red-600">
+                    {stats.absentWithoutPermission}
+                  </Text>
+                </div>
+                <div className="flex items-center">
+                  <Text strong className="w-48">
+                    Tổng số buổi đã học:
+                  </Text>
+                  <Text>{stats.totalSessions}</Text>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <Text strong className="w-48">
+                  Số điện thoại phụ huynh:
+                </Text>
+                <Text>{parentDetails?.phoneNumber || "Đang tải..."}</Text>
+              </div>
+              <div className="flex items-center">
+                <Text strong className="w-48">
+                  Email phụ huynh:
+                </Text>
+                <Text>{parentDetails?.email || "Đang tải..."}</Text>
+              </div>
+            </div>
+          </div>
+
+          <Form.Item
+            name="reason"
+            label={
+              <span className="text-base font-medium">Lý do xin nghỉ</span>
+            }
+            rules={[
+              { required: true, message: "Vui lòng nhập lý do xin nghỉ" },
+            ]}
+          >
+            <Input.TextArea
+              rows={4}
+              className="rounded-lg"
+              placeholder="Nhập lý do xin nghỉ..."
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+    );
+  }
+);
+
 const ParentScheduleScreen: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
@@ -133,12 +280,15 @@ const ParentScheduleScreen: React.FC = () => {
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null);
+  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(
+    null
+  );
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [parentDetailsLoading, setParentDetailsLoading] = useState(false);
-  console.log(parentDetailsLoading)
+  console.log(parentDetailsLoading);
   const [modalKey, setModalKey] = useState(0);
+  console.log(modalKey);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -146,7 +296,6 @@ const ParentScheduleScreen: React.FC = () => {
     email: string;
     phoneNumber: string;
   } | null>(null);
-  const [form] = Form.useForm();
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -169,10 +318,9 @@ const ParentScheduleScreen: React.FC = () => {
         }
       );
       setStudents(response.data.data);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching students:", error);
-      message.error("Không thể lấy danh sách học sinh");
+      message.error("Không thể lấy danh sách thiếu nhi");
       setLoading(false);
     }
   }, []);
@@ -197,99 +345,117 @@ const ParentScheduleScreen: React.FC = () => {
     fetchAcademicYears();
   }, []);
 
-  const fetchAttendanceData = useCallback(async (studentId: number) => {
-    if (!selectedStudent || !selectedYear) return;
-  
-    const yearId = academicYears.find(year => year.year === selectedYear)?.id;
-    if (!yearId) return;
-  
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${yearId}&studentId=${studentId}&gradeId=1`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setAttendanceData(response.data.data);
-    } catch (error) {
-      console.error("Error fetching attendance data:", error);
-      message.error("Không thể lấy thông tin điểm danh");
-    }
-  }, [selectedStudent, selectedYear, academicYears]);
-  
+  const fetchAttendanceData = useCallback(
+    async (studentId: number) => {
+      if (!selectedStudent || !selectedYear) return;
+
+      const yearId = academicYears.find(
+        (year) => year.year === selectedYear
+      )?.id;
+      if (!yearId) return;
+
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${yearId}&studentId=${studentId}&gradeId=1`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setAttendanceData(response.data.data);
+      } catch (error) {
+        console.error("Error fetching attendance data:", error);
+        message.error("Không thể lấy thông tin điểm danh");
+      }
+    },
+    [selectedStudent, selectedYear, academicYears]
+  );
 
   const getAttendanceStats = () => {
-    if (!attendanceData?.attendanceDetails) return {
-      totalAbsent: 0,
-      absentWithPermission: 0,
-      absentWithoutPermission: 0
-    };
+    if (!attendanceData?.attendanceDetails)
+      return {
+        totalSessions: 0,
+        absentWithPermission: 0,
+        absentWithoutPermission: 0,
+      };
 
-    const totalSessions = attendanceData.attendanceDetails.filter(d => d.isAbsent !== "FUTURE").length;
-    const absentWithPermission = attendanceData.attendanceDetails.filter(d =>
-      d.isAbsent === "ABSENT" && d.isAbsentWithPermission === "TRUE"
+    const currentDate = new Date();
+
+    const totalSessions = attendanceData.attendanceDetails.filter(
+      (detail) => new Date(detail.time) <= currentDate
     ).length;
-    const absentWithoutPermission = attendanceData.attendanceDetails.filter(d =>
-      d.isAbsent === "ABSENT" && d.isAbsentWithPermission === "FALSE"
+
+    const absentWithPermission = attendanceData.attendanceDetails.filter(
+      (d) => d.isAbsent === "ABSENT" && d.isAbsentWithPermission === "TRUE"
+    ).length;
+
+    const absentWithoutPermission = attendanceData.attendanceDetails.filter(
+      (d) => d.isAbsent === "ABSENT" && d.isAbsentWithPermission === "FALSE"
     ).length;
 
     return {
       totalSessions,
       absentWithPermission,
-      absentWithoutPermission
+      absentWithoutPermission,
     };
   };
 
-  const fetchSchedule = useCallback(async (studentId: number) => {
-    if (!selectedYear) return;
-    
-    try {
-      setLoading(true);
-      setScheduleData(null);
-      const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}?academicYear=${selectedYear}`
-      );
-      if (!response.data.data) {
-        throw new Error("No data found");
+  const fetchSchedule = useCallback(
+    async (studentId: number) => {
+      if (!selectedYear) {
+        setLoading(false);
+        return;
       }
-      setScheduleData(response.data.data);
-      
-      const currentDate = new Date();
-      const currentWeek = response.data.data.schedule.find(
-        (week: WeekSchedule) => {
-          const startDate = new Date(week.startDate);
-          const endDate = new Date(week.endDate);
-          return currentDate >= startDate && currentDate <= endDate;
+
+      try {
+        setLoading(true);
+        setScheduleData(null);
+        setSelectedWeek(1);
+
+        const response = await axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}?academicYear=${selectedYear}`
+        );
+
+        if (response.data.data && response.data.data.schedule?.length > 0) {
+          setScheduleData(response.data.data);
+
+          const currentDate = new Date();
+          const currentWeek = response.data.data.schedule.find(
+            (week: WeekSchedule) => {
+              const startDate = new Date(week.startDate);
+              const endDate = new Date(week.endDate);
+              return currentDate >= startDate && currentDate <= endDate;
+            }
+          );
+          setSelectedWeek(
+            currentWeek
+              ? currentWeek.weekNumber
+              : response.data.data.schedule[0].weekNumber
+          );
+        } else {
+          message.info("Không tìm thấy lịch học cho thời gian đã chọn");
         }
-      );
-      setSelectedWeek(
-        currentWeek
-          ? currentWeek.weekNumber
-          : response.data.data.schedule[0].weekNumber
-      );
-    } catch (error) {
-      console.error("Error fetching schedule:", error);
-      message.error("Không thể lấy lịch học");
-      setScheduleData(null);
-      setSelectedWeek(1);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedYear]);
+      } catch (error) {
+        console.error("Error fetching schedule:", error);
+        message.error("Không thể lấy lịch học");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedYear]
+  );
 
   useEffect(() => {
     if (selectedStudent && selectedYear) {
       fetchSchedule(selectedStudent);
     }
   }, [selectedStudent, selectedYear, fetchSchedule]);
-  
+
   useEffect(() => {
     if (selectedStudent && selectedYear) {
       fetchAttendanceData(selectedStudent);
     }
   }, [fetchAttendanceData, selectedStudent, selectedYear]);
-
 
   const fetchParentDetails = async (parentId: number) => {
     setParentDetailsLoading(true);
@@ -318,14 +484,18 @@ const ParentScheduleScreen: React.FC = () => {
 
   const handleStudentChange = (studentId: number) => {
     setSelectedStudent(studentId);
-    const currentYear = academicYears.find(year => year.timeStatus === "NOW");
-    if (currentYear) {
-      setSelectedYear(currentYear.year);
-    } else if (academicYears.length > 0) {
-      setSelectedYear(academicYears[0].year);
+    // Immediately set the year and trigger schedule fetch
+    const currentYear = academicYears.find((year) => year.timeStatus === "NOW");
+    const yearToSet = currentYear ? currentYear.year : academicYears[0]?.year;
+
+    if (yearToSet) {
+      setSelectedYear(yearToSet);
+      // Directly fetch the schedule here
+      fetchSchedule(studentId);
+      fetchAttendanceData(studentId);
     }
   };
-  
+
   const createTimetable = (
     slots: Slot[]
   ): { [key: string]: { [key: string]: Slot | null } } => {
@@ -342,8 +512,26 @@ const ParentScheduleScreen: React.FC = () => {
   const stats = getAttendanceStats();
 
   const showModal = (slot: Slot, classItem: Class) => {
-    setModalKey(prev => prev + 1);
-    setSelectedSlot(slot);
+    const weekStart = new Date(currentWeek!.startDate);
+    const dayIndex = [
+      "Thứ Hai",
+      "Thứ Ba",
+      "Thứ Tư",
+      "Thứ Năm",
+      "Thứ Sáu",
+      "Thứ Bảy",
+      "Chủ Nhật",
+    ].indexOf(slot.dayOfWeek);
+    const slotDate = new Date(weekStart);
+    slotDate.setDate(weekStart.getDate() + dayIndex);
+
+    const updatedSlot = {
+      ...slot,
+      actualDate: slotDate,
+    };
+
+    setModalKey((prev) => prev + 1);
+    setSelectedSlot(updatedSlot);
     setSelectedClass(classItem);
     setIsModalVisible(true);
 
@@ -414,6 +602,11 @@ const ParentScheduleScreen: React.FC = () => {
                         <Text className="text-green-600">
                           Chương: {slot.session.name}
                         </Text>
+                        {slot.exams && (
+                          <Text className="text-red-600 block mt-1">
+                            Kiểm tra: {slot.exams}
+                          </Text>
+                        )}
                         {slot.materials && slot.materials.length > 0 && (
                           <div className="mt-2">
                             <Text className="text-purple-600 font-medium">
@@ -439,13 +632,14 @@ const ParentScheduleScreen: React.FC = () => {
                           slot.attendance.isAbsent !== "FUTURE" && (
                             <div className="mt-2 pt-2 border-t border-gray-200">
                               <Text
-                                className={`${slot.attendance.isAbsent === "TRUE"
-                                  ? slot.attendance.isAbsentWithPermission ===
-                                    "TRUE"
-                                    ? "text-yellow-600"
-                                    : "text-red-600"
-                                  : "text-green-600"
-                                  } font-medium`}
+                                className={`${
+                                  slot.attendance.isAbsent === "TRUE"
+                                    ? slot.attendance.isAbsentWithPermission ===
+                                      "TRUE"
+                                      ? "text-yellow-600"
+                                      : "text-red-600"
+                                    : "text-green-600"
+                                } font-medium`}
                               >
                                 Trạng thái điểm danh:
                                 {slot.attendance.isAbsent === "TRUE"
@@ -458,7 +652,9 @@ const ParentScheduleScreen: React.FC = () => {
                             </div>
                           )}
                         <div className="mt-2">
-                          {(!slot.attendance || slot.attendance.isAbsent === "FUTURE" || slot.attendance.isAbsent === "TRUE") && (
+                          {(!slot.attendance ||
+                            slot.attendance.isAbsent === "FUTURE" ||
+                            slot.attendance.isAbsent === "TRUE") && (
                             <Button
                               type="primary"
                               icon={<EllipsisOutlined />}
@@ -515,7 +711,6 @@ const ParentScheduleScreen: React.FC = () => {
 
       message.success("Đã gửi đơn xin nghỉ thành công");
       setIsModalVisible(false);
-      form.resetFields();
     } catch (error) {
       console.error("Error submitting leave request:", error);
       message.error("Không thể gửi đơn xin nghỉ");
@@ -524,111 +719,6 @@ const ParentScheduleScreen: React.FC = () => {
     }
   };
 
-  const AbsenceRequestModal = React.memo(() => {
-    const selectedStudentObj = students.find((s) => s.id === selectedStudent);
-    return (
-      <Modal
-        title={
-          <div className="text-xl font-bold text-blue-600 mb-4">
-            Đơn Xin Nghỉ Học
-          </div>
-        }
-        open={isModalVisible}
-        onOk={() => form.submit()}
-        onCancel={() => setIsModalVisible(false)}
-        width={600}
-        confirmLoading={submitting}
-        okText="Gửi đơn"
-        cancelText="Hủy"
-        className="custom-modal"
-        okButtonProps={{
-          className: "bg-blue-600 hover:bg-blue-700",
-          size: "large",
-        }}
-        cancelButtonProps={{ size: "large" }}
-      >
-        <Form form={form} layout="vertical" onFinish={handleSubmitLeaveRequest}>
-          <div className="bg-gray-50 p-4 rounded-lg mb-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <Text strong className="w-32">
-                    Học sinh:
-                  </Text>
-                  <Text className="text-blue-600">
-                    {selectedStudentObj?.fullName}
-                  </Text>
-                </div>
-                <div className="flex items-center">
-                  <Text strong className="w-32">
-                    Ngày nghỉ:
-                  </Text>
-                  <Text>
-                    {selectedSlot?.dayOfWeek} - {selectedSlot?.time}
-                  </Text>
-                </div>
-                <div className="flex items-center">
-                  <Text strong className="w-32">
-                    Lớp:
-                  </Text>
-                  <Text>
-                    {selectedClass?.className} - {selectedClass?.grade}
-                  </Text>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <Text strong className="w-48">Số buổi vắng có phép:</Text>
-                  <Text className="text-orange-600">{stats.absentWithPermission}</Text>
-                </div>
-                <div className="flex items-center">
-                  <Text strong className="w-48">Số buổi vắng không phép:</Text>
-                  <Text className="text-red-600">{stats.absentWithoutPermission}</Text>
-                </div>
-                <div className="flex items-center">
-                  <Text strong className="w-48">Tổng số buổi học:</Text>
-                  <Text>{stats.totalSessions}</Text>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 p-4 rounded-lg mb-6">
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <Text strong className="w-48">
-                  Số điện thoại phụ huynh:
-                </Text>
-                <Text>{parentDetails?.phoneNumber || "Đang tải..."}</Text>
-              </div>
-              <div className="flex items-center">
-                <Text strong className="w-48">
-                  Email phụ huynh:
-                </Text>
-                <Text>{parentDetails?.email || "Đang tải..."}</Text>
-              </div>
-            </div>
-          </div>
-
-          <Form.Item
-            name="reason"
-            label={
-              <span className="text-base font-medium">Lý do xin nghỉ</span>
-            }
-            rules={[
-              { required: true, message: "Vui lòng nhập lý do xin nghỉ" },
-            ]}
-          >
-            <Input.TextArea
-              rows={4}
-              className="rounded-lg"
-              placeholder="Nhập lý do xin nghỉ..."
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
-    );
-  });
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
@@ -638,10 +728,11 @@ const ParentScheduleScreen: React.FC = () => {
       <div className="flex flex-col space-y-6 mb-6">
         <Select
           style={{ width: 300 }}
-          placeholder="Chọn học sinh"
+          placeholder="Chọn thiếu nhi"
           onChange={handleStudentChange}
           value={selectedStudent}
           className="shadow-sm"
+          allowClear
         >
           {students.map((student) => (
             <Option key={student.id} value={student.id}>
@@ -650,13 +741,21 @@ const ParentScheduleScreen: React.FC = () => {
           ))}
         </Select>
 
-        {loading ? (
+        {loading && selectedStudent ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>
         ) : (
           <>
-            {selectedStudent && scheduleData && (
+            {!selectedStudent && (
+              <div className="text-center text-gray-500 py-8">
+                <p className="text-lg font-semibold">Vui lòng chọn thiếu nhi</p>
+                <p className="text-sm">
+                  Vui lòng chọn thiếu nhi để xem lịch học
+                </p>
+              </div>
+            )}
+            {selectedStudent && (
               <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
                   <div className="space-y-2">
@@ -692,9 +791,13 @@ const ParentScheduleScreen: React.FC = () => {
                       value={selectedWeek}
                       onChange={(value) => setSelectedWeek(value)}
                       placeholder="Chọn tuần"
+                      disabled={!scheduleData?.schedule?.length}
                     >
-                      {scheduleData.schedule.map((week) => (
-                        <Select.Option key={week.weekNumber} value={week.weekNumber}>
+                      {scheduleData?.schedule?.map((week) => (
+                        <Select.Option
+                          key={week.weekNumber}
+                          value={week.weekNumber}
+                        >
                           Tuần {week.weekNumber}
                         </Select.Option>
                       ))}
@@ -704,14 +807,31 @@ const ParentScheduleScreen: React.FC = () => {
               </Card>
             )}
 
-            {!selectedStudent && (
-              <div className="text-center text-gray-500 py-8">
-                <p className="text-lg font-semibold">Vui lòng chọn thiếu nhi</p>
-                <p className="text-sm">Vui lòng chọn thiếu nhi để xem lịch học</p>
-              </div>
-            )}
-            <AbsenceRequestModal key={modalKey} />
+            {selectedStudent &&
+              selectedYear &&
+              !scheduleData?.schedule?.length &&
+              !loading && (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                  <Title level={4} className="text-gray-600">
+                    Không tìm thấy lịch học
+                  </Title>
+                  <Text className="text-gray-500">
+                    Vui lòng chọn niên khóa khác để xem lịch học
+                  </Text>
+                </div>
+              )}
 
+            <AbsenceRequestModal
+              isVisible={isModalVisible}
+              onClose={() => setIsModalVisible(false)}
+              onSubmit={handleSubmitLeaveRequest}
+              selectedStudent={students.find((s) => s.id === selectedStudent)}
+              selectedSlot={selectedSlot}
+              selectedClass={selectedClass}
+              parentDetails={parentDetails}
+              submitting={submitting}
+              stats={stats}
+            />
             {currentWeek && (
               <div className="mt-4">
                 <Text>
@@ -721,7 +841,9 @@ const ParentScheduleScreen: React.FC = () => {
                   const timetable = createTimetable(classItem.slots);
                   return (
                     <Card key={index} className="mb-4 mt-4">
-                      <Title level={4}>{`${classItem.className} - ${classItem.grade}`}</Title>
+                      <Title
+                        level={4}
+                      >{`${classItem.className} - ${classItem.grade}`}</Title>
                       <Text>Giáo lý viên: {classItem.teacherAccount}</Text>
                       {renderCalendar(timetable, classItem)}
                     </Card>
