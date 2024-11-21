@@ -11,6 +11,22 @@ interface Lesson {
   sessionUnits: number;
 }
 
+interface Grade {
+  id: number;
+  name: string;
+  status: string;
+  age: number;
+  orderGrade: number;
+  level: string;
+  description: string;
+  major: {
+    id: number;
+    name: string;
+    ageRange: string;
+    description: string;
+  };
+}
+
 const slotTypeMap: Record<string, string> = {
   exam: "Kiểm tra",
   lesson_exam: "Học và kiểm tra",
@@ -50,7 +66,7 @@ const customStyles = {
 };
 
 const AdminScheduleMapScreen: React.FC = () => {
-  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -64,6 +80,7 @@ const AdminScheduleMapScreen: React.FC = () => {
   const [mappingResults, setMappingResults] = useState<MappingResult[]>([]);
   console.log(mappingResults);
   const [showPreview, setShowPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewItem[]>([]);
   const [showAdditionalActivityModal, setShowAdditionalActivityModal] =
     useState(false);
@@ -77,9 +94,24 @@ const AdminScheduleMapScreen: React.FC = () => {
 
   const fetchGrades = async () => {
     try {
+      const userString = localStorage.getItem("userLogin");
+      const user = userString ? JSON.parse(userString) : null;
+      const userId = user?.id;
+      const accessToken = localStorage.getItem("accessToken");
+  
+      if (!selectedYear) {
+        return;
+      }
+  
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10"
+        `https://sep490-backend-production.up.railway.app/api/v1/grade-leader/user/${userId}/year/${selectedYear}/grades`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
+  
       if (response.data.status === "success") {
         setGrades(response.data.data);
       }
@@ -94,10 +126,16 @@ const AdminScheduleMapScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
+      const currentYear = response.data.find(
+        (year: { timeStatus: string }) => year.timeStatus === "NOW"
+      );
       const nextYears = response.data.filter(
         (year: { timeStatus: string }) => year.timeStatus === "NEXT"
       );
-      setAcademicYears(nextYears);
+      setAcademicYears([...nextYears, currentYear]);
+      if (currentYear) {
+        setSelectedYear(currentYear.id);
+      }
     } catch (error) {
       console.log(error);
       message.error("Failed to fetch academic years");
@@ -136,9 +174,15 @@ const AdminScheduleMapScreen: React.FC = () => {
   }, [selectedGrade, selectedYear]);
 
   useEffect(() => {
-    fetchGrades();
     fetchAcademicYears();
   }, []);
+
+  useEffect(() => {
+    if (selectedYear) {
+      fetchGrades();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
 
   useEffect(() => {
     if (selectedGrade && selectedYear) {
@@ -257,6 +301,7 @@ const AdminScheduleMapScreen: React.FC = () => {
   };
 
   const handleSubmitSchedule = async () => {
+    setIsSubmitting(true);
     try {
       const formattedResults = mappingResults.map((result) => ({
         orderSchedule: result.orderSchedule,
@@ -276,6 +321,8 @@ const AdminScheduleMapScreen: React.FC = () => {
     } catch (error) {
       console.log(error);
       message.error("Không thể lưu lịch học. Vui lòng thử lại");
+    }finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -535,6 +582,7 @@ const AdminScheduleMapScreen: React.FC = () => {
                   onCancel={() => setIsConfirmModalVisible(false)}
                   okText="Xác nhận"
                   cancelText="Hủy"
+                  confirmLoading={isSubmitting}
                 >
                   <p>Bạn có chắc chắn muốn lưu lịch học này?</p>
                   <p className="text-red-500">

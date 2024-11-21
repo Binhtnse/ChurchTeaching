@@ -22,6 +22,7 @@ interface LeaveRequest {
 const CatechistLeaveRequestListScreen: React.FC = () => {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [approvingIds, setApprovingIds] = useState<number[]>([]);
+  const [cancelingIds, setCancelingIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -86,6 +87,39 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
     }
   };
 
+  const handleCancel = async (record: LeaveRequest) => {
+    setCancelingIds((prev) => [...prev, record.leaveRequestId]);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.put(
+        "https://sep490-backend-production.up.railway.app/api/v1/leave-requests/cancel",
+        {
+          leaveRequestId: record.leaveRequestId,
+          timeTableId: record.timeTableId,
+          studentClassId: record.studentClass,
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+  
+      // Refresh the leave requests list
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/leave-requests/catechist/${timeTableId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setLeaveRequests(response.data.data);
+    } catch (error) {
+      console.error("Error canceling leave request:", error);
+    } finally {
+      setCancelingIds((prev) =>
+        prev.filter((id) => id !== record.leaveRequestId)
+      );
+    }
+  };
+
   const { weekNumber, date, dayOfWeek, time } = location.state || {};
 
   const columns = [
@@ -135,26 +169,42 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
       title: "Hành động",
       key: "action",
       render: (record: LeaveRequest) => (
-        <Button
-          type="primary"
-          onClick={() => handleApprove(record)}
-          disabled={
-            record.statusOfLeave === "ACTIVE" ||
-            approvingIds.includes(record.leaveRequestId)
-          }
-          className={`${
-            record.statusOfLeave === "ACTIVE"
-              ? "bg-gray-400"
-              : "bg-blue-600 hover:bg-blue-700"
-          } text-white`}
-          loading={approvingIds.includes(record.leaveRequestId)}
-        >
-          {approvingIds.includes(record.leaveRequestId)
-            ? "Đang duyệt"
-            : "Duyệt đơn"}
-        </Button>
+        <div className="space-x-2">
+          <Button
+            type="primary"
+            onClick={() => handleApprove(record)}
+            disabled={
+              record.statusOfLeave === "ACTIVE" ||
+              approvingIds.includes(record.leaveRequestId)
+            }
+            className={`${
+              record.statusOfLeave === "ACTIVE"
+                ? "bg-gray-400"
+                : "bg-blue-600 hover:bg-blue-700"
+            } text-white`}
+            loading={approvingIds.includes(record.leaveRequestId)}
+          >
+            {approvingIds.includes(record.leaveRequestId)
+              ? "Đang duyệt"
+              : "Duyệt đơn"}
+          </Button>
+          <Button
+            type="primary"
+            danger
+            onClick={() => handleCancel(record)}
+            disabled={
+              record.statusOfLeave === "ACTIVE" ||
+              cancelingIds.includes(record.leaveRequestId)
+            }
+            loading={cancelingIds.includes(record.leaveRequestId)}
+          >
+            {cancelingIds.includes(record.leaveRequestId)
+              ? "Đang hủy"
+              : "Hủy đơn"}
+          </Button>
+        </div>
       ),
-    },
+    }
   ];
 
   return (

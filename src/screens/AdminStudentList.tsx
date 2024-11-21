@@ -8,9 +8,9 @@ import {
   Tag,
   Card,
   Alert,
-  Upload
+  Upload,
 } from "antd";
-import type { UploadRequestOption } from 'rc-upload/lib/interface';
+import type { UploadRequestOption } from "rc-upload/lib/interface";
 import axios from "axios";
 
 interface StudentData {
@@ -107,7 +107,8 @@ const AdminStudentList: React.FC = () => {
         setLoading(true);
         const token = localStorage.getItem("accessToken");
         const response = await axios.get<ApiResponse>(
-          `https://sep490-backend-production.up.railway.app/api/student-grade-year/get-student-to-prepare-arrange-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}&page=${page - 1
+          `https://sep490-backend-production.up.railway.app/api/student-grade-year/get-student-to-prepare-arrange-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}&page=${
+            page - 1
           }&size=${pageSize}`,
           {
             headers: {
@@ -157,7 +158,7 @@ const AdminStudentList: React.FC = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -188,16 +189,18 @@ const AdminStudentList: React.FC = () => {
     setIsAssigning(true);
     try {
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/student-grade-year/auto-assign-student-to-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
+        `https://sep490-backend-production.up.railway.app/api/student-grade-year/auto-assign-student-to-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}`
       );
       message.success(response.data.message);
       fetchStudents(pagination.current, pagination.pageSize);
     } catch (error: unknown) {
       console.log(error);
-      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Xếp lớp thất bại";
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Xếp lớp thất bại";
       setTableError(errorMessage);
       message.error(errorMessage);
-    }finally {
+    } finally {
       setIsAssigning(false);
     }
   };
@@ -258,10 +261,16 @@ const AdminStudentList: React.FC = () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <Alert
-        message={<span className="text-lg font-bold text-blue-700">Thông tin quan trọng</span>}
+        message={
+          <span className="text-lg font-bold text-blue-700">
+            Thông tin quan trọng
+          </span>
+        }
         description={
           <div className="text-base bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-            Màn hình này nhằm sắp xếp các em thiếu nhi thánh thể (gồm đã lên lớp và đăng ký mới) vào các lớp giáo lý trong khoảng từ tháng 6 đến tháng 9 cùng năm (trước khi năm học bắt đầu)
+            Màn hình này nhằm sắp xếp các em thiếu nhi thánh thể (gồm đã lên lớp
+            và đăng ký mới) vào các lớp giáo lý trong khoảng từ tháng 6 đến
+            tháng 9 cùng năm (trước khi năm học bắt đầu)
           </div>
         }
         type="info"
@@ -319,6 +328,7 @@ const AdminStudentList: React.FC = () => {
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
               disabled={isAssigning}
             >
+              {isAssigning && <Spin size="small" />}
               {isAssigning ? "Đang xếp lớp..." : "Xếp thiếu nhi vào lớp"}
             </button>
           </div>
@@ -332,7 +342,10 @@ const AdminStudentList: React.FC = () => {
                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
                 disabled={isUploading}
               >
-                {isUploading ? "Đang tải lên..." : "Nhập thời khóa biểu cho lớp"}
+                {isUploading && <Spin size="small" />}
+                {isUploading
+                  ? "Đang tải lên..."
+                  : "Nhập thời khóa biểu cho lớp"}
               </button>
             </Upload>
           </div>
@@ -349,7 +362,6 @@ const AdminStudentList: React.FC = () => {
           />
         )}
         {selectedYear && selectedGrade ? (
-
           <Table
             columns={columns}
             dataSource={students}

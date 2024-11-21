@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message, Tag, Button } from "antd";
+import { Card, Typography, Spin, Select, message, Tag, Button} from "antd";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 interface ClassData {
   id: number;
@@ -182,7 +182,7 @@ const CatechistScheduleScreen: React.FC = () => {
 
     if (selectedYear) {
       fetchSchedule();
-    }else {
+    } else {
       setLoading(false); // Add this line to handle initial state
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -421,15 +421,6 @@ const CatechistScheduleScreen: React.FC = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <Spin
-        size="large"
-        className="flex justify-center items-center h-screen"
-      />
-    );
-  }
-
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
@@ -498,44 +489,61 @@ const CatechistScheduleScreen: React.FC = () => {
           </div>
         </div>
       </Card>
-
-      <div className="mb-6">
-        <Text strong className="text-lg mr-6">
-          Niên Khóa: {selectedYear}
-        </Text>
-        <Text strong className="text-lg">
-          Tuần: {selectedWeek}
-        </Text>
-      </div>
-      {currentWeek && !selectedClass && (
-        <div className="text-center text-gray-500 py-8">
-          <p className="text-lg font-semibold">Vui lòng chọn lớp</p>
-          <p className="text-sm">Chọn một lớp để xem lịch giảng dạy</p>
+      {selectedYear && !scheduleData?.schedule?.length && !loading && (
+        <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+          <Title level={4} className="text-gray-600">
+            Không tìm thấy lịch học
+          </Title>
+          <Text className="text-gray-500">
+            Vui lòng chọn niên khóa khác để xem lịch học
+          </Text>
         </div>
       )}
-      {scheduleLoading ? (
-        <div className="flex justify-center items-center mt-8">
-          <Spin size="large" tip="Đang tải lịch học..." />
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Spin size="large" />
         </div>
       ) : (
-        currentWeek &&
-        selectedClass && (
-          <div className="mt-4">
-            <Text>
-              Từ {currentWeek.startDate} đến {currentWeek.endDate}
+        <>
+          <div className="mb-6">
+            <Text strong className="text-lg mr-6">
+              Niên Khóa: {selectedYear}
             </Text>
-            {currentWeek.classes
-              .filter((classItem) => classItem.className === selectedClass)
-              .map((classItem, index) => {
-                const timetable = createTimetable(classItem.slots);
-                return (
-                  <Card key={index} className="mb-4 mt-4">
-                    {renderCalendar(timetable, classItem)}
-                  </Card>
-                );
-              })}
+            <Text strong className="text-lg">
+              Tuần: {selectedWeek}
+            </Text>
           </div>
-        )
+          {currentWeek && !selectedClass && (
+            <div className="text-center text-gray-500 py-8">
+              <p className="text-lg font-semibold">Vui lòng chọn lớp</p>
+              <p className="text-sm">Chọn một lớp để xem lịch giảng dạy</p>
+            </div>
+          )}
+          {scheduleLoading ? (
+            <div className="flex justify-center items-center mt-8">
+              <Spin size="large" tip="Đang tải lịch học..." />
+            </div>
+          ) : (
+            currentWeek &&
+            selectedClass && (
+              <div className="mt-4">
+                <Text>
+                  Từ {currentWeek.startDate} đến {currentWeek.endDate}
+                </Text>
+                {currentWeek.classes
+                  .filter((classItem) => classItem.className === selectedClass)
+                  .map((classItem, index) => {
+                    const timetable = createTimetable(classItem.slots);
+                    return (
+                      <Card key={index} className="mb-4 mt-4">
+                        {renderCalendar(timetable, classItem)}
+                      </Card>
+                    );
+                  })}
+              </div>
+            )
+          )}
+        </>
       )}
     </div>
   );
