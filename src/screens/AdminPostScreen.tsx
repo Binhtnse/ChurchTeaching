@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, message, Form, Input, Select } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
 import EditorComponent from "../components/EditorComponent";
@@ -26,11 +26,30 @@ interface Category {
   name: string;
 }
 
+const pageStyles = {
+  container: "h-screen w-full max-w-7xl mx-auto px-4 flex flex-col p-6 bg-white rounded-lg shadow-md",
+  header: "bg-white shadow-lg rounded-lg p-4 mb-4", // Reduced padding
+  searchContainer: "flex justify-between items-center flex-wrap gap-2", // Reduced gap
+  tableWrapper: "flex-1 overflow-auto", // Changed to use flex-1
+  buttonPrimary:
+    "bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-2", // Reduced padding
+  modalContent: "max-h-[80vh] overflow-y-auto",
+  formContainer: "space-y-4", // Reduced spacing
+  actionButtons: "space-x-2 flex items-center",
+};
+
+const loadingStyles = {
+  spinner: "animate-spin h-5 w-5 mr-3",
+  loadingOverlay:
+    "absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center",
+};
+
 const AdminPostScreen: React.FC = () => {
   const [posts, setPosts] = useState<PostDTO[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isEditorModalVisible, setIsEditorModalVisible] = useState<boolean>(false);
+  const [isEditorModalVisible, setIsEditorModalVisible] =
+    useState<boolean>(false);
   const [htmlContent, setHtmlContent] = useState<string>("");
   const { isLoggedIn, role } = useAuthState();
   const [form] = Form.useForm();
@@ -39,7 +58,8 @@ const AdminPostScreen: React.FC = () => {
   const [editingPost, setEditingPost] = useState<PostDTO | null>(null);
   const [searchText, setSearchText] = useState<string>("");
   const [filteredPosts, setFilteredPosts] = useState<PostDTO[]>([]);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState<boolean>(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] =
+    useState<boolean>(false);
   const [postToDelete, setPostToDelete] = useState<PostDTO | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -119,7 +139,7 @@ const AdminPostScreen: React.FC = () => {
         // fetchPosts();
         // form.resetFields();
         // setHtmlContent("");
-        window.location.reload()
+        window.location.reload();
       }
     } catch (error) {
       console.error("Error creating post:", error);
@@ -159,7 +179,7 @@ const AdminPostScreen: React.FC = () => {
           // form.resetFields();
           // setHtmlContent("");
           // setEditingPost(null);
-          window.location.reload()
+          window.location.reload();
         }
       } catch (error) {
         console.error("Error updating post:", error);
@@ -181,7 +201,7 @@ const AdminPostScreen: React.FC = () => {
           message.success("Xóa bài viết thành công");
           // setIsDeleteModalVisible(false);
           // setPostToDelete(null);
-          window.location.reload()
+          window.location.reload();
         }
       } catch (error) {
         console.error("Error deleting post:", error);
@@ -207,31 +227,41 @@ const AdminPostScreen: React.FC = () => {
       title: "Tựa Đề",
       dataIndex: "title",
       key: "title",
+      width: "25%",
+      ellipsis: true,
+      render: (text: string) => (
+        <div className="truncate py-1" title={text}>
+          {text}
+        </div>
+      ),
     },
     {
       title: "Nội Dung",
       dataIndex: "content",
       key: "content",
+      width: "55%",
+      ellipsis: true,
       render: (content: string) => (
         <div
-          className="line-clamp-2 overflow-hidden"
+          className="line-clamp-2 prose prose-sm max-w-none py-1"
           dangerouslySetInnerHTML={{ __html: content }}
-          style={{ maxHeight: "3em", WebkitLineClamp: 2 }}
+          style={{ maxHeight: "4em" }}
         />
       ),
     },
     {
       title: "Hành Động",
       key: "actions",
+      width: "20%",
       render: (_: string, record: PostDTO) => (
-        <div>
+        <div className="flex gap-2 py-1">
           <Button
             type="primary"
             onClick={() => {
               setEditingPost(record);
               setIsEditModalVisible(true);
               setHtmlContent(record.content);
-              setImageUrl(record.linkImage[0])
+              setImageUrl(record.linkImage[0]);
               form.setFieldsValue({
                 title: record.title,
                 categoryId: record?.category?.id,
@@ -241,12 +271,10 @@ const AdminPostScreen: React.FC = () => {
             Chỉnh sửa
           </Button>
           <Button
-
             onClick={() => {
               setPostToDelete(record);
               setIsDeleteModalVisible(true);
             }}
-            className="ml-2"
           >
             Xóa
           </Button>
@@ -256,34 +284,57 @@ const AdminPostScreen: React.FC = () => {
   ];
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleAddPost}
-          className="mb-4"
-        >
-          Thêm bài viết mới
-        </Button>
-        <Search
-          placeholder="Tìm kiếm bài viết..."
-          allowClear
-          enterButton
-          className="mb-4 max-w-md"
-          onChange={(e) => setSearchText(e.target.value)}
+    <div className={pageStyles.container}>
+      <div className={pageStyles.header}>
+        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+          Quản Lý Bài Viết
+        </h1>
+        <div className={pageStyles.searchContainer}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAddPost}
+            className={pageStyles.buttonPrimary}
+          >
+            Thêm bài viết mới
+          </Button>
+          <Search
+            placeholder="Tìm kiếm bài viết..."
+            allowClear
+            enterButton
+            className="w-full md:w-96"
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className={pageStyles.tableWrapper}>
+        <Table
+          columns={columns}
+          dataSource={filteredPosts}
+          loading={{
+            indicator: (
+              <div className={loadingStyles.spinner}>
+                <LoadingOutlined />
+              </div>
+            ),
+            spinning: loading,
+          }}
+          rowKey="id"
+          pagination={{
+            pageSize: 8,
+            showSizeChanger: false,
+            showTotal: (total) => `Tổng số ${total} bài viết`,
+          }}
+          size="middle" // Use smaller table size
+          className="ant-table-compact"
         />
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={filteredPosts}
-        loading={loading}
-        rowKey="id"
-      />
-
       <Modal
-        title="Chỉnh sửa bài viết"
+        title={
+          <span className="text-xl font-semibold">Chỉnh sửa bài viết</span>
+        }
         open={isEditModalVisible}
         onCancel={() => {
           setIsEditModalVisible(false);
@@ -293,23 +344,21 @@ const AdminPostScreen: React.FC = () => {
         }}
         footer={null}
         width="80%"
-        style={{
-          top: 20,
-          maxWidth: 1200,
-        }}
+        className="top-4"
+        bodyStyle={{ maxHeight: "80vh", overflow: "auto" }}
       >
         <Form
           form={form}
           onFinish={handleEditPost}
           layout="vertical"
-          className="p-4"
+          className="space-y-6 p-4"
         >
           <Form.Item
             name="title"
-            label="Tiêu đề"
+            label={<span className="font-medium">Tiêu đề</span>}
             rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}
           >
-            <Input placeholder="Nhập tiêu đề bài viết" />
+            <Input className="rounded-md" placeholder="Nhập tiêu đề bài viết" />
           </Form.Item>
 
           <Form.Item
@@ -319,7 +368,7 @@ const AdminPostScreen: React.FC = () => {
           >
             <Select placeholder="Chọn danh mục">
               {categories.map((category) => (
-                <Select.Option key={category.id} value={category.id} >
+                <Select.Option key={category.id} value={category.id}>
                   {category.name}
                 </Select.Option>
               ))}
@@ -329,11 +378,17 @@ const AdminPostScreen: React.FC = () => {
           <Form.Item label="Hình ảnh">
             <CloudinaryUploadWidget
               onUploadSuccess={handleUploadSuccess} // Handle successful uploads
-              onUploadFailure={(error) => console.error("Upload failed:", error)}
+              onUploadFailure={(error) =>
+                console.error("Upload failed:", error)
+              }
             />
             {imageUrl && (
               <div style={{ marginTop: 10 }}>
-                <img src={imageUrl} alt="Uploaded" style={{ maxWidth: "100%", height: "auto" }} />
+                <img
+                  src={imageUrl}
+                  alt="Uploaded"
+                  style={{ maxWidth: "100%", height: "auto" }}
+                />
               </div>
             )}
           </Form.Item>
@@ -359,7 +414,17 @@ const AdminPostScreen: React.FC = () => {
             >
               Hủy
             </Button>
-            <Button type="primary" htmlType="submit" loading={submitLoading}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={submitLoading}
+              className="relative"
+            >
+              {submitLoading && (
+                <div className={loadingStyles.loadingOverlay}>
+                  <LoadingOutlined className={loadingStyles.spinner} />
+                </div>
+              )}
               Cập nhật
             </Button>
           </Form.Item>
@@ -367,7 +432,7 @@ const AdminPostScreen: React.FC = () => {
       </Modal>
 
       <Modal
-        title="Thêm bài viết mới"
+        title={<span className="text-xl font-semibold">Thêm bài viết mới</span>}
         open={isEditorModalVisible}
         onCancel={() => {
           setIsEditorModalVisible(false);
@@ -376,23 +441,21 @@ const AdminPostScreen: React.FC = () => {
         }}
         footer={null}
         width="80%"
-        style={{
-          top: 20,
-          maxWidth: 1200,
-        }}
+        className="top-4"
+        bodyStyle={{ maxHeight: "80vh", overflow: "auto" }}
       >
         <Form
           form={form}
           onFinish={handlePostSubmit}
           layout="vertical"
-          className="p-4"
+          className="space-y-6 p-4"
         >
           <Form.Item
             name="title"
-            label="Tiêu đề"
+            label={<span className="font-medium">Tiêu đề</span>}
             rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}
           >
-            <Input placeholder="Nhập tiêu đề bài viết" />
+            <Input className="rounded-md" placeholder="Nhập tiêu đề bài viết" />
           </Form.Item>
 
           <Form.Item
@@ -415,12 +478,6 @@ const AdminPostScreen: React.FC = () => {
               onUploadFailure={handleUploadFailure}
             />
           </Form.Item>
-
-          {/* <Form.Item>
-            <Button type="primary" htmlType="submit" disabled={!imageUrl}>
-              Lưu
-            </Button>
-          </Form.Item> */}
 
           <Form.Item
             label="Nội dung"
@@ -445,7 +502,17 @@ const AdminPostScreen: React.FC = () => {
             >
               Hủy
             </Button>
-            <Button type="primary" htmlType="submit" loading={submitLoading}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={submitLoading}
+              className="relative"
+            >
+              {submitLoading && (
+                <div className={loadingStyles.loadingOverlay}>
+                  <LoadingOutlined className={loadingStyles.spinner} />
+                </div>
+              )}
               Đăng bài
             </Button>
           </Form.Item>
@@ -453,7 +520,11 @@ const AdminPostScreen: React.FC = () => {
       </Modal>
 
       <Modal
-        title="Xóa bài viết"
+        title={
+          <span className="text-xl font-semibold text-red-600">
+            Xác nhận xóa
+          </span>
+        }
         open={isDeleteModalVisible}
         onCancel={() => {
           setIsDeleteModalVisible(false);
@@ -463,13 +534,31 @@ const AdminPostScreen: React.FC = () => {
           <Button key="cancel" onClick={() => setIsDeleteModalVisible(false)}>
             Hủy
           </Button>,
-          <Button key="delete" onClick={handleDeletePost }>
+          <Button
+            key="delete"
+            danger
+            type="primary"
+            onClick={handleDeletePost}
+            className="relative"
+            loading={loading}
+          >
+            {submitLoading && (
+              <div className={loadingStyles.loadingOverlay}>
+                <LoadingOutlined className={loadingStyles.spinner} />
+              </div>
+            )}
             Xóa
           </Button>,
         ]}
       >
-        <p>Bạn có chắc chắn muốn xóa bài viết này không?</p>
-        
+        <div className="py-4">
+          <p className="text-gray-700">
+            Bạn có chắc chắn muốn xóa bài viết này không?
+          </p>
+          <p className="text-gray-500 text-sm mt-2">
+            Hành động này không thể hoàn tác.
+          </p>
+        </div>
       </Modal>
     </div>
   );
