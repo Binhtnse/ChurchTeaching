@@ -125,6 +125,7 @@ const CatechistScheduleScreen: React.FC = () => {
   useEffect(() => {
     fetchClasses();
     const fetchSchedule = async () => {
+      setLoading(true);
       setScheduleLoading(true);
       try {
         const userString = localStorage.getItem("userLogin");
@@ -174,12 +175,15 @@ const CatechistScheduleScreen: React.FC = () => {
         console.log(error);
         setScheduleData(null);
       } finally {
+        setLoading(false);
         setScheduleLoading(false);
       }
     };
 
     if (selectedYear) {
       fetchSchedule();
+    }else {
+      setLoading(false); // Add this line to handle initial state
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
@@ -280,7 +284,7 @@ const CatechistScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      "Chủ Nhật",
+      classItem.slots[0].dayOfWeek,
     ];
     const times = Array.from(
       new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
