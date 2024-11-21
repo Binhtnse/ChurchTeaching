@@ -284,7 +284,7 @@ const CatechistScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      classItem.slots[0].dayOfWeek,
+      classItem.slots[0]?.dayOfWeek || "Chủ Nhật"
     ];
     const times = Array.from(
       new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
