@@ -100,6 +100,7 @@ const AdminScheduleMapScreen: React.FC = () => {
       const accessToken = localStorage.getItem("accessToken");
   
       if (!selectedYear) {
+        setGrades([]); // Clear grades when no year selected
         return;
       }
   
@@ -114,9 +115,12 @@ const AdminScheduleMapScreen: React.FC = () => {
   
       if (response.data.status === "success") {
         setGrades(response.data.data);
+      } else {
+        setGrades([]); // Clear grades on unsuccessful response
       }
     } catch (error) {
       console.log(error);
+      setGrades([]); // Clear grades on error
       message.error("Failed to fetch grades");
     }
   };
@@ -144,7 +148,7 @@ const AdminScheduleMapScreen: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     if (!selectedGrade || !selectedYear) return;
-
+  
     try {
       const [lessonsResponse, schedulesResponse] = await Promise.all([
         axios.get(
@@ -154,25 +158,46 @@ const AdminScheduleMapScreen: React.FC = () => {
           `https://sep490-backend-production.up.railway.app/api/v1/timetable/get-schedule?gradeId=${selectedGrade}&yearId=${selectedYear}`
         ),
       ]);
-
+  
       setLessons(lessonsResponse.data.data.slotDTOList);
       setSchedules(schedulesResponse.data.data);
-
+  
       const totalSessionUnits = lessonsResponse.data.data.slotDTOList.reduce(
         (sum: number, lesson: Lesson) => sum + lesson.sessionUnits,
         0
       );
-
+  
       setTotalSessions(totalSessionUnits);
       setRemainingSlots(
         schedulesResponse.data.data.length - Math.ceil(totalSessionUnits)
       );
-    } catch (error) {
-      console.log(error);
-      message.error("Failed to fetch data");
+    } catch (error: unknown) {
+      // Clear the data states
+      setLessons([]);
+      setSchedules([]);
+      setTotalSessions(0);
+      setRemainingSlots(0);
+  
+      // Show specific error messages based on error type
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          if (error.response.status === 404) {
+            message.error('Không tìm thấy dữ liệu cho niên khóa và khối đã chọn');
+          } else if (error.response.status === 403) {
+            message.error('Bạn không có quyền truy cập dữ liệu này');
+          } else {
+            message.error(`Lỗi khi tải dữ liệu: ${error.response.data.message || 'Vui lòng thử lại'}`);
+          }
+        } else if (error.request) {
+          message.error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng');
+        } else {
+          message.error('Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại');
+        }
+      } else {
+        message.error('Đã xảy ra lỗi không xác định khi tải dữ liệu. Vui lòng thử lại');
+      }
     }
   }, [selectedGrade, selectedYear]);
-
   useEffect(() => {
     fetchAcademicYears();
   }, []);

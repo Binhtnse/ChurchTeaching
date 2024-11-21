@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message, Tag, Button} from "antd";
+import { Card, Typography, Spin, Select, message, Tag, Button } from "antd";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
@@ -392,9 +392,14 @@ const CatechistScheduleScreen: React.FC = () => {
                                 const formattedDate = slotDate
                                   .toISOString()
                                   .split("T")[0];
-                                navigate(
-                                  `/schedule/attendance/${slot.timeTableId}?dayOfWeek=${slot.dayOfWeek}&weekNumber=${selectedWeek}&time=${slot.time}&date=${formattedDate}`
+                                const matchingClass = classes.find(
+                                  (c) => c.name === classItem.className
                                 );
+                                if (matchingClass) {
+                                  navigate(
+                                    `/schedule/attendance/${slot.timeTableId}?dayOfWeek=${slot.dayOfWeek}&weekNumber=${selectedWeek}&time=${slot.time}&date=${formattedDate}&classId=${matchingClass.id}`,
+                                  );
+                                }
                               }}
                             >
                               Điểm danh

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, Flex, message, Modal, Input } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -25,6 +25,8 @@ interface EnrollmentData {
 const EnrollDetailScreen: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const status = location.state?.status;
   const [enrollmentData, setEnrollmentData] = useState<EnrollmentData | null>(
     null
   );
@@ -33,6 +35,8 @@ const EnrollDetailScreen: React.FC = () => {
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const { setPageTitle } = usePageTitle();
+
+  const isActionDisabled = status === "APPROVE" || status === "REJECTED";
 
   useEffect(() => {
     setPageTitle("Thông tin đăng ký học", "#4154f1");
@@ -193,6 +197,7 @@ const EnrollDetailScreen: React.FC = () => {
               onClick={() => handleButtonClick("approve")}
               loading={approvalLoading}
               className="px-8 py-2 h-auto"
+              disabled={isActionDisabled}
             >
               Đồng ý
             </Button>
@@ -200,6 +205,7 @@ const EnrollDetailScreen: React.FC = () => {
               danger
               onClick={() => handleButtonClick("reject")}
               className="px-8 py-2 h-auto"
+              disabled={isActionDisabled}
             >
               Từ chối
             </Button>

@@ -94,12 +94,12 @@ const ParentExamScheduleScreen: React.FC = () => {
       const user = userString ? JSON.parse(userString) : null;
       const parentId = user?.id;
       const token = localStorage.getItem("accessToken");
-
+  
       if (!parentId) {
         message.error("Không tìm thấy thông tin phụ huynh");
         return;
       }
-
+  
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
         {
@@ -108,10 +108,18 @@ const ParentExamScheduleScreen: React.FC = () => {
           },
         }
       );
+  
+      if (!response.data.data || response.data.data.length === 0) {
+        message.info("Không tìm thấy thiếu nhi nào được liên kết với tài khoản");
+        setStudents([]);
+        return;
+      }
+  
       setStudents(response.data.data);
     } catch (error) {
       console.error("Error fetching students:", error);
       message.error("Không thể lấy danh sách thiếu nhi");
+      setStudents([]);
     }
   }, []);
 

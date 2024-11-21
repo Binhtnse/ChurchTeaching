@@ -240,7 +240,9 @@ const EnrollListScreen: React.FC = () => {
       title: "Hành động",
       key: "action",
       render: (_: unknown, record: DataType) => (
-        <Link to={`/enroll-list/${record.key}`}>Xem chi tiết</Link>
+        <Link to={`/enroll-list/${record.key}`} state={{ status: record.status }}>
+          Xem chi tiết
+        </Link>
       ),
     },
   ];

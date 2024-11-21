@@ -63,34 +63,60 @@ const CatechistClassList: React.FC = () => {
     }
   };
 
-  const fetchGrades = async () => {
+  const fetchGrades = useCallback(async () => {
     try {
+      const userString = localStorage.getItem("userLogin");
+      const user = userString ? JSON.parse(userString) : null;
+      const userId = user?.id;
       const token = localStorage.getItem("accessToken");
+  
+      if (!selectedYear) {
+        setGrades([]);
+        return;
+      }
+  
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+        `https://sep490-backend-production.up.railway.app/api/v1/grade/catechist/${userId}?academicYearId=${selectedYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
+      
       if (response.data.status === "success") {
+        if (!response.data.data || response.data.data.length === 0) {
+          setGrades([]);
+          message.info("Không tìm thấy khối nào trong niên khóa này");
+          return;
+        }
         setGrades(response.data.data);
       }
     } catch (error) {
       console.error("Error fetching grades:", error);
-      message.error("An error occurred while fetching grades");
+      message.error("Không thể tải danh sách khối");
+      setGrades([]);
     }
-  };
+  }, [selectedYear]);
 
   useEffect(() => {
     fetchAcademicYears();
     fetchGrades();
-  }, []);
+  }, [fetchGrades]);
 
   const fetchClasses = useCallback(
     async (page: number = 1, pageSize: number = 10) => {
-      if (!selectedYear) return;
+      // Clear data immediately when no year is selected
+      if (!selectedYear) {
+        setClasses([]);
+        setPagination((prev) => ({
+          ...prev,
+          total: 0,
+          current: 1,
+        }));
+        return;
+      }
+
       try {
         setLoading(true);
         const userString = localStorage.getItem("userLogin");
@@ -98,9 +124,10 @@ const CatechistClassList: React.FC = () => {
         const userId = user ? user.id : null;
 
         if (!userId) {
-          console.error("User ID not found");
+          setClasses([]); // Clear data if no user ID
           return;
         }
+
         const accessToken = localStorage.getItem("accessToken");
         const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
         const response = await axios.get<ApiResponse>(
@@ -111,6 +138,8 @@ const CatechistClassList: React.FC = () => {
             },
           }
         );
+
+        // Clear data immediately when response has no data
         if (!response.data.data || response.data.data.length === 0) {
           setClasses([]);
           setPagination((prev) => ({
@@ -121,6 +150,7 @@ const CatechistClassList: React.FC = () => {
           message.info("Không tìm thấy lớp học nào");
           return;
         }
+
         setClasses(response.data.data);
         setPagination((prev) => ({
           ...prev,
@@ -129,14 +159,14 @@ const CatechistClassList: React.FC = () => {
           pageSize: pageSize,
         }));
       } catch (error) {
-        console.error("Error fetching classes:", error);
-        message.error("Không thể tải danh sách lớp học");
+        console.log(error)
         setClasses([]);
         setPagination((prev) => ({
           ...prev,
           total: 0,
           current: 1,
         }));
+        message.error("Không thể tải danh sách lớp học");
       } finally {
         setLoading(false);
       }
@@ -146,6 +176,8 @@ const CatechistClassList: React.FC = () => {
 
   const handleYearChange = (value: number) => {
     setSelectedYear(value);
+    setSelectedGrade(null);
+    setGrades([]); 
     fetchClasses(1, pagination.pageSize);
   };
 

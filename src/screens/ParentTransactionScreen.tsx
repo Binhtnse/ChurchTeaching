@@ -56,9 +56,17 @@ const ParentTransactionScreen: React.FC = () => {
             },
           }
         );
+        
+        if (!childrenRes.data.data || childrenRes.data.data.length === 0) {
+          message.info("Không tìm thấy thiếu nhi nào được liên kết với tài khoản");
+          setChildren([]);
+          return;
+        }
+        
         setChildren(childrenRes.data.data);
       } catch (error) {
-        message.error("Failed to fetch children data");
+        message.error("Không thể tải danh sách thiếu nhi. Vui lòng thử lại sau");
+        setChildren([]);
         console.log(error);
       }
     };

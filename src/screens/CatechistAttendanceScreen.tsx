@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Button, message, Checkbox, Spin } from "antd";
+import { Table, Button, message, Spin, Radio } from "antd";
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuthState } from "../hooks/useAuthState";
@@ -19,9 +19,21 @@ interface AttendanceRecord {
   isAbsentWithPermission: "TRUE" | "FALSE";
 }
 
+interface Student {
+  studentId: number;
+  studentClassId: number;
+  fullName: string;
+  account: string;
+  status: string;
+  gender?: string;
+  email?: string;
+  phoneNumber?: string;
+}
+
 interface AttendanceData {
   timeTableId: number;
   slotName: string;
+  isAttendanceMarked: "true" | "false";
   attendanceRecords: AttendanceRecord[];
 }
 
@@ -33,12 +45,17 @@ const CatechistAttendanceScreen: React.FC = () => {
   const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(
     null
   );
+  const [classStudents, setClassStudents] = useState<Student[]>([]);
+  const [initialAttendance, setInitialAttendance] = useState<
+    Map<number, boolean>
+  >(new Map());
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const dayOfWeek = searchParams.get("dayOfWeek");
   const weekNumber = searchParams.get("weekNumber");
   const time = searchParams.get("time");
   const date = searchParams.get("date");
+  const classId = searchParams.get("classId");
   const { timeTableId } = useParams<{ timeTableId: string }>();
 
   useEffect(() => {
@@ -48,6 +65,22 @@ const CatechistAttendanceScreen: React.FC = () => {
   useEffect(() => {
     checkAuthState();
   }, [checkAuthState]);
+
+  const handleInitialAttendanceChange = (
+    studentClassId: number,
+    isAbsent: boolean
+  ) => {
+    if (date && isFutureDate(date)) {
+      message.warning("Không thể điểm danh cho buổi học chưa diễn ra");
+      return;
+    }
+
+    setInitialAttendance((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(studentClassId, isAbsent);
+      return newMap;
+    });
+  };
 
   const fetchAttendanceData = useCallback(async () => {
     setLoading(true);
@@ -70,11 +103,26 @@ const CatechistAttendanceScreen: React.FC = () => {
     }
   }, [timeTableId]);
 
+  const fetchStudents = async (classId: string) => {
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`
+      );
+      setClassStudents(response.data.data.students);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      message.error("Failed to fetch students");
+    }
+  };
+
   useEffect(() => {
     if (isLoggedIn && role === "CATECHIST" && timeTableId) {
       fetchAttendanceData();
+      if (classId) {
+        fetchStudents(classId);
+      }
     }
-  }, [isLoggedIn, role, timeTableId, fetchAttendanceData]);
+  }, [isLoggedIn, role, timeTableId, fetchAttendanceData, classId]);
 
   const handleBack = () => {
     navigate("/schedule");
@@ -97,6 +145,38 @@ const CatechistAttendanceScreen: React.FC = () => {
         ),
       };
     });
+  };
+
+  const handleCreateAttendance = async () => {
+    setSaveLoading(true);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const requestBody = {
+        timeTableId: Number(timeTableId),
+        studentAttendances: classStudents.map((student) => ({
+          studentClassId: student.studentClassId,
+          isAbsent: initialAttendance.get(student.studentClassId)
+            ? "ABSENT"
+            : "PRESENT",
+        })),
+      };
+
+      const response = await axios.post(
+        "https://sep490-backend-production.up.railway.app/api/v1/attendance",
+        requestBody,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      if (response.status === 200) {
+        message.success("Tạo điểm danh thành công");
+        fetchAttendanceData();
+      }
+    } catch (error) {
+      console.error("Error creating attendance:", error);
+      message.error("Tạo điểm danh thất bại");
+    } finally {
+      setSaveLoading(false);
+    }
   };
 
   const handleSaveAttendance = async () => {
@@ -138,12 +218,69 @@ const CatechistAttendanceScreen: React.FC = () => {
     return slotDate > today;
   };
 
-  const columns: ColumnsType<AttendanceRecord> = [
-    { title: "STT", dataIndex: ["studentClass", "id"], key: "id" },
+  const studentColumns: ColumnsType<Student> = [
+    {
+      title: "STT",
+      dataIndex: "studentClassId",
+      key: "studentClassId",
+      render: (text) => text,
+      className: "text-center",
+      align: "center",
+    },
+    {
+      title: "Tên thiếu nhi",
+      dataIndex: "fullName",
+      key: "fullName",
+      className: "text-center",
+      align: "center",
+    },
+    {
+      title: "Trạng thái điểm danh",
+      key: "attendance",
+      className: "bg-gray-100 font-semibold",
+      render: (_, student) => (
+        <div className="flex items-center">
+          <Radio.Group
+            onChange={(e) =>
+              handleInitialAttendanceChange(
+                student.studentClassId,
+                e.target.value === "absent"
+              )
+            }
+            defaultValue="present"
+            disabled={Boolean(date && isFutureDate(date))}
+            className="flex space-x-4" // Added className
+          >
+            <Radio value="present" className="attendance-radio">
+              <span className="text-green-600 font-medium">Có mặt</span>
+            </Radio>
+            <Radio value="absent" className="attendance-radio">
+              <span className="text-red-600 font-medium">Vắng mặt</span>
+            </Radio>
+          </Radio.Group>
+          {date && isFutureDate(date) && (
+            <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  // Original column definition for existing attendance records
+  const attendanceColumns: ColumnsType<AttendanceRecord> = [
+    {
+      title: "STT",
+      dataIndex: ["studentClass", "id"],
+      key: "id",
+      className: "text-center",
+      align: "center",
+    },
     {
       title: "Tên thiếu nhi",
       dataIndex: ["studentClass", "name"],
       key: "name",
+      className: "text-center",
+      align: "center",
     },
     {
       title: "Trạng thái điểm danh",
@@ -151,23 +288,32 @@ const CatechistAttendanceScreen: React.FC = () => {
       className: "bg-gray-100 font-semibold",
       render: (_, record) => (
         <div className="flex items-center">
-          <Checkbox
-            checked={record.isAbsent === "PRESENT"}
+          <Radio.Group
+            value={record.isAbsent === "PRESENT" ? "present" : "absent"}
             onChange={(e) =>
-              handleAttendanceChange(record.attendanceId, !e.target.checked)
+              handleAttendanceChange(
+                record.attendanceId,
+                e.target.value === "absent"
+              )
             }
             disabled={
               record.isAbsentWithPermission === "TRUE" ||
               Boolean(date && isFutureDate(date))
             }
-          />
+            className="flex space-x-4"
+          >
+            <Radio value="present" className="attendance-radio">
+              <span className="text-green-600 font-medium">Có mặt</span>
+            </Radio>
+            <Radio value="absent" className="attendance-radio">
+              <span className="text-red-600 font-medium">Vắng mặt</span>
+            </Radio>
+          </Radio.Group>
           {record.isAbsentWithPermission === "TRUE" && (
             <span className="ml-2 text-gray-500">Vắng có phép</span>
           )}
           {date && isFutureDate(date) && (
-            <span className="ml-2 text-yellow-500">
-              Buổi học chưa diễn ra
-            </span>
+            <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
           )}
         </div>
       ),
@@ -188,9 +334,11 @@ const CatechistAttendanceScreen: React.FC = () => {
         Quay lại lịch dạy
       </Button>
       <Button
-        onClick={() => navigate(`/leave-requests/${timeTableId}`, {
-          state: { weekNumber, date, dayOfWeek, time }
-        })}
+        onClick={() =>
+          navigate(`/leave-requests/${timeTableId}`, {
+            state: { weekNumber, date, dayOfWeek, time },
+          })
+        }
         className="mb-4 ml-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 border rounded shadow"
       >
         Xem danh sách đơn xin nghỉ
@@ -204,31 +352,135 @@ const CatechistAttendanceScreen: React.FC = () => {
           <div className="flex justify-center items-center h-64">
             <Spin size="large" />
           </div>
+        ) : attendanceData?.isAttendanceMarked === "false" ? (
+          <div>
+            <Table
+              columns={studentColumns}
+              dataSource={classStudents}
+              loading={loading}
+              className="overflow-hidden rounded-lg shadow-lg"
+              pagination={false}
+              rowKey="studentId"
+              rowClassName={(_record, index) =>
+                `${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                } hover:bg-blue-50 transition-colors duration-200`
+              }
+              size="middle"
+              components={{
+                header: {
+                  cell: ({
+                    children,
+                    ...props
+                  }: React.PropsWithChildren<
+                    React.ThHTMLAttributes<HTMLTableHeaderCellElement>
+                  >) => (
+                    <th
+                      {...props}
+                      className="bg-blue-600 text-white font-semibold px-6 py-4 text-center"
+                    >
+                      {children}
+                    </th>
+                  ),
+                },
+                body: {
+                  cell: ({
+                    children,
+                    ...props
+                  }: React.PropsWithChildren<
+                    React.TdHTMLAttributes<HTMLTableDataCellElement>
+                  >) => (
+                    <td
+                      {...props}
+                      className="px-6 py-4 text-center border-b border-gray-200"
+                    >
+                      {children}
+                    </td>
+                  ),
+                },
+              }}
+            />
+            <div className="flex justify-end">
+              <Button
+                icon={<SaveOutlined />}
+                onClick={handleCreateAttendance}
+                loading={saveLoading}
+                disabled={Boolean(date && isFutureDate(date))}
+                className={`${
+                  date && isFutureDate(date)
+                    ? "bg-gray-400"
+                    : "bg-green-500 hover:bg-green-600"
+                } text-white font-bold py-2 px-4 rounded-full transition-colors duration-300`}
+              >
+                Tạo điểm danh
+              </Button>
+            </div>
+          </div>
         ) : (
-          <Table
-            columns={columns}
-            dataSource={attendanceData?.attendanceRecords}
-            loading={loading}
-            className="border border-gray-200 rounded-lg mb-6"
-            pagination={false}
-            rowKey="attendanceId"
-          />
+          <div>
+            <Table
+              columns={attendanceColumns}
+              dataSource={attendanceData?.attendanceRecords}
+              loading={loading}
+              className="overflow-hidden rounded-lg shadow-lg"
+              pagination={false}
+              rowKey="attendanceId"
+              rowClassName={(_record, index) =>
+                `${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                } hover:bg-blue-50 transition-colors duration-200`
+              }
+              size="middle"
+              components={{
+                header: {
+                  cell: ({
+                    children,
+                    ...props
+                  }: React.PropsWithChildren<
+                    React.ThHTMLAttributes<HTMLTableHeaderCellElement>
+                  >) => (
+                    <th
+                      {...props}
+                      className="bg-blue-600 text-white font-semibold px-6 py-4 text-center"
+                    >
+                      {children}
+                    </th>
+                  ),
+                },
+                body: {
+                  cell: ({
+                    children,
+                    ...props
+                  }: React.PropsWithChildren<
+                    React.TdHTMLAttributes<HTMLTableDataCellElement>
+                  >) => (
+                    <td
+                      {...props}
+                      className="px-6 py-4 text-center border-b border-gray-200"
+                    >
+                      {children}
+                    </td>
+                  ),
+                },
+              }}
+            />
+            <div className="flex justify-end mt-6">
+              <Button
+                icon={<SaveOutlined />}
+                onClick={handleSaveAttendance}
+                loading={saveLoading}
+                disabled={Boolean(date && isFutureDate(date))}
+                className={`${
+                  date && isFutureDate(date)
+                    ? "bg-gray-400"
+                    : "bg-green-500 hover:bg-green-600"
+                } text-white font-bold py-2 px-4 rounded-full transition-colors duration-300`}
+              >
+                Lưu điểm danh
+              </Button>
+            </div>
+          </div>
         )}
-        <div className="flex justify-end">
-          <Button
-            icon={<SaveOutlined />}
-            onClick={handleSaveAttendance}
-            loading={saveLoading}
-            disabled={Boolean(date && isFutureDate(date))}
-            className={`${
-              date && isFutureDate(date)
-                ? "bg-gray-400"
-                : "bg-green-500 hover:bg-green-600"
-            } text-white font-bold py-2 px-4 rounded-full transition-colors duration-300`}
-          >
-            Lưu điểm danh
-          </Button>
-        </div>
       </div>
     </div>
   );
