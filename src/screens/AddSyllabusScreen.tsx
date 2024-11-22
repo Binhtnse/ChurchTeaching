@@ -69,6 +69,7 @@ interface FormValues {
       type: string;
       examId: number | ExamIdObject;
       examName?: string;
+      sessionUnits: number;
     }>;
   }>;
 }
@@ -233,6 +234,7 @@ const AddSyllabusScreen: React.FC = () => {
                   type: string;
                   materialName: string;
                   examId: number;
+                  sessionUnits: number;
                 }>;
               }) => ({
                 name: session.name,
@@ -243,10 +245,11 @@ const AddSyllabusScreen: React.FC = () => {
                   description: slot.description,
                   orderSlot: slotIndex + 1,
                   slotType: slot.type,
+                  sessionUnits: slot.sessionUnits,
                   examId:
                     typeof slot.examId === "object"
-                      ?  Number((slot.examId as ExamIdObject).value)
-                      :  Number(slot.examId),
+                      ? Number((slot.examId as ExamIdObject).value)
+                      : Number(slot.examId),
                   materialRequestDTO: {
                     name: slot.materialName || "",
                     links: slot.materialLinks || [],
@@ -520,6 +523,22 @@ const AddSyllabusScreen: React.FC = () => {
                             <Option value="Lesson">Bài học</Option>
                             <Option value="exam">Kiểm tra</Option>
                             <Option value="lesson_exam">Học và kiểm tra</Option>
+                          </Select>
+                        </Form.Item>
+                        <Form.Item
+                          name={[
+                            "sessions",
+                            sessionIndex,
+                            "slots",
+                            slotIndex,
+                            "sessionUnits",
+                          ]}
+                          label="Thời lượng bài học"
+                          rules={[{ required: true }]}
+                        >
+                          <Select>
+                            <Option value={0.5}>Nửa buổi</Option>
+                            <Option value={1}>Một buổi</Option>
                           </Select>
                         </Form.Item>
                         {form.getFieldValue([
