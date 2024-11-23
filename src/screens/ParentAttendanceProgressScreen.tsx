@@ -59,16 +59,25 @@ const ParentAttendanceProgressScreen: React.FC = () => {
       const user = userString ? JSON.parse(userString) : null;
       const parentId = user?.id;
       const token = localStorage.getItem("accessToken");
-
+  
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+  
+      // Handle empty data case
+      if (!response.data.data || response.data.data.length === 0) {
+        setStudents([]);
+        message.info("Không tìm thấy danh sách thiếu nhi");
+        return;
+      }
+  
       setStudents(response.data.data);
     } catch (error) {
       console.log(error);
+      setStudents([]); // Reset students array
       message.error("Không thể lấy danh sách thiếu nhi");
     }
   }, []);

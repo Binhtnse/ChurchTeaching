@@ -72,13 +72,21 @@ const ParentCertificateListScreen: React.FC = () => {
           },
         }
       );
+  
+      // Handle empty data case
+      if (!response.data.data || response.data.data.length === 0) {
+        setChildren([]);
+        message.info("Không tìm thấy danh sách thiếu nhi");
+        return;
+      }
+  
       setChildren(response.data.data);
     } catch (error) {
       console.error("Error fetching children:", error);
-      message.error("Failed to fetch children list");
+      setChildren([]); // Reset children array
+      message.error("Không thể lấy danh sách thiếu nhi");
     }
   }, [parentId, token]);
-  
 
   const fetchAcademicYears = async () => {
     try {
