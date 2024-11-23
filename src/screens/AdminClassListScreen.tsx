@@ -23,8 +23,6 @@ import {
 } from "@ant-design/icons";
 import usePageTitle from "../hooks/usePageTitle";
 import { useNavigate } from "react-router-dom";
-import CreateClassModal from "../components/CreateClassModal";
-import ImportFileModal from "../components/ImportFileModal";
 
 const { Search } = Input;
 const { Option } = Select;
@@ -356,7 +354,6 @@ const AdminClassListScreen: React.FC = () => {
           Danh sách lớp giáo lý
         </h1>
         <div className="gap-2 flex">
-          <CreateClassModal />
           <Button
             type="primary"
             className=" px-4 py-2 rounded"
@@ -366,7 +363,6 @@ const AdminClassListScreen: React.FC = () => {
             Xuất danh sách
           </Button>
 
-          <ImportFileModal />
         </div>
       </div>
       <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
