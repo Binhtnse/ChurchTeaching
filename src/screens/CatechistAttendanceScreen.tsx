@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Button, message, Spin, Radio } from "antd";
+import { Table, Button, message, Spin, Checkbox } from "antd";
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuthState } from "../hooks/useAuthState";
@@ -140,7 +140,10 @@ const CatechistAttendanceScreen: React.FC = () => {
         ...prevData,
         attendanceRecords: prevData.attendanceRecords.map((record) =>
           record.attendanceId === attendanceId
-            ? { ...record, isAbsent: isAbsent ? "ABSENT" : "PRESENT" }
+            ? {
+                ...record,
+                isAbsent: isAbsent ? "ABSENT" : "PRESENT",
+              }
             : record
         ),
       };
@@ -148,6 +151,10 @@ const CatechistAttendanceScreen: React.FC = () => {
   };
 
   const handleCreateAttendance = async () => {
+    if (!validateAllAttendanceMarked()) {
+      message.warning("Vui lòng điểm danh cho tất cả học sinh trước khi lưu");
+      return;
+    }
     setSaveLoading(true);
     try {
       const accessToken = localStorage.getItem("accessToken");
@@ -180,6 +187,10 @@ const CatechistAttendanceScreen: React.FC = () => {
   };
 
   const handleSaveAttendance = async () => {
+    if (!validateAllAttendanceMarked()) {
+      message.warning("Vui lòng điểm danh cho tất cả học sinh trước khi lưu");
+      return;
+    }
     setSaveLoading(true);
     try {
       const accessToken = localStorage.getItem("accessToken");
@@ -208,6 +219,18 @@ const CatechistAttendanceScreen: React.FC = () => {
     } finally {
       setSaveLoading(false);
     }
+  };
+
+  const validateAllAttendanceMarked = () => {
+    if (attendanceData?.isAttendanceMarked === "false") {
+      const allStudentsMarked = classStudents.every((student) =>
+        initialAttendance.has(student.studentClassId)
+      );
+      return allStudentsMarked;
+    }
+    return attendanceData?.attendanceRecords.every(
+      (record) => record.isAbsent === "PRESENT" || record.isAbsent === "ABSENT"
+    );
   };
 
   const isFutureDate = (dateString: string | null) => {
@@ -240,24 +263,32 @@ const CatechistAttendanceScreen: React.FC = () => {
       className: "bg-gray-100 font-semibold",
       render: (_, student) => (
         <div className="flex items-center">
-          <Radio.Group
-            onChange={(e) =>
+          <Checkbox.Group
+            value={
+              initialAttendance.has(student.studentClassId)
+                ? [
+                    initialAttendance.get(student.studentClassId)
+                      ? "ABSENT"
+                      : "PRESENT",
+                  ]
+                : []
+            }
+            onChange={(values) =>
               handleInitialAttendanceChange(
                 student.studentClassId,
-                e.target.value === "absent"
+                values.includes("ABSENT")
               )
             }
-            defaultValue="present"
             disabled={Boolean(date && isFutureDate(date))}
-            className="flex space-x-4" // Added className
+            className="flex space-x-4"
           >
-            <Radio value="present" className="attendance-radio">
+            <Checkbox value="PRESENT" className="attendance-checkbox">
               <span className="text-green-600 font-medium">Có mặt</span>
-            </Radio>
-            <Radio value="absent" className="attendance-radio">
+            </Checkbox>
+            <Checkbox value="ABSENT" className="attendance-checkbox">
               <span className="text-red-600 font-medium">Vắng mặt</span>
-            </Radio>
-          </Radio.Group>
+            </Checkbox>
+          </Checkbox.Group>
           {date && isFutureDate(date) && (
             <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
           )}
@@ -288,27 +319,25 @@ const CatechistAttendanceScreen: React.FC = () => {
       className: "bg-gray-100 font-semibold",
       render: (_, record) => (
         <div className="flex items-center">
-          <Radio.Group
-            value={record.isAbsent === "PRESENT" ? "present" : "absent"}
-            onChange={(e) =>
-              handleAttendanceChange(
-                record.attendanceId,
-                e.target.value === "absent"
-              )
-            }
+          <Checkbox.Group
+            value={[record.isAbsent]}
+            onChange={(values) => {
+              const isAbsent = values[values.length - 1] === "ABSENT";
+              handleAttendanceChange(record.attendanceId, isAbsent);
+            }}
             disabled={
               record.isAbsentWithPermission === "TRUE" ||
               Boolean(date && isFutureDate(date))
             }
             className="flex space-x-4"
           >
-            <Radio value="present" className="attendance-radio">
+            <Checkbox value="PRESENT" checked={record.isAbsent === "PRESENT"}>
               <span className="text-green-600 font-medium">Có mặt</span>
-            </Radio>
-            <Radio value="absent" className="attendance-radio">
+            </Checkbox>
+            <Checkbox value="ABSENT" checked={record.isAbsent === "ABSENT"}>
               <span className="text-red-600 font-medium">Vắng mặt</span>
-            </Radio>
-          </Radio.Group>
+            </Checkbox>
+          </Checkbox.Group>
           {record.isAbsentWithPermission === "TRUE" && (
             <span className="ml-2 text-gray-500">Vắng có phép</span>
           )}
@@ -405,9 +434,12 @@ const CatechistAttendanceScreen: React.FC = () => {
                 icon={<SaveOutlined />}
                 onClick={handleCreateAttendance}
                 loading={saveLoading}
-                disabled={Boolean(date && isFutureDate(date))}
+                disabled={
+                  Boolean(date && isFutureDate(date)) ||
+                  !validateAllAttendanceMarked()
+                }
                 className={`${
-                  date && isFutureDate(date)
+                  (date && isFutureDate(date)) || !validateAllAttendanceMarked()
                     ? "bg-gray-400"
                     : "bg-green-500 hover:bg-green-600"
                 } text-white font-bold py-2 px-4 rounded-full transition-colors duration-300`}
