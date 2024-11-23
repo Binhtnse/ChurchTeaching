@@ -108,6 +108,7 @@ const StudentScheduleScreen: React.FC = () => {
 
   const fetchSchedule = useCallback(async () => {
     setScheduleLoading(true);
+    setLoading(false);
     try {
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
@@ -429,14 +430,16 @@ const StudentScheduleScreen: React.FC = () => {
         </div>
       </Card>
 
-      <div className="mb-6">
-        <Text strong className="text-lg mr-6">
-          Niên Khóa: {selectedYear}
-        </Text>
-        <Text strong className="text-lg">
-          Tuần: {selectedWeek}
-        </Text>
-      </div>
+      {selectedYear && !scheduleData?.schedule?.length && !scheduleLoading && (
+        <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+          <Title level={4} className="text-gray-600">
+            Không tìm thấy lịch học
+          </Title>
+          <Text className="text-gray-500">
+            Vui lòng chọn niên khóa khác để xem lịch học
+          </Text>
+        </div>
+      )}
 
       {scheduleLoading ? (
         <div className="flex justify-center items-center mt-8">
@@ -445,6 +448,14 @@ const StudentScheduleScreen: React.FC = () => {
       ) : (
         currentWeek && (
           <div className="mt-4">
+            <div className="mb-6">
+              <Text strong className="text-lg mr-6">
+                Niên Khóa: {selectedYear}
+              </Text>
+              <Text strong className="text-lg">
+                Tuần: {selectedWeek}
+              </Text>
+            </div>
             <Text>
               Từ {currentWeek.startDate} đến {currentWeek.endDate}
             </Text>

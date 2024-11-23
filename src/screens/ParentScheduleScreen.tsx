@@ -810,6 +810,57 @@ const ParentScheduleScreen: React.FC = () => {
           ))}
         </Select>
 
+        {selectedStudent && (
+          <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-600">
+                  Niên khóa
+                </label>
+                <Select
+                  className="w-full"
+                  placeholder="Chọn niên khóa"
+                  onChange={(value: string) => setSelectedYear(value)}
+                  value={selectedYear}
+                  allowClear
+                >
+                  {academicYears.map((year) => (
+                    <Select.Option key={year.id} value={year.year}>
+                      {year.year}{" "}
+                      {year.timeStatus === "NOW" && (
+                        <Tag color="blue" className="ml-2">
+                          Hiện tại
+                        </Tag>
+                      )}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-600">
+                  Tuần
+                </label>
+                <Select
+                  className="w-full"
+                  value={selectedWeek}
+                  onChange={(value) => setSelectedWeek(value)}
+                  placeholder="Chọn tuần"
+                  disabled={!scheduleData?.schedule?.length}
+                >
+                  {scheduleData?.schedule?.map((week) => (
+                    <Select.Option
+                      key={week.weekNumber}
+                      value={week.weekNumber}
+                    >
+                      Tuần {week.weekNumber}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+          </Card>
+        )}
         {loading && selectedStudent ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
@@ -823,57 +874,6 @@ const ParentScheduleScreen: React.FC = () => {
                   Vui lòng chọn thiếu nhi để xem lịch học
                 </p>
               </div>
-            )}
-            {selectedStudent && (
-              <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600">
-                      Niên khóa
-                    </label>
-                    <Select
-                      className="w-full"
-                      placeholder="Chọn niên khóa"
-                      onChange={(value: string) => setSelectedYear(value)}
-                      value={selectedYear}
-                      allowClear
-                    >
-                      {academicYears.map((year) => (
-                        <Select.Option key={year.id} value={year.year}>
-                          {year.year}{" "}
-                          {year.timeStatus === "NOW" && (
-                            <Tag color="blue" className="ml-2">
-                              Hiện tại
-                            </Tag>
-                          )}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600">
-                      Tuần
-                    </label>
-                    <Select
-                      className="w-full"
-                      value={selectedWeek}
-                      onChange={(value) => setSelectedWeek(value)}
-                      placeholder="Chọn tuần"
-                      disabled={!scheduleData?.schedule?.length}
-                    >
-                      {scheduleData?.schedule?.map((week) => (
-                        <Select.Option
-                          key={week.weekNumber}
-                          value={week.weekNumber}
-                        >
-                          Tuần {week.weekNumber}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-                </div>
-              </Card>
             )}
 
             {selectedStudent &&
