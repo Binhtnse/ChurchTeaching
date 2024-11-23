@@ -522,7 +522,12 @@ const AdminUserListScreen: React.FC = () => {
         }
         visible={isModalVisible}
         onOk={handleImportUsers}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setValidRecords([]);
+          setInvalidRecords([]);
+        }}
+        cancelText="Hủy"
         confirmLoading={isUploading}
         okText={isUploading ? "Đang tải lên..." : "Tải lên"}
         okButtonProps={{ disabled: invalidRecords.length > 0 }}

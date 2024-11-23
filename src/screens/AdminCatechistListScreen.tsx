@@ -335,7 +335,11 @@ const AdminCatechistListScreen: React.FC = () => {
           </h2>
         }
         visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setValidRecords([]);
+          setInvalidRecords([]);
+        }}
         width={1000}
         style={{ top: 20 }}
         bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}

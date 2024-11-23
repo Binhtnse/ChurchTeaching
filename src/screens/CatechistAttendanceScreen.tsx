@@ -68,16 +68,25 @@ const CatechistAttendanceScreen: React.FC = () => {
 
   const handleInitialAttendanceChange = (
     studentClassId: number,
-    isAbsent: boolean
+    values: string[]
   ) => {
     if (date && isFutureDate(date)) {
       message.warning("Không thể điểm danh cho buổi học chưa diễn ra");
       return;
     }
-
+  
     setInitialAttendance((prev) => {
       const newMap = new Map(prev);
-      newMap.set(studentClassId, isAbsent);
+      const latestValue = values[values.length - 1];
+      
+      if (latestValue === "PRESENT") {
+        newMap.set(studentClassId, false);
+      } else if (latestValue === "ABSENT") {
+        newMap.set(studentClassId, true);
+      } else {
+        newMap.delete(studentClassId);
+      }
+      
       return newMap;
     });
   };
@@ -265,27 +274,20 @@ const CatechistAttendanceScreen: React.FC = () => {
         <div className="flex items-center">
           <Checkbox.Group
             value={
-              initialAttendance.has(student.studentClassId)
-                ? [
-                    initialAttendance.get(student.studentClassId)
-                      ? "ABSENT"
-                      : "PRESENT",
-                  ]
+              initialAttendance.has(student.studentClassId) 
+                ? [initialAttendance.get(student.studentClassId) ? "ABSENT" : "PRESENT"]
                 : []
             }
             onChange={(values) =>
-              handleInitialAttendanceChange(
-                student.studentClassId,
-                values.includes("ABSENT")
-              )
+              handleInitialAttendanceChange(student.studentClassId, values)
             }
             disabled={Boolean(date && isFutureDate(date))}
             className="flex space-x-4"
           >
-            <Checkbox value="PRESENT" className="attendance-checkbox">
+            <Checkbox value="PRESENT">
               <span className="text-green-600 font-medium">Có mặt</span>
             </Checkbox>
-            <Checkbox value="ABSENT" className="attendance-checkbox">
+            <Checkbox value="ABSENT">
               <span className="text-red-600 font-medium">Vắng mặt</span>
             </Checkbox>
           </Checkbox.Group>
@@ -429,7 +431,7 @@ const CatechistAttendanceScreen: React.FC = () => {
                 },
               }}
             />
-            <div className="flex justify-end">
+            <div className="flex justify-end mt-6">
               <Button
                 icon={<SaveOutlined />}
                 onClick={handleCreateAttendance}
