@@ -21,7 +21,7 @@ interface Material {
 }
 
 interface TimetableSlot {
-  [key: string]: Slot | null;
+  [key: string]: ExtendedSlot[] | null;
 }
 
 interface Timetable {
@@ -51,6 +51,12 @@ interface Class {
   roomNo: string;
   status: string;
   slots: Slot[];
+}
+
+interface ExtendedSlot extends Slot {
+  className: string;
+  grade: string;
+  roomNo: string;
 }
 
 interface WeekSchedule {
@@ -86,11 +92,6 @@ const CalendarCell = styled.div`
   }
 `;
 
-const SundayCell = styled(CalendarCell)`
-  grid-column: 8;
-  background-color: #f6f8fa;
-`;
-
 const TimeCell = styled(CalendarCell)`
   font-weight: bold;
   display: flex;
@@ -111,7 +112,6 @@ const CatechistScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [classes, setClasses] = useState<ClassData[]>([]);
-  const [selectedClass, setSelectedClass] = useState<string>("");
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const savedWeek = localStorage.getItem("selectedWeek");
   const [academicYears, setAcademicYears] = useState<
@@ -221,13 +221,33 @@ const CatechistScheduleScreen: React.FC = () => {
     };
   };
 
-  const createTimetable = (slots: Slot[]): Timetable => {
+  const createCombinedTimetable = (classes: Class[]): Timetable => {
     const timetable: Timetable = {};
-    slots.forEach((slot) => {
-      if (!timetable[slot.dayOfWeek]) {
-        timetable[slot.dayOfWeek] = {};
-      }
-      timetable[slot.dayOfWeek][slot.time] = slot;
+    classes.forEach((classItem) => {
+      classItem.slots.forEach((slot) => {
+        console.log(
+          "API dayOfWeek unicode:",
+          [...slot.dayOfWeek].map((c) => c.charCodeAt(0))
+        );
+        const normalizedDay = normalizeVietnameseDay(slot.dayOfWeek);
+        console.log(
+          "Days array unicode:",
+          [...normalizedDay[6]].map((c) => c.charCodeAt(0))
+        );
+        if (!timetable[normalizedDay]) {
+          timetable[normalizedDay] = {};
+        }
+        if (!timetable[normalizedDay][slot.time]) {
+          timetable[normalizedDay][slot.time] = [];
+        }
+        (timetable[normalizedDay][slot.time] as ExtendedSlot[]).push({
+          ...slot,
+          dayOfWeek: normalizedDay,
+          className: classItem.className,
+          grade: classItem.grade,
+          roomNo: classItem.roomNo,
+        });
+      });
     });
     return timetable;
   };
@@ -276,15 +296,29 @@ const CatechistScheduleScreen: React.FC = () => {
     });
   };
 
-  const renderCalendar = (timetable: Timetable, classItem: Class) => {
+  const normalizeVietnameseDay = (day: string): string => {
+    // Map API's unicode values to our unicode values
+    const mappings: { [key: string]: string } = {
+      "Chủ nhật": "Chủ Nhật",
+      "Thứ Hai": "Thứ Hai",
+      "Thứ Ba": "Thứ Ba",
+      "Thứ Tư": "Thứ Tư",
+      "Thứ Năm": "Thứ Năm",
+      "Thứ Sáu": "Thứ Sáu",
+      "Thứ Bảy": "Thứ Bảy",
+    };
+    return mappings[day] || day;
+  };
+
+  const renderCalendar = (timetable: Timetable) => {
     const days = [
       "Thứ Hai",
       "Thứ Ba",
       "Thứ Tư",
       "Thứ Năm",
       "Thứ Sáu",
-      "Thứ Bảy",
-      classItem.slots[0]?.dayOfWeek || "Chủ Nhật"
+      String.fromCharCode(84, 104, 432, 769, 32, 66, 97, 777, 121),
+      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
     ];
     const times = Array.from(
       new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
@@ -299,11 +333,6 @@ const CatechistScheduleScreen: React.FC = () => {
 
     return (
       <div>
-        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-          <Text strong className="text-lg text-indigo-600">
-            Lớp: {classItem.className} - {classItem.grade}
-          </Text>
-        </div>
         <CalendarGrid>
           <CalendarCell />
           {days.map((day, index) => (
@@ -315,107 +344,122 @@ const CatechistScheduleScreen: React.FC = () => {
           {times.map((time) => (
             <React.Fragment key={time}>
               <TimeCell>{time}</TimeCell>
-              {days.map((day, index) => {
-                const CellComponent = index === 6 ? SundayCell : CalendarCell;
+              {days.map((day) => {
+                const CellComponent = CalendarCell;
                 const slot = timetable[day] && timetable[day][time];
                 return (
                   <CellComponent key={`${day}-${time}`}>
-                    {slot && (
-                      <div className="flex flex-col h-full">
-                        <Text className="text-gray-500 mb-1">
-                          Phòng: {classItem.roomNo}
-                        </Text>
-                        <strong className="text-blue-600 mb-1">
-                          {slot.name}
-                        </strong>
-                        <div className="mt-auto">
-                          {slot.session && (
-                            <Text className="text-green-600">
-                              Chương: {slot.session.name}
+                    {slot &&
+                      slot.map((classSlot, idx) => (
+                        <div
+                          key={idx}
+                          className="flex flex-col h-full mb-4 p-2 border-b last:border-b-0 hover:bg-gray-50 rounded"
+                        >
+                          <div
+                            className={`bg-blue-50 p-2 rounded mb-2 ${
+                              idx > 0 ? "mt-2 border-t" : ""
+                            }`}
+                          >
+                            <Text strong className="text-indigo-600">
+                              {classSlot.className} - {classSlot.grade}
                             </Text>
-                          )}
-                          {slot.noteOfSlot && (
-                            <Text className="text-orange-600 block mt-1">
-                              Ghi chú: {slot.noteOfSlot}
+                            <Text className="text-gray-500 block">
+                              Phòng: {classSlot.roomNo}
                             </Text>
-                          )}
-                          {slot.exams && (
-                            <Text className="text-red-600 block mt-1">
-                              Kiểm tra: {slot.exams}
-                            </Text>
-                          )}
-                          {slot.materials && slot.materials.length > 0 && (
-                            <div className="mt-2">
-                              <Text className="text-purple-600 font-medium">
-                                Tài liệu:
+                          </div>
+
+                          <strong className="text-blue-600 mb-1">
+                            {classSlot.name}
+                          </strong>
+
+                          <div className="mt-auto">
+                            {classSlot.session && (
+                              <Text className="text-green-600">
+                                Chương: {classSlot.session.name}
                               </Text>
-                              <ul className="list-disc pl-4">
-                                {slot.materials.map((material, index) => (
-                                  <li key={index}>
-                                    <a
-                                      href={material.link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-500 hover:text-blue-700 underline"
-                                      onClick={handleMaterialClick} // Add this line
-                                    >
-                                      {material.name}
-                                    </a>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          <div className="mt-2">
-                            <Button
-                              type="primary"
-                              size="middle"
-                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                const weekStart = new Date(
-                                  currentWeek!.startDate
-                                );
-                                const dayIndex = [
-                                  "Thứ Hai",
-                                  "Thứ Ba",
-                                  "Thứ Tư",
-                                  "Thứ Năm",
-                                  "Thứ Sáu",
-                                  "Thứ Bảy",
-                                  "Chủ Nhật",
-                                ].indexOf(slot.dayOfWeek);
-                                const slotDate = new Date(weekStart);
-                                slotDate.setDate(
-                                  weekStart.getDate() + dayIndex
-                                );
-                                const formattedDate = slotDate
-                                  .toISOString()
-                                  .split("T")[0];
-                                const matchingClass = classes.find(
-                                  (c) => c.name === classItem.className
-                                );
-                                if (matchingClass) {
-                                  navigate(
-                                    `/schedule/attendance/${slot.timeTableId}?dayOfWeek=${slot.dayOfWeek}&weekNumber=${selectedWeek}&time=${slot.time}&date=${formattedDate}&classId=${matchingClass.id}`,
+                            )}
+
+                            {classSlot.noteOfSlot && (
+                              <Text className="text-orange-600 block mt-1">
+                                Ghi chú: {classSlot.noteOfSlot}
+                              </Text>
+                            )}
+
+                            {classSlot.exams && (
+                              <Text className="text-red-600 block mt-1">
+                                Kiểm tra: {classSlot.exams}
+                              </Text>
+                            )}
+
+                            {classSlot.materials &&
+                              classSlot.materials.length > 0 && (
+                                <div className="mt-2">
+                                  <Text className="text-purple-600 font-medium">
+                                    Tài liệu:
+                                  </Text>
+                                  <ul className="list-disc pl-4">
+                                    {classSlot.materials.map(
+                                      (material, index) => (
+                                        <li key={index}>
+                                          <a
+                                            href={material.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 hover:text-blue-700 underline"
+                                            onClick={handleMaterialClick}
+                                          >
+                                            {material.name}
+                                          </a>
+                                        </li>
+                                      )
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+
+                            <div className="mt-2">
+                              <Button
+                                type="primary"
+                                size="middle"
+                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                  const weekStart = new Date(
+                                    currentWeek!.startDate
                                   );
-                                }
-                              }}
-                            >
-                              Điểm danh
-                            </Button>
+                                  weekStart.setHours(0, 0, 0, 0); // Reset time part
+                                  const dayIndex = [
+                                    "Thứ Hai",
+                                    "Thứ Ba",
+                                    "Thứ Tư",
+                                    "Thứ Năm",
+                                    "Thứ Sáu",
+                                    "Thứ Bảy",
+                                    "Chủ nhật",
+                                  ].indexOf(classSlot.dayOfWeek);
+                                  const slotDate = new Date(weekStart);
+                                  slotDate.setDate(
+                                    weekStart.getDate() + dayIndex
+                                  );
+                                  const formattedDate = slotDate
+                                    .toISOString()
+                                    .split("T")[0];
+                                  const matchingClass = classes.find(
+                                    (c) => c.name === classSlot.className
+                                  );
+                                  if (matchingClass) {
+                                    navigate(
+                                      `/schedule/attendance/${classSlot.timeTableId}?dayOfWeek=${classSlot.dayOfWeek}&weekNumber=${selectedWeek}&time=${classSlot.time}&date=${formattedDate}&classId=${matchingClass.id}`
+                                    );
+                                  }
+                                }}
+                              >
+                                Điểm danh
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                    {index === 6 && (
-                      <div className="mt-2 bg-gray-100 p-2 rounded">
-                        <Text
-                          strong
-                          className="text-indigo-600"
-                        >{`${classItem.className} - ${classItem.grade}`}</Text>
-                      </div>
-                    )}
+                      ))}
                   </CellComponent>
                 );
               })}
@@ -476,22 +520,6 @@ const CatechistScheduleScreen: React.FC = () => {
               ))}
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600">Lớp</label>
-            <Select
-              className="w-full"
-              placeholder="Chọn lớp"
-              onChange={(value) => setSelectedClass(value)}
-              value={selectedClass}
-            >
-              {classes.map((classItem) => (
-                <Select.Option key={classItem.id} value={classItem.name}>
-                  {classItem.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </div>
         </div>
       </Card>
       {selectedYear && !scheduleData?.schedule?.length && !loading && (
@@ -518,33 +546,25 @@ const CatechistScheduleScreen: React.FC = () => {
               Tuần: {selectedWeek}
             </Text>
           </div>
-          {currentWeek && !selectedClass && (
-            <div className="text-center text-gray-500 py-8">
-              <p className="text-lg font-semibold">Vui lòng chọn lớp</p>
-              <p className="text-sm">Chọn một lớp để xem lịch giảng dạy</p>
-            </div>
-          )}
           {scheduleLoading ? (
             <div className="flex justify-center items-center mt-8">
               <Spin size="large" tip="Đang tải lịch học..." />
             </div>
           ) : (
-            currentWeek &&
-            selectedClass && (
+            currentWeek && (
               <div className="mt-4">
-                <Text>
-                  Từ {currentWeek.startDate} đến {currentWeek.endDate}
-                </Text>
-                {currentWeek.classes
-                  .filter((classItem) => classItem.className === selectedClass)
-                  .map((classItem, index) => {
-                    const timetable = createTimetable(classItem.slots);
-                    return (
-                      <Card key={index} className="mb-4 mt-4">
-                        {renderCalendar(timetable, classItem)}
-                      </Card>
-                    );
-                  })}
+                {currentWeek && (
+                  <div className="mt-4">
+                    <Text>
+                      Từ {currentWeek.startDate} đến {currentWeek.endDate}
+                    </Text>
+                    <Card className="mb-4 mt-4">
+                      {renderCalendar(
+                        createCombinedTimetable(currentWeek.classes), // Pass all classes
+                      )}
+                    </Card>
+                  </div>
+                )}
               </div>
             )
           )}

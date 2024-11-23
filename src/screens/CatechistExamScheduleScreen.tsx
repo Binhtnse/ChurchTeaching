@@ -210,7 +210,8 @@ const CatechistExamScheduleScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedYear, selectedClass]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchAcademicYears();
@@ -219,10 +220,16 @@ const CatechistExamScheduleScreen: React.FC = () => {
   useEffect(() => {
     if (selectedYear) {
       fetchClasses();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
+
+  useEffect(() => {
+    if (selectedYear) {
       fetchSchedule();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear, fetchSchedule]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear, selectedClass]);
 
   if (loading) {
     return (

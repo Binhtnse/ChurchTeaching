@@ -195,7 +195,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       },
       {
         key: "admin-student-catechist-list",
-        label: "Quản lý thiếu nhi và giáo lý viên",
+        label: "Quản lý thiếu nhi và giáo lý viên đầu năm",
         icon: <UsergroupAddOutlined />,
         children: [
           { key: "admin-student-list", label: "Quản lý danh sách thiếu nhi" },

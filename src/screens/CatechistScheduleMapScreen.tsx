@@ -130,15 +130,15 @@ const AdminScheduleMapScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
+      const nextYear = response.data.find(
+        (year: { timeStatus: string }) => year.timeStatus === "NEXT"
+      );
       const currentYear = response.data.find(
         (year: { timeStatus: string }) => year.timeStatus === "NOW"
       );
-      const nextYears = response.data.filter(
-        (year: { timeStatus: string }) => year.timeStatus === "NEXT"
-      );
-      setAcademicYears([...nextYears, currentYear]);
-      if (currentYear) {
-        setSelectedYear(currentYear.id);
+      setAcademicYears([...nextYear, currentYear]);
+      if (nextYear) {
+        setSelectedYear(nextYear.id);
       }
     } catch (error) {
       console.log(error);
