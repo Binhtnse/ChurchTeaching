@@ -396,6 +396,27 @@ const AddSyllabusScreen: React.FC = () => {
     form.setFieldsValue({ sessions: currentSessions });
   };
 
+  const handleSlotCountChange = (sessionIndex: number, newValue: number) => {
+    const currentSlots = sessions[sessionIndex].slots.length;
+    
+    if (newValue < currentSlots) {
+      // Remove excess slots
+      const newSessions = [...sessions];
+      newSessions[sessionIndex].slots = newSessions[sessionIndex].slots.slice(0, newValue);
+      setSessions(newSessions);
+      
+      // Update form values to remove excess slots
+      const currentFormValues = form.getFieldValue('sessions');
+      currentFormValues[sessionIndex].slots = currentFormValues[sessionIndex].slots.slice(0, newValue);
+      form.setFieldsValue({ sessions: currentFormValues });
+      
+      // Update total slot count
+      setTotalSlotCount(prev => prev - (currentSlots - newValue));
+      
+      message.info(`Đã xóa ${currentSlots - newValue} bài học cuối cùng của chương này`);
+    }
+  };
+
   const removeSlot = (sessionIndex: number, slotIndex: number) => {
     const newSessions = [...sessions];
     newSessions[sessionIndex].slots.splice(slotIndex, 1);
@@ -530,7 +551,7 @@ const AddSyllabusScreen: React.FC = () => {
                     label="Số Bài Học"
                     rules={[{ required: true }]}
                   >
-                    <InputNumber min={1} />
+                    <InputNumber min={1} onChange={(value) => handleSlotCountChange(sessionIndex, value || 0)} />
                   </Form.Item>
                   <Title level={4}>Bài học</Title>
                   {session.slots.map((_slot, slotIndex) => {
