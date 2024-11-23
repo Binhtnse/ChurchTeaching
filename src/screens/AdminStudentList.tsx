@@ -151,8 +151,8 @@ const AdminStudentList: React.FC = () => {
       const token = localStorage.getItem("accessToken");
       const formData = new FormData();
       formData.append("file", file);
-
-      await axios.post(
+  
+      const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/timetable/import",
         formData,
         {
@@ -162,15 +162,15 @@ const AdminStudentList: React.FC = () => {
           },
         }
       );
-      message.success("Nhập thời khóa biểu thành công");
-    } catch (error) {
-      console.error("Error uploading timetable:", error);
-      message.error("Nhập thời khóa biểu thất bại");
+      message.success(response.data.message);
+    } catch (error: unknown) {
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Nhập thời khóa biểu thất bại";
+      message.error(errorMessage);
     } finally {
       setIsUploading(false);
     }
   };
-
+  
   const customRequest = (options: UploadRequestOption) => {
     const { file, onSuccess } = options;
     if (file instanceof File && file.name.endsWith(".xlsx")) {
