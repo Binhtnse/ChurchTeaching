@@ -23,6 +23,7 @@ import {
   BookOutlined,
   ScheduleOutlined,
   EyeOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
@@ -384,6 +385,31 @@ const AddSyllabusScreen: React.FC = () => {
     }
   };
 
+  const removeSession = (sessionIndex: number) => {
+    const newSessions = [...sessions];
+    newSessions.splice(sessionIndex, 1);
+    setSessions(newSessions);
+
+    // Also remove the session from form values
+    const currentSessions = form.getFieldValue("sessions");
+    currentSessions.splice(sessionIndex, 1);
+    form.setFieldsValue({ sessions: currentSessions });
+  };
+
+  const removeSlot = (sessionIndex: number, slotIndex: number) => {
+    const newSessions = [...sessions];
+    newSessions[sessionIndex].slots.splice(slotIndex, 1);
+    setSessions(newSessions);
+
+    // Also remove the slot from form values
+    const currentSessions = form.getFieldValue("sessions");
+    currentSessions[sessionIndex].slots.splice(slotIndex, 1);
+    form.setFieldsValue({ sessions: currentSessions });
+
+    // Update total slot count
+    setTotalSlotCount((prev) => prev - 1);
+  };
+
   const steps = [
     {
       title: "Thông tin chung",
@@ -470,7 +496,21 @@ const AddSyllabusScreen: React.FC = () => {
           </Title>
           <Collapse>
             {sessions.map((session, sessionIndex) => (
-              <Panel header={`Chương ${sessionIndex + 1}`} key={sessionIndex}>
+              <Panel
+                header={`Chương ${sessionIndex + 1}`}
+                key={sessionIndex}
+                extra={
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeSession(sessionIndex);
+                    }}
+                  />
+                }
+              >
                 <Card className="mb-4" style={{ background: "#f0f2f5" }}>
                   <Form.Item
                     name={["sessions", sessionIndex, "name"]}
@@ -507,6 +547,14 @@ const AddSyllabusScreen: React.FC = () => {
                         className="mb-2"
                         style={{ background: "#fff" }}
                         title={`Bài học ${globalSlotNumber}`}
+                        extra={
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => removeSlot(sessionIndex, slotIndex)}
+                          />
+                        }
                       >
                         <Form.Item
                           name={[
