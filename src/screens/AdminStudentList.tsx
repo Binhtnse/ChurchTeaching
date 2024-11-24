@@ -9,6 +9,7 @@ import {
   Card,
   Alert,
   Upload,
+  Button,
 } from "antd";
 import type { UploadRequestOption } from "rc-upload/lib/interface";
 import axios from "axios";
@@ -323,14 +324,13 @@ const AdminStudentList: React.FC = () => {
           </div>
 
           <div className="space-y-2 flex items-end">
-            <button
+            <Button
               onClick={handleAutoAssignStudents}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
-              disabled={isAssigning}
+              loading={isAssigning}
             >
-              {isAssigning && <Spin size="small" />}
               {isAssigning ? "Đang xếp lớp..." : "Xếp thiếu nhi vào lớp"}
-            </button>
+            </Button>
           </div>
           <div className="space-y-2 flex items-end">
             <Upload
