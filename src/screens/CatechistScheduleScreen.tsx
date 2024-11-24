@@ -223,17 +223,20 @@ const CatechistScheduleScreen: React.FC = () => {
 
   const createCombinedTimetable = (classes: Class[]): Timetable => {
     const timetable: Timetable = {};
-    classes.forEach((classItem) => {
+    const processedTimeTableIds = new Set<string>();
+    
+    const classesWithSlots = classes.filter(classItem => classItem.slots && classItem.slots.length > 0);
+    
+    classesWithSlots.forEach((classItem) => {
       classItem.slots.forEach((slot) => {
-        console.log(
-          "API dayOfWeek unicode:",
-          [...slot.dayOfWeek].map((c) => c.charCodeAt(0))
-        );
+        // Skip if we've already processed this timeTableId
+        if (processedTimeTableIds.has(slot.timeTableId)) {
+          return;
+        }
+        
+        processedTimeTableIds.add(slot.timeTableId);
+        
         const normalizedDay = normalizeVietnameseDay(slot.dayOfWeek);
-        console.log(
-          "Days array unicode:",
-          [...normalizedDay[6]].map((c) => c.charCodeAt(0))
-        );
         if (!timetable[normalizedDay]) {
           timetable[normalizedDay] = {};
         }
