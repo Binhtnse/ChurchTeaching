@@ -97,7 +97,7 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "schedule-exam", label: "Lịch kiểm tra" },
         ],
       },
-      ...(leaderType === 'PRIMARY' ? [
+      ...(leaderType === 'PRIMARY' || leaderType === 'ASSISTANT' ? [
         {
           key: "assign-schedule",
           label: "Sắp xếp lịch học",

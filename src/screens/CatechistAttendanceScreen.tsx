@@ -70,10 +70,6 @@ const CatechistAttendanceScreen: React.FC = () => {
     studentClassId: number,
     values: string[]
   ) => {
-    if (date && isFutureDate(date)) {
-      message.warning("Không thể điểm danh cho buổi học chưa diễn ra");
-      return;
-    }
   
     setInitialAttendance((prev) => {
       const newMap = new Map(prev);
@@ -138,10 +134,6 @@ const CatechistAttendanceScreen: React.FC = () => {
   };
 
   const handleAttendanceChange = (attendanceId: number, isAbsent: boolean) => {
-    if (date && isFutureDate(date)) {
-      message.warning("Không thể điểm danh cho buổi học chưa diễn ra");
-      return;
-    }
 
     setAttendanceData((prevData) => {
       if (!prevData) return null;
@@ -281,7 +273,6 @@ const CatechistAttendanceScreen: React.FC = () => {
             onChange={(values) =>
               handleInitialAttendanceChange(student.studentClassId, values)
             }
-            disabled={Boolean(date && isFutureDate(date))}
             className="flex space-x-4"
           >
             <Checkbox value="PRESENT">
@@ -328,8 +319,7 @@ const CatechistAttendanceScreen: React.FC = () => {
               handleAttendanceChange(record.attendanceId, isAbsent);
             }}
             disabled={
-              record.isAbsentWithPermission === "TRUE" ||
-              Boolean(date && isFutureDate(date))
+              record.isAbsentWithPermission === "TRUE" 
             }
             className="flex space-x-4"
           >
@@ -437,7 +427,6 @@ const CatechistAttendanceScreen: React.FC = () => {
                 onClick={handleCreateAttendance}
                 loading={saveLoading}
                 disabled={
-                  Boolean(date && isFutureDate(date)) ||
                   !validateAllAttendanceMarked()
                 }
                 className={`${
@@ -503,7 +492,6 @@ const CatechistAttendanceScreen: React.FC = () => {
                 icon={<SaveOutlined />}
                 onClick={handleSaveAttendance}
                 loading={saveLoading}
-                disabled={Boolean(date && isFutureDate(date))}
                 className={`${
                   date && isFutureDate(date)
                     ? "bg-gray-400"

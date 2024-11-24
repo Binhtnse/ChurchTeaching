@@ -268,18 +268,29 @@ const CatechistClassGradeScreen: React.FC = () => {
     studentClassId: number;
     examId: number;
     examName: string;
-  }> = React.memo(({ value, onChange }) => (
+}> = React.memo(({ value, onChange }) => (
     <Input
-      value={value !== null && value !== undefined ? value.toString() : ""}
-      onChange={(e) => onChange(e.target.value)}
-      onBlur={(e) => {
-        const numValue = parseFloat(e.target.value);
-        if (!isNaN(numValue)) {
-          onChange(numValue.toString());
-        }
-      }}
+        value={value !== null && value !== undefined ? value.toString() : ""}
+        onChange={(e) => {
+            const numValue = parseFloat(e.target.value);
+            if (e.target.value === "" || (numValue >= 0 && numValue <= 10)) {
+                onChange(e.target.value);
+            }
+        }}
+        onBlur={(e) => {
+            const numValue = parseFloat(e.target.value);
+            if (!isNaN(numValue)) {
+                // Ensure value is between 0 and 10
+                const clampedValue = Math.min(Math.max(numValue, 0), 10);
+                onChange(clampedValue.toString());
+            }
+        }}
+        type="number"
+        min={0}
+        max={10}
+        step={0.1}
     />
-  ));
+));
 
   const classGradeColumns = [
     {
