@@ -130,19 +130,33 @@ const AdminScheduleMapScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      const nextYear = response.data.find(
-        (year: { timeStatus: string }) => year.timeStatus === "NEXT"
-      );
-      const currentYear = response.data.find(
-        (year: { timeStatus: string }) => year.timeStatus === "NOW"
-      );
-      setAcademicYears([...nextYear, currentYear]);
-      if (nextYear) {
-        setSelectedYear(nextYear.id);
+      
+      // Check if response.data exists and is an array
+      if (Array.isArray(response.data)) {
+        const nextYear = response.data.find(
+          (year) => year.timeStatus === "NEXT"
+        );
+        const currentYear = response.data.find(
+          (year) => year.timeStatus === "NOW"
+        );
+        
+        // Filter out null/undefined values and set state
+        const validYears = [nextYear, currentYear].filter(Boolean);
+        setAcademicYears(validYears);
+        
+        // Set selected year if nextYear exists
+        if (nextYear) {
+          setSelectedYear(nextYear.id);
+        }
+      } else {
+        message.error("Invalid data format received from server");
       }
     } catch (error) {
-      console.log(error);
-      message.error("Failed to fetch academic years");
+      if (axios.isAxiosError(error)) {
+        message.error(`Failed to fetch academic years: ${error.response?.data?.message || 'Network error'}`);
+      } else {
+        message.error("Failed to fetch academic years");
+      }
     }
   };
 

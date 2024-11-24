@@ -95,7 +95,7 @@ const StudentCertificateListScreen: React.FC = () => {
       try {
         setLoading(true);
         const response = await axios.get<ApiResponse>(
-          `https://sep490-backend-production.up.railway.app/api/v1/certificate/user/${studentId}?page=${page}&size=${pageSize}&gradeId=${selectedGrade}&yearId=${selectedYear}`,
+          `https://sep490-backend-production.up.railway.app/api/v1/certificate/user/${studentId}?page=${page}&size=${pageSize}&gradeId=${selectedGrade}&academicYearId=${selectedYear}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

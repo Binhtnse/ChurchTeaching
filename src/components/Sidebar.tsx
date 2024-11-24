@@ -195,7 +195,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       },
       {
         key: "admin-student-catechist-list",
-        label: "Quản lý thiếu nhi và giáo lý viên đầu năm",
+        label: "Quản lý thiếu nhi, giáo lý viên đầu năm",
         icon: <UsergroupAddOutlined />,
         children: [
           { key: "admin-student-list", label: "Quản lý danh sách thiếu nhi" },
@@ -274,7 +274,7 @@ const Sidebar: React.FC<{ role: string }> = ({ role }) => {
   return (
     <div
       style={{
-        width: collapsed ? "80px" : "300px",
+        width: collapsed ? "80px" : "335px",
         transition: "width 0.3s",
         backgroundColor: "white",
         boxShadow: "2px 0 8px rgba(0,0,0,0.15)",

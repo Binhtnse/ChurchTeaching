@@ -93,7 +93,7 @@ const AdminCertificateListScreen: React.FC = () => {
         setLoading(true);
         const accessToken = localStorage.getItem("accessToken");
         const response = await axios.get<ApiResponse>(
-          `https://sep490-backend-production.up.railway.app/api/v1/certificate/list?page=${page}&size=${pageSize}&gradeId=${selectedGrade}&yearId=${selectedYear}`,
+          `https://sep490-backend-production.up.railway.app/api/v1/certificate/list?page=${page}&size=${pageSize}&gradeId=${selectedGrade}&academicYearId=${selectedYear}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
