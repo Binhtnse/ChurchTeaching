@@ -124,8 +124,8 @@ const AdminStudentList: React.FC = () => {
           fullName: item.student.fullName,
           holyName: item.student.saintName,
           dateOfBirth: item.student.dob,
-          address: item.student.address || "N/A",
-          phoneNumber: item.student.phoneNumber || "N/A",
+          address: item.student.address || "",
+          phoneNumber: item.student.phoneNumber || "",
           status: item.studyStatus,
         }));
 

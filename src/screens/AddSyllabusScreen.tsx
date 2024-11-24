@@ -136,10 +136,10 @@ const SyllabusPreview: React.FC<{
               title={
                 <Text strong>{`Chương ${index + 1}: ${session.name}`}</Text>
               }
-              extra={<Tag color="blue">{`${session.slotCount} buổi học`}</Tag>}
+              extra={<Tag color="blue">{`${session.slotCount} bài học`}</Tag>}
             >
               <Text>{session.description}</Text>
-              <Divider orientation="left">Buổi học</Divider>
+              <Divider orientation="left">Bài học</Divider>
               <List
                 dataSource={session.slots}
                 renderItem={(slot, slotIndex: number) => (
@@ -274,7 +274,7 @@ const AddSyllabusScreen: React.FC = () => {
         setSessions([]);
         navigate("/list-syllabus");
       } else {
-        message.error("Failed to create syllabus");
+        message.error("Tạo chương trình học thất bại");
       }
     } catch (error) {
       console.error("Error creating syllabus:", error);
@@ -429,6 +429,23 @@ const AddSyllabusScreen: React.FC = () => {
 
     // Update total slot count
     setTotalSlotCount((prev) => prev - 1);
+  };
+
+  const handleTypeChange = (sessionIndex: number, slotIndex: number, value: string) => {
+    if (value === 'exam') {
+      // Set sessionUnits to 1 (Một buổi) when exam is selected
+      form.setFieldsValue({
+        sessions: {
+          [sessionIndex]: {
+            slots: {
+              [slotIndex]: {
+                sessionUnits: 1
+              }
+            }
+          }
+        }
+      });
+    }
   };
 
   const steps = [
@@ -588,7 +605,7 @@ const AddSyllabusScreen: React.FC = () => {
                           label="Hoạt động chính"
                           rules={[{ required: true }]}
                         >
-                          <Select>
+                          <Select onChange={(value) => handleTypeChange(sessionIndex, slotIndex, value)}>
                             <Option value="Lesson">Bài học</Option>
                             <Option value="exam">Kiểm tra</Option>
                             <Option value="lesson_exam">Học và kiểm tra</Option>

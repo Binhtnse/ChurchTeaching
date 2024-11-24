@@ -70,7 +70,7 @@ const EnrollDetailScreen: React.FC = () => {
           `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/approve`
         );
         console.log("Approval response:", response.data);
-        message.success("Enrollment approved successfully");
+        message.success("Đã chấp nhận đơn đăng kí học!");
         navigate("/enroll-list");
       } else if (action === "reject") {
         setIsRejectModalVisible(true);
@@ -102,7 +102,7 @@ const EnrollDetailScreen: React.FC = () => {
         `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/reject?message=${encodedReason}`
       );
       console.log("Rejection response:", response.data);
-      message.success("Enrollment rejected successfully");
+      message.success("Đã từ chối đơn đăng kí học!");
       setIsRejectModalVisible(false);
       navigate("/enroll-list");
     } catch (error) {
@@ -155,18 +155,26 @@ const EnrollDetailScreen: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4 text-gray-700">
               Câu trả lời
             </h2>
-            {enrollmentData.answers.map((answer, index) => (
-              <div key={index} className="mb-4 bg-gray-50 p-4 rounded-lg">
-                <p className="font-medium text-gray-700">
-                  {index + 1}. {answer.questionText}
-                </p>
-                <p className="mt-2 text-gray-600">
-                  {answer.answerText ||
-                    answer.selectedOptions?.join(", ") ||
-                    "N/A"}
-                </p>
-              </div>
-            ))}
+            {enrollmentData.answers.map((answer, index) => {
+              const answerContent =
+                answer.answerText || answer.selectedOptions?.join(", ");
+
+              if (
+                answerContent &&
+                answerContent.trim() !== "" &&
+                answerContent.trim().toLowerCase() !== "null"
+              ) {
+                return (
+                  <div key={index} className="mb-4 bg-gray-50 p-4 rounded-lg">
+                    <p className="font-medium text-gray-700">
+                      {index + 1}. {answer.questionText}
+                    </p>
+                    <p className="mt-2 text-gray-600">{answerContent}</p>
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
 
           {enrollmentData.links && enrollmentData.links.length > 0 && (

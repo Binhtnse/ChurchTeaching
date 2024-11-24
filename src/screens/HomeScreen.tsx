@@ -3,10 +3,12 @@ import React, { useEffect, useState } from "react";
 import { Row, Col, Carousel, List, Card, message, Spin } from "antd";
 import axios from "axios";
 import styled from "styled-components";
+import { useNavigate } from 'react-router-dom';
 
 interface UserDTO {
   id: number;
   fullName: string;
+  createdDate?: string;
 }
 
 interface PostDTO {
@@ -18,7 +20,6 @@ interface PostDTO {
   categoryId: number;
   userId: number;
   category: any;
-  createdDate?: string; // Ngày đăng bài
   user?: UserDTO; // Thông tin người đăng bài
 }
 
@@ -27,6 +28,7 @@ const HomeScreen: React.FC = () => {
   const [gridPosts, setGridPosts] = useState<PostDTO[]>([]);
   const [latestPosts, setLatestPosts] = useState<PostDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPosts();
@@ -60,30 +62,39 @@ const HomeScreen: React.FC = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) {
-      return "No date available";
+      return "Chưa có ngày";
     }
     const date = new Date(dateString);
     return isNaN(date.getTime())
-      ? "Invalid Date"
-      : date.toLocaleDateString("en-US", {
+      ? "Ngày không hợp lệ"
+      : date.toLocaleDateString("vi-VN", {
           year: "numeric",
           month: "long",
           day: "numeric",
-        });
+      });
   };
 
   if (loading)
-    return <Spin size="large" style={{ display: "block", margin: "20px auto" }} />;
+    return (
+      <Spin size="large" style={{ display: "block", margin: "20px auto" }} />
+    );
 
   return (
-    <div style={{ minHeight: "100vh", width: "97%", margin: "auto", padding: "20px 0" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "97%",
+        margin: "auto",
+        padding: "20px 0",
+      }}
+    >
       <Row gutter={32}>
         <Col span={16}>
           <Carousel autoplay dots>
             {spotlightPosts.map((post, index) => (
               <div key={index}>
                 <Card
-                  onClick={() => (window.location.href = `/post/${post.id}`)}
+                  onClick={() => navigate(`/post/${post.id}`)}
                   hoverable
                   cover={<StyledImage src={post.linkImage} alt={post.title} />}
                 >
@@ -92,10 +103,13 @@ const HomeScreen: React.FC = () => {
                     description={
                       <>
                         <small style={{ color: "gray", fontStyle: "italic" }}>
-                          Published on: {formatDate(post.createdDate)} by {post.user?.fullName || "Unknown"}
+                          Đăng vào ngày: {formatDate(post.user?.createdDate)} bởi{" "}
+                          {post.user?.fullName || "Unknown"}
                         </small>
                         <ContentTruncate
-                          dangerouslySetInnerHTML={{ __html: truncateContent(post.content) }}
+                          dangerouslySetInnerHTML={{
+                            __html: truncateContent(post.content),
+                          }}
                         />
                       </>
                     }
@@ -107,7 +121,11 @@ const HomeScreen: React.FC = () => {
         </Col>
         <Col span={8} style={{ maxHeight: "300px", overflowY: "auto" }}>
           <List
-            header={<h2><b>Bài Viết Mới Nhất</b></h2>}
+            header={
+              <h2>
+                <b>Bài Viết Mới Nhất</b>
+              </h2>
+            }
             itemLayout="horizontal"
             dataSource={latestPosts}
             renderItem={(item) => (
@@ -121,14 +139,15 @@ const HomeScreen: React.FC = () => {
                         textDecoration: "underline",
                         color: "blue",
                       }}
-                      onClick={() => (window.location.href = `/post/${item.id}`)}
+                      onClick={() => navigate(`/post/${item.id}`)}
                     >
                       {item.title}
                     </div>
                   }
                   description={
                     <small style={{ color: "gray", fontStyle: "italic" }}>
-                      Published on: {formatDate(item.createdDate)} by {item.user?.fullName || "Unknown"}
+                      Đăng vào ngày: {formatDate(item.user?.createdDate)} bởi{" "}
+                      {item.user?.fullName || "Unknown"}
                     </small>
                   }
                 />
@@ -150,7 +169,7 @@ const HomeScreen: React.FC = () => {
             renderItem={(item) => (
               <List.Item>
                 <StyledCard
-                  onClick={() => (window.location.href = `/post/${item.id}`)}
+                  onClick={() => navigate(`/post/${item.id}`)}
                   hoverable
                   cover={<StyledImage src={item.linkImage} alt={item.title} />}
                 >
@@ -159,10 +178,13 @@ const HomeScreen: React.FC = () => {
                     description={
                       <>
                         <small style={{ color: "gray", fontStyle: "italic" }}>
-                          Published on: {formatDate(item.createdDate)} by {item.user?.fullName || "Unknown"}
+                          Đăng vào ngày: {formatDate(item.user?.createdDate)} bởi{" "}
+                          {item.user?.fullName || "Unknown"}
                         </small>
                         <ContentTruncate
-                          dangerouslySetInnerHTML={{ __html: truncateContent(item.content) }}
+                          dangerouslySetInnerHTML={{
+                            __html: truncateContent(item.content),
+                          }}
                         />
                       </>
                     }

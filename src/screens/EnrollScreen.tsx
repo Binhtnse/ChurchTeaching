@@ -84,7 +84,7 @@ const EnrollScreen: React.FC = () => {
   const [currentGroup, setCurrentGroup] = useState(0);
   const [fileList, setFileList] = useState<unknown[]>([]);
   const [parentInfo, setParentInfo] = useState<{ [key: number]: unknown }>({});
-  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const [uploadedUrls, setUploadedUrls] = useState<{ [key: number]: string[] }>({});
   const [groupData, setGroupData] = useState<{ [key: string]: unknown }>({});
   const { setPageTitle } = usePageTitle();
 
@@ -285,7 +285,10 @@ const EnrollScreen: React.FC = () => {
                       if (onSuccess) {
                         onSuccess(secureUrl);
                       }
-                      setUploadedUrls((prevUrls) => [...prevUrls, secureUrl]);
+                      setUploadedUrls(prev => ({
+                        ...prev,
+                        [childrenData.length - 1]: [...(prev[childrenData.length - 1] || []), secureUrl]
+                      }));
                     } catch (error) {
                       console.error("Upload failed:", error);
                     }
@@ -305,6 +308,7 @@ const EnrollScreen: React.FC = () => {
     const currentChildData = form.getFieldsValue();
     setChildrenData((prevData) => [...prevData, currentChildData]);
     setCurrentGroup(1);
+    setFileList([]); // Reset file list for new child
     form.resetFields();
     form.setFieldsValue(parentInfo);
   };
@@ -421,7 +425,7 @@ const EnrollScreen: React.FC = () => {
       { ...childrenData[childrenData.length - 1], ...values },
     ];
 
-    const requestBody = finalChildData.map((childData) => ({
+    const requestBody = finalChildData.map((childData, index) => ({
       surveyId: 1,
       note: childData.note || "Đây là thông tin thêm cho khảo sát này.",
       gradeId: childData.gradeId as number,
@@ -446,7 +450,7 @@ const EnrollScreen: React.FC = () => {
             question.questionType === "choice" ? [formattedAnswer] : [],
         };
       }),
-      links: uploadedUrls,
+      links: uploadedUrls[index] || [],
     }));
 
     console.log("Request body:", JSON.stringify(requestBody, null, 2));

@@ -10,15 +10,13 @@ const AddPolicyScreen: React.FC = () => {
     absenceLimit: number;
     absenceWithPermissionLimit: number;
     tuitionFee: number;
+    numberOfMember: number;
   }) => {
     setLoading(true);
     try {
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/policy",
-        {
-          ...values,
-          numberOfMember: 3,
-        }
+        values
       );
       message.success("Tạo quy định thành công");
       form.resetFields();
@@ -26,7 +24,7 @@ const AddPolicyScreen: React.FC = () => {
     } catch (error) {
       message.error("Failed to create policy");
       console.log(error);
-    }finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -42,6 +40,22 @@ const AddPolicyScreen: React.FC = () => {
         layout="vertical"
         className="space-y-6"
       >
+        <Form.Item
+          name="numberOfMember"
+          label={
+            <span className="text-lg font-semibold">
+              Số thiếu nhi một lớp
+            </span>
+          }
+          rules={[
+            {
+              required: true,
+              message: "Vui lòng nhập số thiếu nhi một lớp",
+            },
+          ]}
+        >
+          <Input type="number" className="w-full h-10 text-lg" />
+        </Form.Item>
         <Form.Item
           name="absenceLimit"
           label={

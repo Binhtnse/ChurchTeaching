@@ -191,21 +191,44 @@ const StudentListScreen: React.FC = () => {
       </Button>
 
       {classDetails && (
-      <div className="mb-6">
-        <Title level={2} className="text-center text-gray-800 font-bold text-3xl">
-          {classDetails.className}
-        </Title>
-        <div className="bg-white p-4 rounded-lg shadow-md mb-4">
-          <p><strong>Khối:</strong> {classDetails.gradeName}</p>
-          <p><strong>Năm học:</strong> {classDetails.academicYear}</p>
-          <p><strong>Số lượng thiếu nhi:</strong> {classInfo?.students?.length || 0}</p>
-          <p><strong>Giáo lý viên chính:</strong> {classDetails.mainTeachers.map(t => t.name).join(', ')}</p>
+  <div className="mb-8">
+    <Title level={2} className="text-center text-gray-800 font-bold text-3xl mb-6">
+      {classDetails.className}
+    </Title>
+    <div className="bg-white p-6 rounded-lg shadow-md mb-4 grid grid-cols-2 gap-4">
+      <div className="col-span-2 lg:col-span-1">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center">
+            <span className="font-semibold text-gray-700 w-32">Khối:</span>
+            <span className="text-gray-600">{classDetails.gradeName}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-semibold text-gray-700 w-32">Năm học:</span>
+            <span className="text-gray-600">{classDetails.academicYear}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-semibold text-gray-700 w-32">Số thiếu nhi:</span>
+            <span className="text-gray-600">{classInfo?.students?.length || 0}</span>
+          </div>
+        </div>
+      </div>
+      <div className="col-span-2 lg:col-span-1">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-start">
+            <span className="font-semibold text-gray-700 w-32">Giáo lý viên chính:</span>
+            <span className="text-gray-600">{classDetails.mainTeachers.map(t => t.name).join(', ')}</span>
+          </div>
           {classDetails.assistantTeachers.length > 0 && (
-            <p><strong>Giáo lý viên phụ:</strong> {classDetails.assistantTeachers.map(t => t.name).join(', ')}</p>
+            <div className="flex items-start">
+              <span className="font-semibold text-gray-700 w-32">Giáo lý viên phụ:</span>
+              <span className="text-gray-600">{classDetails.assistantTeachers.map(t => t.name).join(', ')}</span>
+            </div>
           )}
         </div>
       </div>
-    )}
+    </div>
+  </div>
+)}
 
       <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4"
       >

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Card, Select, Table, Input, message, Tag, Button, Modal } from "antd";
 import axios from "axios";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface Lesson {
   id: number;
@@ -91,6 +92,7 @@ const AdminScheduleMapScreen: React.FC = () => {
   const [currentLesson] = useState<Lesson | null>(null);
   const [nextLesson] = useState<Lesson | null>(null);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const navigate = useNavigate();
 
   const fetchGrades = async () => {
     try {
@@ -98,12 +100,12 @@ const AdminScheduleMapScreen: React.FC = () => {
       const user = userString ? JSON.parse(userString) : null;
       const userId = user?.id;
       const accessToken = localStorage.getItem("accessToken");
-  
+
       if (!selectedYear) {
         setGrades([]); // Clear grades when no year selected
         return;
       }
-  
+
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/grade-leader/user/${userId}/year/${selectedYear}/grades`,
         {
@@ -112,7 +114,7 @@ const AdminScheduleMapScreen: React.FC = () => {
           },
         }
       );
-  
+
       if (response.data.status === "success") {
         setGrades(response.data.data);
       } else {
@@ -130,7 +132,7 @@ const AdminScheduleMapScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      
+
       // Check if response.data exists and is an array
       if (Array.isArray(response.data)) {
         const nextYear = response.data.find(
@@ -139,11 +141,11 @@ const AdminScheduleMapScreen: React.FC = () => {
         const currentYear = response.data.find(
           (year) => year.timeStatus === "NOW"
         );
-        
+
         // Filter out null/undefined values and set state
         const validYears = [nextYear, currentYear].filter(Boolean);
         setAcademicYears(validYears);
-        
+
         // Set selected year if nextYear exists
         if (nextYear) {
           setSelectedYear(nextYear.id);
@@ -153,7 +155,11 @@ const AdminScheduleMapScreen: React.FC = () => {
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        message.error(`Failed to fetch academic years: ${error.response?.data?.message || 'Network error'}`);
+        message.error(
+          `Failed to fetch academic years: ${
+            error.response?.data?.message || "Network error"
+          }`
+        );
       } else {
         message.error("Failed to fetch academic years");
       }
@@ -162,7 +168,7 @@ const AdminScheduleMapScreen: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     if (!selectedGrade || !selectedYear) return;
-  
+
     try {
       const [lessonsResponse, schedulesResponse] = await Promise.all([
         axios.get(
@@ -172,15 +178,15 @@ const AdminScheduleMapScreen: React.FC = () => {
           `https://sep490-backend-production.up.railway.app/api/v1/timetable/get-schedule?gradeId=${selectedGrade}&yearId=${selectedYear}`
         ),
       ]);
-  
+
       setLessons(lessonsResponse.data.data.slotDTOList);
       setSchedules(schedulesResponse.data.data);
-  
+
       const totalSessionUnits = lessonsResponse.data.data.slotDTOList.reduce(
         (sum: number, lesson: Lesson) => sum + lesson.sessionUnits,
         0
       );
-  
+
       setTotalSessions(totalSessionUnits);
       setRemainingSlots(
         schedulesResponse.data.data.length - Math.ceil(totalSessionUnits)
@@ -191,24 +197,34 @@ const AdminScheduleMapScreen: React.FC = () => {
       setSchedules([]);
       setTotalSessions(0);
       setRemainingSlots(0);
-  
+
       // Show specific error messages based on error type
       if (axios.isAxiosError(error)) {
         if (error.response) {
           if (error.response.status === 404) {
-            message.error('Không tìm thấy dữ liệu cho niên khóa và khối đã chọn');
+            message.error(
+              "Không tìm thấy dữ liệu cho niên khóa và khối đã chọn"
+            );
           } else if (error.response.status === 403) {
-            message.error('Bạn không có quyền truy cập dữ liệu này');
+            message.error("Bạn không có quyền truy cập dữ liệu này");
           } else {
-            message.error(`Lỗi khi tải dữ liệu: ${error.response.data.message || 'Vui lòng thử lại'}`);
+            message.error(
+              `Lỗi khi tải dữ liệu: ${
+                error.response.data.message || "Vui lòng thử lại"
+              }`
+            );
           }
         } else if (error.request) {
-          message.error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng');
+          message.error(
+            "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng"
+          );
         } else {
-          message.error('Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại');
+          message.error("Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại");
         }
       } else {
-        message.error('Đã xảy ra lỗi không xác định khi tải dữ liệu. Vui lòng thử lại');
+        message.error(
+          "Đã xảy ra lỗi không xác định khi tải dữ liệu. Vui lòng thử lại"
+        );
       }
     }
   }, [selectedGrade, selectedYear]);
@@ -220,7 +236,7 @@ const AdminScheduleMapScreen: React.FC = () => {
     if (selectedYear) {
       fetchGrades();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   useEffect(() => {
@@ -330,9 +346,11 @@ const AdminScheduleMapScreen: React.FC = () => {
       const lesson = lessons.find((l) => l.id === result.idSlot);
       return {
         orderSchedule: result.orderSchedule,
-        lessonName: lesson ? lesson.name : "Hoạt động khác",
+        lessonName: lesson?.slotType === 'exam' 
+          ? 'Kiểm tra' 
+          : (lesson?.name || "Hoạt động khác"),
         additionalActivity: result.note,
-        examName: lesson ? lesson.examName : "",
+        examName: lesson?.examName || "",
       };
     });
     setPreviewData(preview);
@@ -357,10 +375,11 @@ const AdminScheduleMapScreen: React.FC = () => {
         response.data.message || "Lịch học đã được lưu thành công"
       );
       setIsConfirmModalVisible(false);
+      navigate("/");
     } catch (error) {
       console.log(error);
       message.error("Không thể lưu lịch học. Vui lòng thử lại");
-    }finally {
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -432,15 +451,22 @@ const AdminScheduleMapScreen: React.FC = () => {
       dataIndex: "lessonName",
       key: "lessonName",
       render: (_: string, record: PreviewItem) => {
-        const lesson = lessons.find((l) => l.name === record.lessonName);
-        if (lesson?.examName) {
+        // Show only exam name with tag
+        if (record.lessonName === 'Kiểm tra') {
+          return <Tag color="orange">{record.examName}</Tag>;
+        }
+        
+        // Show both lesson name and exam name when both exist
+        if (record.lessonName && record.examName) {
           return (
             <div>
               <div>{record.lessonName}</div>
-              <Tag color="orange">{lesson.examName}</Tag>
+              <Tag color="orange">{record.examName}</Tag>
             </div>
           );
         }
+    
+        // Show regular lesson name
         return record.lessonName;
       },
     },
