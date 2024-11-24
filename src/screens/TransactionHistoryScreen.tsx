@@ -166,14 +166,14 @@ const TransactionHistoryScreen: React.FC = () => {
       title: "Tổng thanh toán",
       dataIndex: "amount",
       key: "amount",
-      render: (amount: number) => `${amount.toFixed(2)} VNĐ`,
+      render: (amount: number) => `${amount.toLocaleString()} VNĐ`,
     },
     {
       title: "Đóng góp thêm",
       dataIndex: "donate",
       key: "donate",
       render: (donate: number | null) =>
-        donate ? `${donate.toFixed(2)} VNĐ` : "-",
+        donate ? `${donate.toLocaleString()} VNĐ` : "-",
     },
     {
       title: "Ngày thanh toán",

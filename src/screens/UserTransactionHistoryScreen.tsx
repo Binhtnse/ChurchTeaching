@@ -124,6 +124,7 @@ const UserTransactionHistoryScreen: React.FC = () => {
 
   const fetchTransactions = useCallback(
     async (page: number = 1, pageSize: number = 10) => {
+      console.log('Selected Year ID:', selectedYear);
       try {
         setLoading(true);
         const userString = localStorage.getItem("userLogin");
@@ -154,10 +155,14 @@ const UserTransactionHistoryScreen: React.FC = () => {
           },
         });
 
+        // Handle empty or null response data
         if (response.data && response.data.data) {
           setTransactions(response.data.data);
+        } else {
+          setTransactions([]); // Set empty array if no data
         }
 
+        // Handle pagination even when no data
         if (response.data && response.data.pageResponse) {
           setPagination((prev) => ({
             ...prev,
@@ -168,19 +173,33 @@ const UserTransactionHistoryScreen: React.FC = () => {
         } else {
           setPagination((prev) => ({
             ...prev,
-            current: page,
+            total: 0,
+            current: 1,
             pageSize: pageSize,
           }));
         }
+
+        // Add a message when no data is found
+        if (!response.data?.data?.length) {
+          message.info('Không tìm thấy dữ liệu phù hợp với bộ lọc');
+        }
+
       } catch (error) {
         console.error("Error fetching transactions:", error);
         message.error("Failed to fetch transaction history");
+        setTransactions([]); // Clear transactions on error
+        setPagination((prev) => ({
+          ...prev,
+          total: 0,
+          current: 1,
+        }));
       } finally {
         setLoading(false);
       }
     },
     [selectedYear, selectedGrade, selectedClass]
   );
+
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -213,6 +232,23 @@ const UserTransactionHistoryScreen: React.FC = () => {
 
     fetchTransactions();
   }, [fetchTransactions]);
+
+  useEffect(() => {
+    let mounted = true;
+    
+    const fetchData = async () => {
+      if (mounted && selectedYear) {
+        await fetchTransactions(1, pagination.pageSize);
+      }
+    };
+    
+    fetchData();
+    
+    return () => {
+      mounted = false;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
 
   const columns = [
     {
@@ -280,7 +316,6 @@ const UserTransactionHistoryScreen: React.FC = () => {
                 placeholder="Chọn niên khóa"
                 onChange={(value) => {
                   setSelectedYear(value);
-                  fetchTransactions(1, pagination.pageSize);
                 }}
                 value={selectedYear}
               >

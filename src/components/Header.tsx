@@ -10,7 +10,7 @@ const { Title } = Typography;
 
 const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedIn, userName }) => {
   const navigate = useNavigate();
-  const { setIsLoggedIn, setRole, setUserName } = useAuthState();
+  const { setIsLoggedIn, setRole, setUserName, role } = useAuthState();
 
   const handleMenuClick = async (e: { key: string }) => {
     if (e.key === "logout") {
@@ -34,7 +34,7 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
 
   const menu = (
     <Menu onClick={handleMenuClick}>
-      <Menu.Item key="account">Thông tin tài khoản</Menu.Item>
+      {role !== "ADMIN" && <Menu.Item key="account">Thông tin tài khoản</Menu.Item>}
       <Menu.Item key="logout">Đăng xuất</Menu.Item>
     </Menu>
   );
