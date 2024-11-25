@@ -285,10 +285,8 @@ const CatechistClassGradeScreen: React.FC = () => {
                 onChange(clampedValue.toString());
             }
         }}
-        type="number"
         min={0}
         max={10}
-        step={0.1}
     />
 ));
 

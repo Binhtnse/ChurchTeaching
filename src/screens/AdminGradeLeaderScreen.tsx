@@ -29,6 +29,7 @@ interface GradeLeaderData {
 interface User {
   id: number;
   fullName: string;
+  account: string;
 }
 
 interface ApiResponse {
@@ -58,9 +59,9 @@ const AdminGradeLeaderScreen: React.FC = () => {
   const [editingGradeLeader, setEditingGradeLeader] =
     useState<GradeLeaderData | null>(null);
   const [editForm] = Form.useForm();
-  const [catechists, setCatechists] = useState<{ id: number; name: string }[]>(
-    []
-  );
+  const [catechists, setCatechists] = useState<
+    { id: number; name: string; account: string }[]
+  >([]);
   const [addLoading, setAddLoading] = useState(false);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
@@ -159,6 +160,7 @@ const AdminGradeLeaderScreen: React.FC = () => {
           response.data.data.map((user: User) => ({
             id: user.id,
             name: user.fullName,
+            account: user.account,
           }))
         );
       }
@@ -247,11 +249,11 @@ const AdminGradeLeaderScreen: React.FC = () => {
     setEditModalVisible(true);
   };
 
-  const handleEditSubmit = async (values: { 
-    isPrimary: string,
-    gradeId: number,
-    gradeLeaderAcademicYearId: number,
-    academicYearId: number 
+  const handleEditSubmit = async (values: {
+    isPrimary: string;
+    gradeId: number;
+    gradeLeaderAcademicYearId: number;
+    academicYearId: number;
   }) => {
     setEditLoading(true);
     try {
@@ -265,20 +267,20 @@ const AdminGradeLeaderScreen: React.FC = () => {
             leader.status === "ACTIVE" &&
             leader.id !== editingGradeLeader?.id
         );
-  
+
         if (existingPrimary) {
           message.error("Khối này đã có trưởng khối!");
           return;
         }
       }
-  
+
       const response = await axios.put(
         "https://sep490-backend-production.up.railway.app/api/v1/grade-leader/update",
         {
           gradeLeaderAcademicYearId: editingGradeLeader?.id,
           isPrimary: values.isPrimary,
           academicYearId: selectedYear,
-          gradeId: values.gradeId
+          gradeId: values.gradeId,
         },
         {
           headers: {
@@ -286,7 +288,7 @@ const AdminGradeLeaderScreen: React.FC = () => {
           },
         }
       );
-  
+
       if (response.data.status === "success") {
         message.success("Cập nhật thành công");
         setEditModalVisible(false);
@@ -499,7 +501,7 @@ const AdminGradeLeaderScreen: React.FC = () => {
             >
               {catechists.map((catechist) => (
                 <Select.Option key={catechist.id} value={catechist.id}>
-                  {catechist.name}
+                  {catechist.name} - {catechist.account}
                 </Select.Option>
               ))}
             </Select>

@@ -10,7 +10,6 @@ import {
   Select,
   message,
   Spin,
-  Tag,
 } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import styled from "styled-components";
@@ -100,6 +99,7 @@ interface WeekSchedule {
 interface ScheduleData {
   studentId: number;
   academicYear: string;
+  studentClassId: number;
   schedule: WeekSchedule[];
 }
 
@@ -272,7 +272,7 @@ const ParentScheduleScreen: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -285,7 +285,7 @@ const ParentScheduleScreen: React.FC = () => {
   console.log(parentDetailsLoading);
   const [modalKey, setModalKey] = useState(0);
   console.log(modalKey);
-  const [academicYears, setAcademicYears] = useState<
+  const [academicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
   const [parentDetails, setParentDetails] = useState<{
@@ -330,7 +330,12 @@ const ParentScheduleScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      setAcademicYears(response.data);
+      const currentYear = response.data.find(
+        (year: { timeStatus: string }) => year.timeStatus === "NOW"
+      );
+      if (currentYear) {
+        setSelectedYear(currentYear.year);
+      }
     } catch (error) {
       console.error("Error fetching academic years:", error);
       message.error("Failed to fetch academic years");
@@ -530,16 +535,6 @@ const ParentScheduleScreen: React.FC = () => {
       return acc;
     }, {} as { [key: string]: { [key: string]: Slot | null } });
 
-    // Add string comparison logs
-    console.log(
-      "API Sunday:",
-      [...slots[0].dayOfWeek].map((c) => c.charCodeAt(0))
-    );
-    console.log(
-      "Our Sunday:",
-      [..."Chủ nhật"].map((c) => c.charCodeAt(0))
-    );
-
     slots.forEach((slot) => {
       if (timetable[slot.dayOfWeek] && times.includes(slot.time)) {
         timetable[slot.dayOfWeek][slot.time] = slot;
@@ -593,8 +588,6 @@ const ParentScheduleScreen: React.FC = () => {
     timetable: { [key: string]: { [key: string]: Slot | null } },
     classItem: Class
   ) => {
-    console.log("Timetable for Sunday:", timetable["Chủ nhật"]);
-    console.log("All slots:", classItem.slots);
     const days = [
       "Thứ Hai",
       "Thứ Ba",
@@ -714,8 +707,10 @@ const ParentScheduleScreen: React.FC = () => {
                         )}
                         <div className="mt-2">
                           {(!slot.attendance?.isAbsent ||
-                            slot.attendance.isAbsent === "FUTURE" ||
-                            slot.attendance.isAbsent === "TRUE") && (
+                            slot.attendance.isAbsent === "ABSENT" ||
+                            slot.attendance.isAbsentWithPermission === "TRUE" ||
+                            slot.attendance.isAbsentWithPermission ===
+                              "FALSE") && (
                             <Button
                               type="primary"
                               icon={<EllipsisOutlined />}
@@ -752,29 +747,41 @@ const ParentScheduleScreen: React.FC = () => {
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
       const parentId = user?.id;
-
-      const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/student/${selectedStudent}`
-      );
-      const studentClassId = response.data.data;
+      const token = localStorage.getItem("accessToken");
 
       const payload = {
         parentId: parentId,
-        studentClassId: studentClassId,
+        studentClassId: scheduleData?.studentClassId,
         timeTableId: selectedSlot?.timeTableId,
         reason: values.reason,
       };
 
-      await axios.post(
+      const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/leave-requests",
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      message.success("Đã gửi đơn xin nghỉ thành công");
-      setIsModalVisible(false);
-    } catch (error) {
+      if (response.data.status === "error") {
+        message.error(response.data.message || "Không thể gửi đơn xin nghỉ");
+      } else {
+        message.success("Đã gửi đơn xin nghỉ thành công");
+        setIsModalVisible(false);
+      }
+    } catch (error: unknown) {
       console.error("Error submitting leave request:", error);
-      message.error("Không thể gửi đơn xin nghỉ");
+      if (error instanceof Error) {
+        message.error(
+          (error as { response?: { data?: { message?: string } } }).response
+            ?.data?.message || "Không thể gửi đơn xin nghỉ"
+        );
+      } else {
+        message.error("Không thể gửi đơn xin nghỉ");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -809,24 +816,11 @@ const ParentScheduleScreen: React.FC = () => {
                 <label className="text-sm font-medium text-gray-600">
                   Niên khóa
                 </label>
-                <Select
-                  className="w-full"
-                  placeholder="Chọn niên khóa"
-                  onChange={(value: string) => setSelectedYear(value)}
-                  value={selectedYear}
-                  allowClear
-                >
-                  {academicYears.map((year) => (
-                    <Select.Option key={year.id} value={year.year}>
-                      {year.year}{" "}
-                      {year.timeStatus === "NOW" && (
-                        <Tag color="blue" className="ml-2">
-                          Hiện tại
-                        </Tag>
-                      )}
-                    </Select.Option>
-                  ))}
-                </Select>
+                <div className="space-y-2">
+                  <Text strong className="text-lg">
+                    Niên Khóa: {selectedYear}
+                  </Text>
+                </div>
               </div>
 
               <div className="space-y-2">

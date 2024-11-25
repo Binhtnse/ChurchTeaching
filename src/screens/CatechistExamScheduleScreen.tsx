@@ -172,8 +172,12 @@ const CatechistExamScheduleScreen: React.FC = () => {
 
       const examData: ExamSchedule[] = [];
       response.data.data.schedule.forEach((week: WeekSchedule) => {
-        week.classes.forEach((classItem) => {
-          if (!selectedClass || classItem.className === selectedClass) {
+        week.classes
+          .filter(
+            (classItem) =>
+              !selectedClass || classItem.className === selectedClass
+          ) // Filter classes first
+          .forEach((classItem) => {
             classItem.slots.forEach((slot) => {
               if (slot.exams) {
                 const date = new Date(week.startDate);
@@ -198,8 +202,7 @@ const CatechistExamScheduleScreen: React.FC = () => {
                 });
               }
             });
-          }
-        });
+          });
       });
 
       setExamSchedules(examData);
@@ -210,8 +213,7 @@ const CatechistExamScheduleScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedYear, selectedClass]);
 
   useEffect(() => {
     fetchAcademicYears();
@@ -221,15 +223,15 @@ const CatechistExamScheduleScreen: React.FC = () => {
     if (selectedYear) {
       fetchClasses();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   useEffect(() => {
     if (selectedYear) {
       fetchSchedule();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear, selectedClass]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
 
   if (loading) {
     return (
@@ -276,7 +278,13 @@ const CatechistExamScheduleScreen: React.FC = () => {
         <div className="bg-white rounded-lg overflow-hidden">
           <Table
             columns={columns}
-            dataSource={examSchedules}
+            dataSource={
+              selectedClass
+                ? examSchedules.filter(
+                    (exam) => exam.className === selectedClass
+                  )
+                : examSchedules
+            }
             rowKey={(record) =>
               `${record.date}-${record.time}-${record.examName}-${record.className}`
             }

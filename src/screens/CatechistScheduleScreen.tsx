@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message, Tag, Button } from "antd";
+import { Card, Typography, Spin, Select, message, Button } from "antd";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
@@ -115,7 +115,7 @@ const CatechistScheduleScreen: React.FC = () => {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const savedWeek = localStorage.getItem("selectedWeek");
-  const [academicYears, setAcademicYears] = useState<
+  const [academicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
   const [selectedWeek, setSelectedWeek] = useState<number>(
@@ -194,14 +194,11 @@ const CatechistScheduleScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      setAcademicYears(response.data);
       const currentYear = response.data.find(
         (year: { timeStatus: string }) => year.timeStatus === "NOW"
       );
       if (currentYear) {
         setSelectedYear(currentYear.year);
-      } else if (response.data.length > 0) {
-        setSelectedYear(response.data[0].year);
       }
     } catch (error) {
       console.error("Error fetching academic years:", error);
@@ -501,24 +498,11 @@ const CatechistScheduleScreen: React.FC = () => {
             <label className="text-sm font-medium text-gray-600">
               Niên khóa
             </label>
-            <Select
-              className="w-full"
-              placeholder="Chọn niên khóa"
-              onChange={(value) => setSelectedYear(value)}
-              value={selectedYear}
-              allowClear
-            >
-              {academicYears.map((year) => (
-                <Select.Option key={year.id} value={year.year}>
-                  {year.year}{" "}
-                  {year.timeStatus === "NOW" && (
-                    <Tag color="blue" className="ml-2">
-                      Hiện tại
-                    </Tag>
-                  )}
-                </Select.Option>
-              ))}
-            </Select>
+            <div className="space-y-2">
+              <Text strong className="text-lg">
+                Niên Khóa: {selectedYear}
+              </Text>
+            </div>
           </div>
 
           <div className="space-y-2">

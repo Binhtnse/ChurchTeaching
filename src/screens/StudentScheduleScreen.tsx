@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message, Tag } from "antd";
+import { Card, Typography, Spin, Select, message } from "antd";
 import styled from "styled-components";
 
 const { Title, Text } = Typography;
@@ -76,7 +76,6 @@ const CalendarCell = styled.div`
   }
 `;
 
-
 const TimeCell = styled(CalendarCell)`
   font-weight: bold;
   display: flex;
@@ -97,9 +96,6 @@ const StudentScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [scheduleLoading, setScheduleLoading] = useState(false);
-  const [academicYears, setAcademicYears] = useState<
-    { id: number; year: string; timeStatus: string }[]
-  >([]);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
 
   const fetchSchedule = useCallback(async () => {
@@ -155,7 +151,6 @@ const StudentScheduleScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      setAcademicYears(response.data);
       const currentYear = response.data.find(
         (year: { timeStatus: string }) => year.timeStatus === "NOW"
       );
@@ -390,23 +385,11 @@ const StudentScheduleScreen: React.FC = () => {
             <label className="text-sm font-medium text-gray-600">
               Niên khóa
             </label>
-            <Select
-              className="w-full"
-              placeholder="Chọn niên khóa"
-              onChange={(value: string) => setSelectedYear(value)}
-              value={selectedYear}
-            >
-              {academicYears.map((year) => (
-                <Option key={year.id} value={year.year}>
-                  {year.year}{" "}
-                  {year.timeStatus === "NOW" && (
-                    <Tag color="blue" className="ml-2">
-                      Hiện tại
-                    </Tag>
-                  )}
-                </Option>
-              ))}
-            </Select>
+            <div className="space-y-2">
+              <Text strong className="text-lg">
+                Niên Khóa: {selectedYear}
+              </Text>
+            </div>
           </div>
 
           <div className="space-y-2">

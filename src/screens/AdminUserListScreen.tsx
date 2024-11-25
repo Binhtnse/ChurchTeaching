@@ -31,6 +31,7 @@ interface User {
   email: string;
   role: string;
   status: string;
+  account: string;
 }
 
 interface NewUser {
