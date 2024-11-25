@@ -217,6 +217,7 @@ const AddSyllabusScreen: React.FC = () => {
         academicYearId: Number(currentFormValues.academicYearId),
         name: currentFormValues.name,
         duration: currentFormValues.duration,
+        gradeTemplateId: 1,
         levelName:
           grades.find((g) => g.id === currentFormValues.grade)?.name || "",
         levelID: Number(currentFormValues.grade),
