@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { Row, Col, Carousel, List, Card, message, Spin } from "antd";
-import axios from "axios";
+import { Row, Col, List, Card, message, Spin } from "antd";
 import styled from "styled-components";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 interface UserDTO {
   id: number;
@@ -20,19 +20,31 @@ interface PostDTO {
   categoryId: number;
   userId: number;
   category: any;
-  user?: UserDTO; // Thông tin người đăng bài
+  user?: UserDTO;
 }
 
 const HomeScreen: React.FC = () => {
-  const [spotlightPosts, setSpotLightPosts] = useState<PostDTO[]>([]);
+  const [spotlightPosts, setSpotlightPosts] = useState<PostDTO[]>([]);
   const [gridPosts, setGridPosts] = useState<PostDTO[]>([]);
   const [latestPosts, setLatestPosts] = useState<PostDTO[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  useEffect(() => {
+    if (spotlightPosts.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) =>
+          prevIndex === spotlightPosts.length - 1 ? 0 : prevIndex + 1
+        );
+      }, 7000); // Chuyển bài viết sau 7 giây
+      return () => clearInterval(interval); // Clear interval khi component unmount
+    }
+  }, [spotlightPosts]);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -41,9 +53,9 @@ const HomeScreen: React.FC = () => {
         "https://sep490-backend-production.up.railway.app/api/posts"
       );
       const fetchedPosts = response.data;
-      setSpotLightPosts(fetchedPosts.filter((post) => post.category.id === 3));
-      setGridPosts(fetchedPosts.filter((post) => post.category.id === 4));
-      setLatestPosts(fetchedPosts.slice(0, 5));
+      setSpotlightPosts(fetchedPosts.filter((post) => post.category.id === 3)); // Bài viết tiêu điểm
+      setGridPosts(fetchedPosts.filter((post) => post.category.id === 4)); // Các bài viết dưới
+      setLatestPosts(fetchedPosts.slice(0, 5)); // Bài viết mới nhất
     } catch (error) {
       console.error("Error fetching posts:", error);
       message.error("Failed to fetch posts");
@@ -52,10 +64,14 @@ const HomeScreen: React.FC = () => {
     }
   };
 
+  const handleDotClick = (index: number) => {
+    setCurrentIndex(index);
+  };
+
   const truncateContent = (content: string) => {
     const lines = content.split("\n");
-    if (lines.length > 5) {
-      return lines.slice(0, 5).join("\n") + "...";
+    if (lines.length > 4) {
+      return lines.slice(0, 4).join("\n") + "...";
     }
     return content;
   };
@@ -88,74 +104,105 @@ const HomeScreen: React.FC = () => {
         padding: "20px 0",
       }}
     >
+      {/* Spotlight Posts */}
       <Row gutter={32}>
         <Col span={16}>
-          <Carousel autoplay dots>
-            {spotlightPosts.map((post, index) => (
-              <div key={index}>
-                <Card
-                  onClick={() => navigate(`/post/${post.id}`)}
-                  hoverable
-                  cover={<StyledImage src={post.linkImage} alt={post.title} />}
-                >
-                  <Card.Meta
-                    title={post.title}
-                    description={
-                      <>
-                        <small style={{ color: "gray", fontStyle: "italic" }}>
-                          Đăng vào ngày: {formatDate(post.user?.createdDate)} bởi{" "}
-                          {post.user?.fullName || "Unknown"}
-                        </small>
-                        <ContentTruncate
-                          dangerouslySetInnerHTML={{
-                            __html: truncateContent(post.content),
-                          }}
-                        />
-                      </>
-                    }
-                  />
-                </Card>
-              </div>
-            ))}
-          </Carousel>
-        </Col>
-        <Col span={8} style={{ maxHeight: "300px", overflowY: "auto" }}>
-          <List
-            header={
-              <h2>
-                <b>Bài Viết Mới Nhất</b>
-              </h2>
-            }
-            itemLayout="horizontal"
-            dataSource={latestPosts}
-            renderItem={(item) => (
-              <List.Item>
-                <List.Item.Meta
+          <SectionTitle>
+            <b>Bài Viết Tiêu Điểm</b>
+          </SectionTitle>
+          {spotlightPosts.length > 0 && (
+            <div>
+              <SpotlightCard
+                onClick={() =>
+                  navigate(`/post/${spotlightPosts[currentIndex].id}`)
+                }
+                hoverable
+              >
+                <StyledImage
+                  src={spotlightPosts[currentIndex].linkImage}
+                  alt={spotlightPosts[currentIndex].title}
+                />
+                <Card.Meta
                   title={
-                    <div
-                      style={{
-                        textAlign: "center",
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                        color: "blue",
-                      }}
-                      onClick={() => navigate(`/post/${item.id}`)}
-                    >
-                      {item.title}
-                    </div>
+                    <SpotlightTitle>
+                      {spotlightPosts[currentIndex].title}
+                    </SpotlightTitle>
                   }
                   description={
-                    <small style={{ color: "gray", fontStyle: "italic" }}>
-                      Đăng vào ngày: {formatDate(item.user?.createdDate)} bởi{" "}
-                      {item.user?.fullName || "Unknown"}
-                    </small>
+                    <>
+                      <small style={{ color: "gray", fontStyle: "italic" }}>
+                        Đăng vào ngày:{" "}
+                        {formatDate(
+                          spotlightPosts[currentIndex].user?.createdDate
+                        )}{" "}
+                        bởi{" "}
+                        {spotlightPosts[currentIndex].user?.fullName ||
+                          "Unknown"}
+                      </small>
+                      <ContentTruncate
+                        dangerouslySetInnerHTML={{
+                          __html: truncateContent(
+                            spotlightPosts[currentIndex].content
+                          ),
+                        }}
+                      />
+                    </>
                   }
                 />
-              </List.Item>
-            )}
-          />
+              </SpotlightCard>
+              <DotContainer>
+                {spotlightPosts.map((_, index) => (
+                  <Dot
+                    key={index}
+                    active={index === currentIndex}
+                    onClick={() => handleDotClick(index)}
+                  />
+                ))}
+              </DotContainer>
+            </div>
+          )}
+        </Col>
+
+        {/* Latest Posts */}
+        <Col span={8}>
+          <SectionTitle>
+            <b>Bài Viết Mới Nhất</b>
+          </SectionTitle>
+          <LatestPostsContainer>
+            <List
+              itemLayout="vertical"
+              dataSource={latestPosts}
+              renderItem={(item) => (
+                <List.Item>
+                  <List.Item.Meta
+                    title={
+                      <div
+                        style={{
+                          textAlign: "left",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          color: "blue",
+                        }}
+                        onClick={() => navigate(`/post/${item.id}`)}
+                      >
+                        {item.title}
+                      </div>
+                    }
+                    description={
+                      <small style={{ color: "gray", fontStyle: "italic" }}>
+                        Đăng vào ngày: {formatDate(item.user?.createdDate)} bởi{" "}
+                        {item.user?.fullName || "Unknown"}
+                      </small>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </LatestPostsContainer>
         </Col>
       </Row>
+
+      {/* Grid Posts */}
       <Row gutter={32} style={{ marginTop: "32px" }}>
         <Col span={24}>
           <List
@@ -169,10 +216,10 @@ const HomeScreen: React.FC = () => {
             renderItem={(item) => (
               <List.Item>
                 <StyledCard
-                  onClick={() => navigate(`/post/${item.id}`)}
                   hoverable
-                  cover={<StyledImage src={item.linkImage} alt={item.title} />}
+                  onClick={() => navigate(`/post/${item.id}`)}
                 >
+                  <StyledImage src={item.linkImage} alt={item.title} />
                   <Card.Meta
                     title={item.title}
                     description={
@@ -202,25 +249,66 @@ const HomeScreen: React.FC = () => {
 export default HomeScreen;
 
 // Styled Components
-const ContentTruncate = styled.div`
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4; /* Giới hạn số dòng hiển thị */
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const StyledCard = styled(Card)`
-  height: 330px; /* Chiều cao cố định cho các thẻ Card */
+const SpotlightCard = styled(Card)`
+  height: 300px; /* Giới hạn chiều cao bài viết tiêu điểm */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  overflow: hidden; /* Đảm bảo nội dung không vượt quá khung */
+  overflow: hidden; /* Ẩn nội dung vượt quá */
+  cursor: pointer;
+`;
+
+const SpotlightTitle = styled.h3`
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0;
+`;
+
+const StyledCard = styled(Card)`
+  height: 300px; /* Chiều cao đồng nhất */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
 `;
 
 const StyledImage = styled.img`
   width: 100%;
-  height: 140px; /* Chiều cao cố định cho hình ảnh */
-  object-fit: cover; /* Đảm bảo hình ảnh không bị tràn ra ngoài */
-  border-radius: 8px 8px 0 0; /* Tùy chỉnh góc bo tròn nếu cần */
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+`;
+
+const LatestPostsContainer = styled.div`
+  max-height: 300px; /* Chiều cao cố định */
+  overflow-y: auto; /* Hiển thị thanh cuộn khi nội dung vượt quá */
+  padding-right: 10px; /* Đệm để thanh cuộn không che nội dung */
+`;
+
+const ContentTruncate = styled.div`
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4; /* Giới hạn số dòng */
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const DotContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 10px;
+`;
+
+const Dot = styled.div<{ active: boolean }>`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: ${(props) => (props.active ? "blue" : "gray")};
+  cursor: pointer;
+`;
+const SectionTitle = styled.h2`
+  font-size: 1.5em; /* Tăng kích thước chữ */
+  font-weight: bold;
+  margin-bottom: 20px;
 `;
