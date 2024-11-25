@@ -43,7 +43,7 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
     <AntHeader className="bg-[#2F6FC8] flex items-center justify-between px-4">
       <Space className="flex items-center">
         <img
-          src="src\assets\vecteezy_cross-christian_1194154.png"
+          src="https://drive.google.com/file/d/1Q-VqcxNQx-LtWS3iokLi_CtbATD9LDQA/view?usp=sharing"
           alt="Church Logo"
           className="h-8 w-8 mr-2"
         />
