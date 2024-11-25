@@ -30,6 +30,7 @@ import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import CloudinaryUploadWidget from "../components/CloudinaryUploadWidget";
+import { Modal } from 'antd';
 import "./AddSyllabusScreen.css";
 
 const { Option } = Select;
@@ -945,45 +946,72 @@ const AddSyllabusScreen: React.FC = () => {
     },
   ];
 
+  const checkSyllabusExists = async (gradeId: number, yearId: number) => {
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/syllabus/check?gradeId=${gradeId}&yearId=${yearId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error checking syllabus:", error);
+      throw error;
+    }
+  };
+
   const next = () => {
     form
       .validateFields()
-      .then((values) => {
+      .then(async (values) => {
+        // Only check on first step
+        if (currentStep === 0) {
+          try {
+            const checkResult = await checkSyllabusExists(values.grade, values.academicYearId);
+            
+            if (checkResult.data[0] === "false") {
+              Modal.confirm({
+                title: 'Xác nhận',
+                content: checkResult.data[1],
+                okText: 'Tiếp tục',
+                cancelText: 'Hủy',
+                onOk: () => {
+                  const currentValues = form.getFieldsValue(true);
+                  setFormValues(currentValues);
+                  setCurrentStep(currentStep + 1);
+                }
+              });
+              return;
+            }
+          } catch (error) {
+            console.log(error)
+            message.error("Không thể kiểm tra thông tin chương trình học");
+            return;
+          }
+        }
+  
+        // Rest of your existing next() logic
         const currentValues = form.getFieldsValue(true);
         setFormValues(currentValues);
         setCurrentStep(currentStep + 1);
-        console.log("Current Form Values:", values);
-        console.log("Enriched Form Values:", {
-          ...values,
-          levelName: grades.find((g) => g.id === values.grade)?.name,
-          sessions: values.sessions?.map((session: Session) => ({
-            ...session,
-            slots: session.slots?.map((slot) => ({
-              ...slot,
-              examName: slot.examId
-                ? gradeTemplates.find((t) => t.id === slot.examId)?.name
-                : undefined,
-            })),
-          })),
-        });
+        
+        // Your existing validation logic for step 1
         if (currentStep === 1) {
           const selectedExamValues = Object.values(selectedExams);
           const totalRequiredExams = gradeTemplates.length;
-
+  
           if (selectedExamValues.length < totalRequiredExams) {
             message.error(
               `Vui lòng sử dụng tất cả ${totalRequiredExams} bài kiểm tra trong mẫu`
             );
             return;
           }
-
+  
           const uniqueExams = new Set(Object.values(selectedExams));
           if (uniqueExams.size !== selectedExamValues.length) {
             message.error("Không được chọn trùng bài kiểm tra");
             return;
           }
         }
-
+  
         const updatedValues = {
           ...values,
           levelName: grades.find((g) => g.id === values.grade)?.name,
@@ -997,7 +1025,7 @@ const AddSyllabusScreen: React.FC = () => {
             })),
           })),
         };
-
+  
         setFormValues(updatedValues);
         setCurrentStep(currentStep + 1);
       })
