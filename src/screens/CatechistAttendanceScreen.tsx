@@ -127,7 +127,7 @@ const CatechistAttendanceScreen: React.FC = () => {
         fetchStudents(classId);
       }
     }
-  }, [isLoggedIn, role, timeTableId, fetchAttendanceData, classId]);
+  }, [isLoggedIn, role, timeTableId, fetchAttendanceData, classId, dayOfWeek, weekNumber, time, date]);
 
   const handleBack = () => {
     navigate("/schedule");

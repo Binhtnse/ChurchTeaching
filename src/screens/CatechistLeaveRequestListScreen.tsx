@@ -102,7 +102,7 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-  
+
       // Refresh the leave requests list
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/leave-requests/catechist/${timeTableId}`,
@@ -120,7 +120,7 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
     }
   };
 
-  const { weekNumber, date, dayOfWeek, time } = location.state || {};
+  const { weekNumber, date, dayOfWeek, time, classId } = location.state || {};
 
   const columns = [
     {
@@ -204,14 +204,21 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
           </Button>
         </div>
       ),
-    }
+    },
   ];
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <Button
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate(`/schedule/attendance/${timeTableId}?dayOfWeek=${dayOfWeek}&weekNumber=${weekNumber}&time=${time}&date=${date}`)}
+        onClick={() =>
+          navigate(
+            `/schedule/attendance/${timeTableId}?dayOfWeek=${dayOfWeek}&weekNumber=${weekNumber}&time=${time}&date=${date}&classId=${classId}`, 
+            {
+              state: { weekNumber, date, dayOfWeek, time }
+            }
+          )
+        }
         className="mb-4 bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
       >
         Quay lại điểm danh
