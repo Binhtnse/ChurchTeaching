@@ -113,18 +113,18 @@ const CatechistScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [classes, setClasses] = useState<ClassData[]>([]);
+  console.log(classes)
+  const [classesLoading, setClassesLoading] = useState(false);
+  console.log(classesLoading)
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const savedWeek = localStorage.getItem("selectedWeek");
-  const [academicYears] = useState<
-    { id: number; year: string; timeStatus: string }[]
-  >([]);
+  const [academicYears, setAcademicYears] = useState<{ id: number; year: string; timeStatus: string }[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<number>(
     savedWeek ? parseInt(savedWeek) : 1
   );
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchClasses();
     const fetchSchedule = async () => {
       setLoading(true);
       setScheduleLoading(true);
@@ -186,7 +186,6 @@ const CatechistScheduleScreen: React.FC = () => {
     } else {
       setLoading(false); // Add this line to handle initial state
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   const fetchAcademicYears = async () => {
@@ -194,6 +193,7 @@ const CatechistScheduleScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
+      setAcademicYears(response.data); // Store the fetched years
       const currentYear = response.data.find(
         (year: { timeStatus: string }) => year.timeStatus === "NOW"
       );
@@ -256,16 +256,25 @@ const CatechistScheduleScreen: React.FC = () => {
   };
 
   const fetchClasses = async () => {
+    console.log('Fetching classes with year:', selectedYear);
+    setClassesLoading(true);
     try {
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
       const userId = user ? user.id : null;
-
-      if (!userId || !selectedYear) return;
-
+  
+      if (!userId || !selectedYear) {
+        console.log('Missing userId or selectedYear');
+        return;
+      }
+  
       const yearObj = academicYears.find((year) => year.year === selectedYear);
-      if (!yearObj) return;
-
+      if (!yearObj) {
+        console.log('Year object not found for:', selectedYear);
+        return;
+      }
+      console.log('Found year object:', yearObj);
+  
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/class/catechist/${userId}?page=1&size=100&academicYearId=${yearObj.id}`,
@@ -275,14 +284,24 @@ const CatechistScheduleScreen: React.FC = () => {
           },
         }
       );
+      console.log('API Response:', response.data);
       if (response.data.data) {
         setClasses(response.data.data);
       }
     } catch (error) {
       console.error("Error fetching classes:", error);
       message.error("Không thể tải danh sách lớp học");
+    } finally {
+      setClassesLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (selectedYear) {
+      fetchClasses();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
 
   const currentWeek = scheduleData?.schedule.find(
     (week) => week.weekNumber === selectedWeek
@@ -463,6 +482,15 @@ const CatechistScheduleScreen: React.FC = () => {
                                   const matchingClass = classes.find(
                                     (c) => c.name === classSlot.className
                                   );
+                                  console.log({
+                                    timeTableId: classSlot.timeTableId,
+                                    dayOfWeek: classSlot.dayOfWeek,
+                                    weekNumber: selectedWeek,
+                                    time: classSlot.time,
+                                    date: formattedDate,
+                                    classId: matchingClass?.id
+                                  });
+                                  console.log('Matching class:', matchingClass);
                                   if (matchingClass) {
                                     navigate(
                                       `/schedule/attendance/${classSlot.timeTableId}?dayOfWeek=${classSlot.dayOfWeek}&weekNumber=${selectedWeek}&time=${classSlot.time}&date=${formattedDate}&classId=${matchingClass.id}`
