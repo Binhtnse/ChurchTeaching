@@ -18,6 +18,7 @@ import {
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -30,10 +31,13 @@ interface Material {
 
 interface Slot {
   id: number;
-  name: string;
-  description: string;
+  name: string | null;
+  description: string | null;
   orderSlot: number;
   slotType: string;
+  examId: number;
+  sessionUnits: number;
+  examName: string;
   materialRequestDTO: Material;
 }
 
@@ -51,6 +55,71 @@ interface SyllabusData {
   levelName: string;
   sessions: Session[];
 }
+
+const StyledContainer = styled.div`
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const StyledHeader = styled(Card)`
+  .ant-card-body {
+    padding: 2rem;
+  }
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`;
+
+const StyledTitle = styled.h1`
+  font-size: 2.5rem;
+  color: #1890ff;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #1890ff;
+`;
+
+const StyledFilterSection = styled(Row)`
+  margin-bottom: 2rem;
+  .ant-select {
+    border-radius: 8px;
+  }
+`;
+
+const StyledCollapse = styled(Collapse)`
+  .ant-collapse-header {
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 1rem 1.5rem !important;
+  }
+
+  .ant-collapse-content-box {
+    padding: 1.5rem !important;
+  }
+`;
+
+const StyledSlotCard = styled(Card)`
+  margin-top: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  .ant-card-head {
+    background-color: #f8f9fa;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+
+  .ant-card-body {
+    padding: 1.5rem;
+  }
+`;
+
+const StyledBackButton = styled(Button)`
+  margin-bottom: 2rem;
+  &:hover {
+    transform: translateX(-3px);
+    transition: transform 0.2s;
+  }
+`;
 
 const SyllabusDetailScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -121,28 +190,26 @@ const SyllabusDetailScreen: React.FC = () => {
     : filteredSlots;
 
   return (
-    <div className="p-6">
-      <Button
+    <StyledContainer>
+      <StyledBackButton
         type="primary"
         onClick={handleReturn}
-        className="mb-4"
         icon={<ArrowLeftOutlined />}
       >
         Quay lại danh sách
-      </Button>
-      <Card className="mb-6">
-        <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
-          {syllabus.name}
-        </h1>
+      </StyledBackButton>
+      <StyledHeader>
+        <StyledTitle>{syllabus.name}</StyledTitle>
         <Row gutter={16}>
           <Col span={12}>
-            <ClockCircleOutlined /> <Text strong>Thời gian:</Text>{" "}
-            {syllabus.duration}
+            <ClockCircleOutlined className="text-blue-500 mr-2" />
+            <Text strong>Thời gian:</Text>{" "}
+            <span className="text-gray-700">{syllabus.duration}</span>
           </Col>
         </Row>
-      </Card>
+      </StyledHeader>
 
-      <Row gutter={16} className="mb-6">
+      <StyledFilterSection gutter={16}>
         <Col span={12}>
           <Select
             style={{ width: "100%" }}
@@ -172,53 +239,75 @@ const SyllabusDetailScreen: React.FC = () => {
             </Option>
             {filteredSlots.map((slot) => (
               <Option key={slot.id} value={slot.id}>
-                {slot.name}
+                Tiết {slot.orderSlot}
               </Option>
             ))}
           </Select>
         </Col>
-      </Row>
+      </StyledFilterSection>
 
-      <Collapse defaultActiveKey={[filteredSessions[0]?.id]}>
+      <StyledCollapse defaultActiveKey={[filteredSessions[0]?.id]}>
         {filteredSessions.map((session) => (
           <Panel header={session.name} key={session.id}>
             <Text>{session.description}</Text>
             {displaySlots
               .filter((slot) => session.slots.some((s) => s.id === slot.id))
               .map((slot) => (
-                <Card key={slot.id} title={slot.name} className="mt-4">
-                  <p>
-                    <Text strong>Mô tả:</Text> {slot.description}
-                  </p>
+                <StyledSlotCard
+                  key={slot.id}
+                  title={slot.name || slot.examName}
+                >
+                  {slot.description && (
+                    <p>
+                      <Text strong>Mô tả:</Text> {slot.description}
+                    </p>
+                  )}
                   <p>
                     <UserOutlined /> <Text strong>Loại tiết học:</Text>{" "}
                     {getVietnameseSlotType(slot.slotType)}
                   </p>
+                  {slot.examName && (
+                    <p>
+                      <Text strong>Bài kiểm tra:</Text> {slot.examName}
+                    </p>
+                  )}
+                  {slot.sessionUnits && (
+                    <p>
+                      <Text strong>Số tiết:</Text> {slot.sessionUnits}
+                    </p>
+                  )}
                   {slot.materialRequestDTO &&
                     slot.materialRequestDTO.links &&
-                    slot.materialRequestDTO.links.length > 0 && (
+                    slot.materialRequestDTO.links.some(
+                      (link) => link !== ""
+                    ) && (
                       <div>
                         <Text strong>Tài liệu:</Text>
-                        <p>{slot.materialRequestDTO.name}</p>
-                        {slot.materialRequestDTO.links.map((link, index) => (
-                          <Button
-                            key={index}
-                            type="link"
-                            icon={<LinkOutlined />}
-                            href={link}
-                            target="_blank"
-                          >
-                            Link tài liệu {index + 1}
-                          </Button>
-                        ))}
+                        {slot.materialRequestDTO.name && (
+                          <p>{slot.materialRequestDTO.name}</p>
+                        )}
+                        {slot.materialRequestDTO.links.map(
+                          (link, index) =>
+                            link && (
+                              <Button
+                                key={index}
+                                type="link"
+                                icon={<LinkOutlined />}
+                                href={link}
+                                target="_blank"
+                              >
+                                Link tài liệu {index + 1}
+                              </Button>
+                            )
+                        )}
                       </div>
                     )}
-                </Card>
+                </StyledSlotCard>
               ))}
           </Panel>
         ))}
-      </Collapse>
-    </div>
+      </StyledCollapse>
+    </StyledContainer>
   );
 };
 

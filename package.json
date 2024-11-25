@@ -19,6 +19,7 @@
     "@emotion/styled": "^11.13.0",
     "@mui/x-charts": "^7.22.0",
     "@reduxjs/toolkit": "^2.2.7",
+    "@types/styled-components": "^5.1.34",
     "antd": "^5.20.6",
     "axios": "^1.7.7",
     "chart.js": "^4.4.6",
