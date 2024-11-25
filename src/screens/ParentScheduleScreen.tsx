@@ -26,7 +26,7 @@ interface AttendanceData {
 }
 
 interface AttendanceDetail {
-  isAbsent: "ABSENT" | "FUTURE" | "FALSE";
+  isAbsent: "ABSENT" | "PRESENT";
   isAbsentWithPermission: "TRUE" | "FALSE";
   time: string;
 }
@@ -77,8 +77,8 @@ interface Slot {
 }
 
 interface Attendance {
-  isAbsent: string;
-  isAbsentWithPermission: string;
+  isAbsent: string | null;
+  isAbsentWithPermission: string | null;
 }
 
 interface Class {
@@ -121,11 +121,6 @@ const CalendarCell = styled.div`
   &:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
-`;
-
-const SundayCell = styled(CalendarCell)`
-  grid-column: 8;
-  background-color: #f6f8fa;
 `;
 
 const TimeCell = styled(CalendarCell)`
@@ -606,8 +601,8 @@ const ParentScheduleScreen: React.FC = () => {
       "Thứ Tư",
       "Thứ Năm",
       "Thứ Sáu",
-      "Thứ Bảy",
-      classItem.slots[0].dayOfWeek,
+      String.fromCharCode(84, 104, 432, 769, 32, 66, 97, 777, 121),
+      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
     ];
 
     const times = [...new Set(classItem.slots.map((slot) => slot.time))].sort();
@@ -622,11 +617,6 @@ const ParentScheduleScreen: React.FC = () => {
         }
       });
     });
-
-    console.log(
-      "Sunday slot data:",
-      timetable["Chủ nhật"] && timetable["Chủ nhật"]["08:00 - 11:00"]
-    );
 
     const weekStart = new Date(currentWeek!.startDate);
     const dates = days.map((_, index) => {
@@ -647,8 +637,8 @@ const ParentScheduleScreen: React.FC = () => {
         {times.map((time) => (
           <React.Fragment key={time}>
             <TimeCell>{time}</TimeCell>
-            {days.map((day, index) => {
-              const CellComponent = index === 6 ? SundayCell : CalendarCell;
+            {days.map((day) => {
+              const CellComponent = CalendarCell;
               const slot = timetable[day]?.[time] ?? null;
               return (
                 <CellComponent key={`${day}-${time}`}>
@@ -697,31 +687,33 @@ const ParentScheduleScreen: React.FC = () => {
                             </ul>
                           </div>
                         )}
-                        {slot.attendance &&
-                          slot.attendance.isAbsent !== "FUTURE" && (
-                            <div className="mt-2 pt-2 border-t border-gray-200">
-                              <Text
-                                className={`${
-                                  slot.attendance.isAbsent === "TRUE"
-                                    ? slot.attendance.isAbsentWithPermission ===
-                                      "TRUE"
-                                      ? "text-yellow-600"
-                                      : "text-red-600"
-                                    : "text-green-600"
-                                } font-medium`}
-                              >
-                                Trạng thái điểm danh:
-                                {slot.attendance.isAbsent === "TRUE"
-                                  ? slot.attendance.isAbsentWithPermission ===
+                        {slot.attendance && (
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <Text
+                              className={`${
+                                !slot.attendance?.isAbsent ||
+                                slot.attendance.isAbsent === "PRESENT"
+                                  ? "text-green-600"
+                                  : slot.attendance.isAbsentWithPermission ===
                                     "TRUE"
-                                    ? " Vắng có phép"
-                                    : " Vắng không phép"
-                                  : " Có mặt"}
-                              </Text>
-                            </div>
-                          )}
+                                  ? "text-yellow-600"
+                                  : "text-red-600"
+                              } font-medium`}
+                            >
+                              Trạng thái điểm danh:
+                              {!slot.attendance?.isAbsent
+                                ? " Chưa điểm danh"
+                                : slot.attendance.isAbsent === "PRESENT"
+                                ? " Có mặt"
+                                : slot.attendance.isAbsentWithPermission ===
+                                  "TRUE"
+                                ? " Vắng có phép"
+                                : " Vắng không phép"}
+                            </Text>
+                          </div>
+                        )}
                         <div className="mt-2">
-                          {(!slot.attendance ||
+                          {(!slot.attendance?.isAbsent ||
                             slot.attendance.isAbsent === "FUTURE" ||
                             slot.attendance.isAbsent === "TRUE") && (
                             <Button

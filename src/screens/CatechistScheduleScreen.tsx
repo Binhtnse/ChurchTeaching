@@ -43,6 +43,7 @@ interface Slot {
   materials: Material[];
   exams?: string;
   noteOfSlot: string | null;
+  isAttendanceMarked: "true" | "false";
 }
 
 interface Class {
@@ -224,18 +225,20 @@ const CatechistScheduleScreen: React.FC = () => {
   const createCombinedTimetable = (classes: Class[]): Timetable => {
     const timetable: Timetable = {};
     const processedTimeTableIds = new Set<string>();
-    
-    const classesWithSlots = classes.filter(classItem => classItem.slots && classItem.slots.length > 0);
-    
+
+    const classesWithSlots = classes.filter(
+      (classItem) => classItem.slots && classItem.slots.length > 0
+    );
+
     classesWithSlots.forEach((classItem) => {
       classItem.slots.forEach((slot) => {
         // Skip if we've already processed this timeTableId
         if (processedTimeTableIds.has(slot.timeTableId)) {
           return;
         }
-        
+
         processedTimeTableIds.add(slot.timeTableId);
-        
+
         const normalizedDay = normalizeVietnameseDay(slot.dayOfWeek);
         if (!timetable[normalizedDay]) {
           timetable[normalizedDay] = {};
@@ -421,6 +424,19 @@ const CatechistScheduleScreen: React.FC = () => {
                               )}
 
                             <div className="mt-2">
+                              <div className="mt-2">
+                                <Text
+                                  className={
+                                    classSlot.isAttendanceMarked === "true"
+                                      ? "text-green-600"
+                                      : "text-red-600"
+                                  }
+                                >
+                                  {classSlot.isAttendanceMarked === "true"
+                                    ? "Đã điểm danh"
+                                    : "Chưa điểm danh"}
+                                </Text>
+                              </div>
                               <Button
                                 type="primary"
                                 size="middle"
@@ -563,7 +579,7 @@ const CatechistScheduleScreen: React.FC = () => {
                     </Text>
                     <Card className="mb-4 mt-4">
                       {renderCalendar(
-                        createCombinedTimetable(currentWeek.classes), // Pass all classes
+                        createCombinedTimetable(currentWeek.classes) // Pass all classes
                       )}
                     </Card>
                   </div>
