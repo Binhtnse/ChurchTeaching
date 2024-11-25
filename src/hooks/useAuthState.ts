@@ -10,16 +10,12 @@ export const useAuthState = () => {
   const userNameRef = useRef("");
 
   const checkAuthState = useCallback(() => {
-    console.log("Checking auth state...");
     const userString = localStorage.getItem("userLogin");
     const accessToken = localStorage.getItem("accessToken");
-    console.log("UserString:", userString);
-    console.log("AccessToken:", accessToken);
 
     if (userString && accessToken) {
       try {
         const user = JSON.parse(userString);
-        console.log("Parsed user:", user);
         setRole(user.roleName?.toUpperCase() || "");
         setIsLoggedIn(true);
         setUserName(user.name || "");
