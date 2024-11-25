@@ -12,7 +12,7 @@ const MyFooter: React.FC = () => {
           <div className="flex flex-wrap justify-end -mx-4">
             <div className="w-full sm:w-1/4 px-4 mb-8 sm:mb-0">
               <Space direction="vertical">
-                <img src="https://www.vecteezy.com/png/1194154-cross-christian" alt="Church Logo" className="h-12" />
+                <img src="https://static.vecteezy.com/system/resources/previews/001/194/154/large_2x/cross-christian-png.png" alt="Church Logo" className="h-12" />
                 <Title level={4}>Nhà thờ giáo xứ Phước Vĩnh</Title>
               </Space>
             </div>
