@@ -5,21 +5,22 @@ import { Alert, Card, Spin, List } from "antd";
 import axios from "axios";
 import { useParams, Link } from "react-router-dom";
 
+interface UserDTO {
+  id: number;
+  fullName: string;
+  createdDate?: string;
+}
+
 interface PostDTO {
   id: number;
   title: string;
-  linkImage: any;
+  linkImage: string;
   content: string;
   customCSS: string;
   categoryId: number;
   userId: number;
-  user: {
-    id: number;
-    fullName: string;
-  };
   category: any;
-  createdDate: string; // Add createdDate field
-  author: string; // Add author field
+  user?: UserDTO;
 }
 
 export const PostDetail: React.FC = () => {
@@ -37,22 +38,10 @@ export const PostDetail: React.FC = () => {
 
   const fetchPost = async () => {
     try {
-      const response = await axios.get<PostDTO>(`https://sep490-backend-production.up.railway.app/api/posts/${id}`);
-      const postData = response.data;
-
-      setPost({
-        id: postData.id,
-        title: postData.title,
-        linkImage: postData.linkImage[0],
-        content: postData.content,
-        customCSS: postData.customCSS,
-        categoryId: postData.category.id,
-        userId: postData.user.id,
-        user: postData.user, // Include user field
-        category: postData.category,
-        createdDate: postData.createdDate, // Set createdDate field
-        author: postData.user.fullName, // Set author field
-      });
+      const response = await axios.get<PostDTO>(
+        `https://sep490-backend-production.up.railway.app/api/posts/${id}`
+      );
+      setPost(response.data);
     } catch (err) {
       setError("Failed to load post details.");
     } finally {
@@ -68,7 +57,9 @@ export const PostDetail: React.FC = () => {
       const fetchedPosts = response.data;
       const latest = fetchedPosts.slice(0, 5); // 5 bài viết mới nhất
       const others = fetchedPosts.filter(
-        (post) => !latest.some((latestPost) => latestPost.id === post.id) && post.id !== Number(id)
+        (post) =>
+          !latest.some((latestPost) => latestPost.id === post.id) &&
+          post.id !== Number(id)
       ); // Loại bài viết hiện tại và bài viết trong "Bài viết mới nhất"
 
       setLatestPosts(latest);
@@ -78,23 +69,62 @@ export const PostDetail: React.FC = () => {
     }
   };
 
-  if (loading) return <Spin size="large" style={{ display: "block", margin: "20px auto" }} />;
-  if (error) return <Alert message={error} type="error" showIcon style={{ textAlign: "center" }} />;
+  if (loading)
+    return (
+      <Spin size="large" style={{ display: "block", margin: "20px auto" }} />
+    );
+  if (error)
+    return (
+      <Alert
+        message={error}
+        type="error"
+        showIcon
+        style={{ textAlign: "center" }}
+      />
+    );
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) {
+      return "Chưa có ngày";
+    }
+    const date = new Date(dateString);
+    return isNaN(date.getTime())
+      ? "Ngày không hợp lệ"
+      : date.toLocaleDateString("vi-VN", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+  };
 
   return (
-    <div style={{ minHeight: "100vh", width: "90%", margin: "0 auto", padding: "32px 0", display: "flex", gap: "16px" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "90%",
+        margin: "0 auto",
+        padding: "32px 0",
+        display: "flex",
+        gap: "16px",
+      }}
+    >
       {/* Main content for the post */}
       <div style={{ width: "70%" }}>
         {post ? (
           <Card style={{ width: "100%", textAlign: "center" }}>
             <h1 className="my-5">{post.title}</h1>
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <img src={post.linkImage} alt={post.title} style={{ width: "300px", height: "300px" }} />
+              <img
+                src={post.linkImage}
+                alt={post.title}
+                style={{ width: "300px", height: "300px" }}
+              />
             </div>
             <p>
-              By {post.author} on{" "}
-              {new Date(post.createdDate).toLocaleDateString("en-GB")}
+              Đăng vào ngày: {formatDate(post.user?.createdDate)} bởi{" "}
+              {post.user?.fullName || "Unknown"}
             </p>
+
             <div
               dangerouslySetInnerHTML={{ __html: post.content }}
               style={{ marginTop: "16px" }}

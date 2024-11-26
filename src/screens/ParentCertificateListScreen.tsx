@@ -103,7 +103,7 @@ const ParentCertificateListScreen: React.FC = () => {
   const fetchGrades = useCallback(async () => {
     try {
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=10",
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=30",
         {
           headers: {
             Authorization: `Bearer ${token}`,

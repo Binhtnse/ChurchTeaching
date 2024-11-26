@@ -84,7 +84,9 @@ const EnrollScreen: React.FC = () => {
   const [currentGroup, setCurrentGroup] = useState(0);
   const [fileList, setFileList] = useState<unknown[]>([]);
   const [parentInfo, setParentInfo] = useState<{ [key: number]: unknown }>({});
-  const [uploadedUrls, setUploadedUrls] = useState<{ [key: number]: string[] }>({});
+  const [uploadedUrls, setUploadedUrls] = useState<{ [key: number]: string[] }>(
+    {}
+  );
   const [groupData, setGroupData] = useState<{ [key: string]: unknown }>({});
   const { setPageTitle } = usePageTitle();
 
@@ -105,6 +107,10 @@ const EnrollScreen: React.FC = () => {
       questions: [11, 12, 13, 14, 15, 16],
     },
   ];
+
+  const calculateAge = (birthDate: Dayjs): number => {
+    return dayjs().diff(birthDate, "year");
+  };
 
   const uploadToCloudinary = async (file: File) => {
     const CLOUD_NAME = "dlhd1ztab";
@@ -199,24 +205,51 @@ const EnrollScreen: React.FC = () => {
                             required: true,
                             message: `Vui lòng trả lời câu hỏi này!`,
                           },
-                          ...(question.questionId === 6 ? [
-                            {
-                              pattern: /^[0-9]{10}$/,
-                              message: 'Số điện thoại phải có 10 chữ số!'
-                            }
-                          ] : []),
-                          ...(question.questionId === 5 ? [
-                            {
-                              type: 'email' as const,
-                              message: 'Vui lòng nhập đúng định dạng email!'
-                            }
-                          ] : [])
+                          ...(question.questionId === 6
+                            ? [
+                                {
+                                  pattern: /^[0-9]{10}$/,
+                                  message: "Số điện thoại phải có 10 chữ số!",
+                                },
+                              ]
+                            : []),
+                          ...(question.questionId === 5
+                            ? [
+                                {
+                                  type: "email" as const,
+                                  message:
+                                    "Vui lòng nhập đúng định dạng email!",
+                                },
+                              ]
+                            : []),
                         ]
-                      : [])
+                      : []),
                   ]}
                 >
-                  {question.questionId === 9 ||
-                    question.questionId === 11 ||
+                  {question.questionId === 9 ? (
+                    <DatePicker
+                      format="DD-MM-YYYY"
+                      onChange={(date) => {
+                        if (date) {
+                          const age = calculateAge(date);
+                          const selectedGradeId = form.getFieldValue("gradeId");
+                          const selectedGradeObj = grades.find(
+                            (g) => g.id === selectedGradeId
+                          );
+
+                          if (selectedGradeObj && age < selectedGradeObj.age) {
+                            message.warning(
+                              `Thiếu nhi chưa đủ tuổi cho khối này. Yêu cầu ${selectedGradeObj.age} tuổi.`
+                            );
+                          }
+
+                          form.setFieldsValue({
+                            [question.questionId]: date,
+                          });
+                        }
+                      }}
+                    />
+                  ) : question.questionId === 11 ||
                     question.questionId === 13 ||
                     question.questionId === 15 ? (
                     <DatePicker
@@ -228,15 +261,19 @@ const EnrollScreen: React.FC = () => {
                       }}
                     />
                   ) : question.questionType === "text" ? (
-                    <Input {...(question.questionId === 6 ? {
-                      maxLength: 10,
-                      onKeyPress: (e) => {
-                        const isNumber = /[0-9]/.test(e.key);
-                        if (!isNumber) {
-                          e.preventDefault();
-                        }
-                      }
-                    } : {})}/>
+                    <Input
+                      {...(question.questionId === 6
+                        ? {
+                            maxLength: 10,
+                            onKeyPress: (e) => {
+                              const isNumber = /[0-9]/.test(e.key);
+                              if (!isNumber) {
+                                e.preventDefault();
+                              }
+                            },
+                          }
+                        : {})}
+                    />
                   ) : (
                     <Select placeholder="Chọn một lựa chọn">
                       {question.options?.map((option) => (
@@ -285,9 +322,12 @@ const EnrollScreen: React.FC = () => {
                       if (onSuccess) {
                         onSuccess(secureUrl);
                       }
-                      setUploadedUrls(prev => ({
+                      setUploadedUrls((prev) => ({
                         ...prev,
-                        [childrenData.length - 1]: [...(prev[childrenData.length - 1] || []), secureUrl]
+                        [childrenData.length - 1]: [
+                          ...(prev[childrenData.length - 1] || []),
+                          secureUrl,
+                        ],
                       }));
                     } catch (error) {
                       console.error("Upload failed:", error);
@@ -429,27 +469,28 @@ const EnrollScreen: React.FC = () => {
       surveyId: 1,
       note: childData.note || "Đây là thông tin thêm cho khảo sát này.",
       gradeId: childData.gradeId as number,
-      answers: surveyData?.questions.map((question) => {
-        const answer =
-          question.questionId <= 6
-            ? parentInfo[question.questionId]
-            : childData[question.questionId];
-        let formattedAnswer = answer;
-        if ([9, 11, 13, 15].includes(question.questionId)) {
-          formattedAnswer = answer
-            ? dayjs(answer as Dayjs).format("DD-MM-YYYY")
-            : null;
-        }
-        return {
-          questionId: question.questionId,
-          answerType: question.questionType,
-          answerText:
-            formattedAnswer !== undefined ? String(formattedAnswer) : null,
-          status: "ACTIVE",
-          selectedOptions:
-            question.questionType === "choice" ? [formattedAnswer] : [],
-        };
-      }),
+      answers:
+        surveyData?.questions?.map((question) => {
+          const answer =
+            question.questionId <= 6
+              ? parentInfo[question.questionId]
+              : childData[question.questionId];
+          let formattedAnswer = answer;
+          if ([9, 11, 13, 15].includes(question.questionId)) {
+            formattedAnswer = answer
+              ? dayjs(answer as Dayjs).format("DD-MM-YYYY")
+              : null;
+          }
+          return {
+            questionId: question.questionId,
+            answerType: question.questionType,
+            answerText:
+              formattedAnswer !== undefined ? String(formattedAnswer) : null,
+            status: "ACTIVE",
+            selectedOptions:
+              question.questionType === "choice" ? [formattedAnswer] : [],
+          };
+        }) || [],
       links: uploadedUrls[index] || [],
     }));
 
@@ -462,6 +503,10 @@ const EnrollScreen: React.FC = () => {
       );
       console.log("Registration successful:", response.data);
       setSubmittedChildName(values["childname"] as string);
+      const childNameAnswer = requestBody[0].answers.find(
+        (answer) => answer.questionId === 7
+      ); // Assuming question 7 is child name
+      setSubmittedChildName(childNameAnswer?.answerText || "thiếu nhi");
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error submitting registration:", error);
@@ -469,7 +514,6 @@ const EnrollScreen: React.FC = () => {
       setLoading(false);
     }
   };
-
   const handleSubmit = () => {
     form
       .validateFields()
