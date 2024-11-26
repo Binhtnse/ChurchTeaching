@@ -117,26 +117,39 @@ const ParentGradesProgressScreen: React.FC = () => {
   };
 
   const fetchClasses = useCallback(async () => {
-    if (!selectedAcademicYear || !selectedGrade) return;
+    if (!selectedAcademicYear || !selectedGrade || !selectedStudent) return;
     try {
-      const response = await axios.get(
+      // First API call to get student's class IDs
+      const studentClassesResponse = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/class/student/${selectedStudent}/classes?academicYearId=${selectedAcademicYear}`
+      );
+      
+      const studentClassIds = studentClassesResponse.data.data;
+  
+      // Second API call to get all classes
+      const allClassesResponse = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`
       );
-      // Handle empty data case
-      if (!response.data.data || response.data.data.length === 0) {
+  
+      // Filter classes to show only matching ones
+      const filteredClasses = allClassesResponse.data.data.filter((classItem: Class) =>
+        studentClassIds.includes(classItem.id)
+      );
+  
+      if (filteredClasses.length === 0) {
         setClasses([]);
-        message.info(
-          "Không tìm thấy lớp học nào cho khối và niên khóa đã chọn"
-        );
+        message.info("Không tìm thấy lớp học nào cho thiếu nhi này");
         return;
       }
-      setClasses(response.data.data);
+  
+      setClasses(filteredClasses);
     } catch (error) {
       console.log(error);
-      setClasses([]); // Reset classes array
+      setClasses([]);
       message.error("Không thể lấy danh sách lớp");
     }
-  }, [selectedAcademicYear, selectedGrade]);
+  }, [selectedAcademicYear, selectedGrade, selectedStudent]);
+  
 
   const fetchGradeTemplate = useCallback(async () => {
     try {
