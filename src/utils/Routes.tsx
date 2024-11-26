@@ -46,6 +46,10 @@ import StudentExamScheduleScreen from "../screens/StudentExamScheduleScreen";
 import ParentExamScheduleScreen from "../screens/ParentExamScheduleScreen";
 import CatechistExamScheduleScreen from "../screens/CatechistExamScheduleScreen";
 import AdminScheduleMapScreen from "../screens/CatechistScheduleMapScreen";
+import ParentListChildrenScreen from "../screens/ParentListChildrenScreen";
+import AdminGradeTemplateListScreen from "../screens/AdminGradeTemplateListScreen";
+import AdminCreateGradeTemplateScreen from "../screens/AdminCreateGradeTemplateScreen";
+import ParentChildrenDetailScreen from "../screens/ParentChildrenDetailScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -149,6 +153,22 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["PARENT"]}>
                 <ParentCertificateListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/children-list"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentListChildrenScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/children-list/:childId"
+            element={
+              <ProtectedRoute allowedRoles={["PARENT"]}>
+                <ParentChildrenDetailScreen />
               </ProtectedRoute>
             }
           />
@@ -286,6 +306,22 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["STUDENT"]}>
                 <StudentCertificateListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grade-template-list"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminGradeTemplateListScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-grade-template"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminCreateGradeTemplateScreen />
               </ProtectedRoute>
             }
           />

@@ -30,7 +30,7 @@ import ForbiddenScreen from "./ForbiddenScreen";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import CloudinaryUploadWidget from "../components/CloudinaryUploadWidget";
-import { Modal } from 'antd';
+import { Modal } from "antd";
 import "./AddSyllabusScreen.css";
 
 const { Option } = Select;
@@ -191,11 +191,19 @@ const AddSyllabusScreen: React.FC = () => {
   const [selectedExams, setSelectedExams] = useState<{ [key: string]: number }>(
     {}
   );
+  const [allGradeTemplates, setAllGradeTemplates] = useState<
+    Array<{
+      id: number;
+      name: string;
+      maxExamCount: number;
+      exams: GradeTemplate[];
+    }>
+  >([]);
   const [totalSlotCount, setTotalSlotCount] = useState(0);
   console.log(totalSlotCount);
   const [currentStep, setCurrentStep] = useState(0);
   const [policies, setPolicies] = useState<
-    { id: number; absenceLimit: number; absenceWithPermissionLimit: number }[]
+    { id: number; absenceLimit: number; absenceWithPermissionLimit: number; tuitionFee: number; numberOfMember: number }[]
   >([]);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
@@ -218,7 +226,7 @@ const AddSyllabusScreen: React.FC = () => {
         academicYearId: Number(currentFormValues.academicYearId),
         name: currentFormValues.name,
         duration: currentFormValues.duration,
-        gradeTemplateId: 1,
+        gradeTemplateId: Number(currentFormValues.gradeTemplateId),
         levelName:
           grades.find((g) => g.id === currentFormValues.grade)?.name || "",
         levelID: Number(currentFormValues.grade),
@@ -309,7 +317,7 @@ const AddSyllabusScreen: React.FC = () => {
           "https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10"
         );
         if (response.data.status === "success") {
-          setGradeTemplates(response.data.data[0].exams);
+          setAllGradeTemplates(response.data.data);
         }
       } catch (error) {
         console.error("Error fetching grade templates:", error);
@@ -400,22 +408,29 @@ const AddSyllabusScreen: React.FC = () => {
 
   const handleSlotCountChange = (sessionIndex: number, newValue: number) => {
     const currentSlots = sessions[sessionIndex].slots.length;
-    
+
     if (newValue < currentSlots) {
       // Remove excess slots
       const newSessions = [...sessions];
-      newSessions[sessionIndex].slots = newSessions[sessionIndex].slots.slice(0, newValue);
+      newSessions[sessionIndex].slots = newSessions[sessionIndex].slots.slice(
+        0,
+        newValue
+      );
       setSessions(newSessions);
-      
+
       // Update form values to remove excess slots
-      const currentFormValues = form.getFieldValue('sessions');
-      currentFormValues[sessionIndex].slots = currentFormValues[sessionIndex].slots.slice(0, newValue);
+      const currentFormValues = form.getFieldValue("sessions");
+      currentFormValues[sessionIndex].slots = currentFormValues[
+        sessionIndex
+      ].slots.slice(0, newValue);
       form.setFieldsValue({ sessions: currentFormValues });
-      
+
       // Update total slot count
-      setTotalSlotCount(prev => prev - (currentSlots - newValue));
-      
-      message.info(`Đã xóa ${currentSlots - newValue} bài học cuối cùng của chương này`);
+      setTotalSlotCount((prev) => prev - (currentSlots - newValue));
+
+      message.info(
+        `Đã xóa ${currentSlots - newValue} bài học cuối cùng của chương này`
+      );
     }
   };
 
@@ -433,20 +448,31 @@ const AddSyllabusScreen: React.FC = () => {
     setTotalSlotCount((prev) => prev - 1);
   };
 
-  const handleTypeChange = (sessionIndex: number, slotIndex: number, value: string) => {
-    if (value === 'exam') {
+  const handleTypeChange = (
+    sessionIndex: number,
+    slotIndex: number,
+    value: string
+  ) => {
+    if (value === "exam") {
       // Set sessionUnits to 1 (Một buổi) when exam is selected
       form.setFieldsValue({
         sessions: {
           [sessionIndex]: {
             slots: {
               [slotIndex]: {
-                sessionUnits: 1
-              }
-            }
-          }
-        }
+                sessionUnits: 1,
+              },
+            },
+          },
+        },
       });
+    }
+  };
+
+  const handleGradeTemplateChange = (templateId: number) => {
+    const selectedTemplate = allGradeTemplates.find(t => t.id === templateId);
+    if (selectedTemplate) {
+      setGradeTemplates(selectedTemplate.exams);
     }
   };
 
@@ -488,9 +514,9 @@ const AddSyllabusScreen: React.FC = () => {
                   const selectedYear = academicYears.find(
                     (year) => year.id === value
                   );
-                  if (selectedYear?.timeStatus === "NOW") {
+                  if (selectedYear?.timeStatus === "NOW" || selectedYear?.timeStatus === "PASS") {
                     return Promise.reject(
-                      "Chương trình này chỉ có thể áp dụng cho năm học sau"
+                      "Chương trình không thể áp dụng cho năm học đang chọn"
                     );
                   }
                   return Promise.resolve();
@@ -512,6 +538,21 @@ const AddSyllabusScreen: React.FC = () => {
             </Select>
           </Form.Item>
           <Form.Item
+            name="gradeTemplateId"
+            label="Khung kiểm tra"
+            rules={[
+              { required: true, message: "Vui lòng chọn khung kiểm tra" },
+            ]}
+          >
+            <Select onChange={handleGradeTemplateChange}>
+              {allGradeTemplates.map((template) => (
+                <Option key={template.id} value={template.id}>
+                  {template.name} ({template.maxExamCount} bài kiểm tra)
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
             name="policyId"
             label="Quy định"
             rules={[{ required: true }]}
@@ -519,7 +560,7 @@ const AddSyllabusScreen: React.FC = () => {
             <Select>
               {policies.map((policy) => (
                 <Option key={policy.id} value={policy.id}>
-                  {`Số buổi vắng không phép tối đa: ${policy.absenceLimit}, Số buổi vắng có phép tối đa: ${policy.absenceWithPermissionLimit}`}
+                  {`Số buổi vắng không phép tối đa: ${policy.absenceLimit}, Số buổi vắng có phép tối đa: ${policy.absenceWithPermissionLimit}, Số thiếu nhi 1 lớp: ${policy.numberOfMember}, Học phí: ${policy.tuitionFee}`}
                 </Option>
               ))}
             </Select>
@@ -570,7 +611,12 @@ const AddSyllabusScreen: React.FC = () => {
                     label="Số Bài Học"
                     rules={[{ required: true }]}
                   >
-                    <InputNumber min={1} onChange={(value) => handleSlotCountChange(sessionIndex, value || 0)} />
+                    <InputNumber
+                      min={1}
+                      onChange={(value) =>
+                        handleSlotCountChange(sessionIndex, value || 0)
+                      }
+                    />
                   </Form.Item>
                   <Title level={4}>Bài học</Title>
                   {session.slots.map((_slot, slotIndex) => {
@@ -607,7 +653,11 @@ const AddSyllabusScreen: React.FC = () => {
                           label="Hoạt động chính"
                           rules={[{ required: true }]}
                         >
-                          <Select onChange={(value) => handleTypeChange(sessionIndex, slotIndex, value)}>
+                          <Select
+                            onChange={(value) =>
+                              handleTypeChange(sessionIndex, slotIndex, value)
+                            }
+                          >
                             <Option value="Lesson">Bài học</Option>
                             <Option value="exam">Kiểm tra</Option>
                             <Option value="lesson_exam">Học và kiểm tra</Option>
@@ -965,53 +1015,56 @@ const AddSyllabusScreen: React.FC = () => {
         // Only check on first step
         if (currentStep === 0) {
           try {
-            const checkResult = await checkSyllabusExists(values.grade, values.academicYearId);
-            
+            const checkResult = await checkSyllabusExists(
+              values.grade,
+              values.academicYearId
+            );
+
             if (checkResult.data[0] === "false") {
               Modal.confirm({
-                title: 'Xác nhận',
+                title: "Xác nhận",
                 content: checkResult.data[1],
-                okText: 'Tiếp tục',
-                cancelText: 'Hủy',
+                okText: "Tiếp tục",
+                cancelText: "Hủy",
                 onOk: () => {
                   const currentValues = form.getFieldsValue(true);
                   setFormValues(currentValues);
                   setCurrentStep(currentStep + 1);
-                }
+                },
               });
               return;
             }
           } catch (error) {
-            console.log(error)
+            console.log(error);
             message.error("Không thể kiểm tra thông tin chương trình học");
             return;
           }
         }
-  
+
         // Rest of your existing next() logic
         const currentValues = form.getFieldsValue(true);
         setFormValues(currentValues);
         setCurrentStep(currentStep + 1);
-        
+
         // Your existing validation logic for step 1
         if (currentStep === 1) {
           const selectedExamValues = Object.values(selectedExams);
           const totalRequiredExams = gradeTemplates.length;
-  
+
           if (selectedExamValues.length < totalRequiredExams) {
             message.error(
               `Vui lòng sử dụng tất cả ${totalRequiredExams} bài kiểm tra trong mẫu`
             );
             return;
           }
-  
+
           const uniqueExams = new Set(Object.values(selectedExams));
           if (uniqueExams.size !== selectedExamValues.length) {
             message.error("Không được chọn trùng bài kiểm tra");
             return;
           }
         }
-  
+
         const updatedValues = {
           ...values,
           levelName: grades.find((g) => g.id === values.grade)?.name,
@@ -1025,7 +1078,7 @@ const AddSyllabusScreen: React.FC = () => {
             })),
           })),
         };
-  
+
         setFormValues(updatedValues);
         setCurrentStep(currentStep + 1);
       })

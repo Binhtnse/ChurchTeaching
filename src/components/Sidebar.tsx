@@ -18,7 +18,8 @@ import {
   FileDoneOutlined,
   ReadOutlined,
   UserOutlined,
-  FilePdfOutlined
+  FilePdfOutlined,
+  CheckSquareOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -149,6 +150,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         icon: <FormOutlined />,
       },
       {
+        key: "children-list",
+        label: "Danh sách các con",
+        icon: <TeamOutlined />,
+      },
+      {
         key: "parent-certificate-list",
         label: "Danh sách chứng chỉ lên lớp",
         icon: <FilePdfOutlined />,
@@ -224,6 +230,15 @@ const getMenuItems = (role: string): MenuItem[] => {
         children: [
           { key: "policy-list", label: "Xem tất cả quy định" },
           { key: "add-policy", label: "Thêm quy định" },
+        ],
+      },
+      {
+        key: "grade-template",
+        label: "Quản lý các khung kiểm tra",
+        icon: <CheckSquareOutlined />,
+        children: [
+          { key: "grade-template-list", label: "Xem tất cả khung kiểm tra" },
+          { key: "create-grade-template", label: "Thêm khung kiểm tra" },
         ],
       },
       {
