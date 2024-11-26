@@ -18,6 +18,7 @@ interface ClassData {
   gradeName: string;
   academicYear: string;
   status: string;
+  timeStatus: string;
 }
 
 interface ApiResponse {
@@ -204,20 +205,42 @@ const CatechistClassList: React.FC = () => {
 
   const columns = [
     {
-      title: <span className="text-blue-600 font-semibold">Tên lớp</span>,
+      title: <span className="text-blue-600 font-semibold text-base">Tên lớp</span>,
       dataIndex: "name",
       key: "name",
+      render: (text: string) => (
+        <span className="text-gray-700 font-medium">{text}</span>
+      ),
     },
     {
-      title: <span className="text-blue-600 font-semibold">Khối</span>,
+      title: <span className="text-blue-600 font-semibold text-base">Khối</span>,
       dataIndex: "gradeName",
       key: "gradeName",
+      render: (text: string) => (
+        <span className="text-gray-700">{text}</span>
+      ),
     },
     {
-      title: <span className="text-blue-600 font-semibold">Niên Khóa</span>,
+      title: <span className="text-blue-600 font-semibold text-base">Niên Khóa</span>,
       dataIndex: "academicYear",
       key: "academicYear",
+      render: (text: string) => (
+        <span className="text-gray-700">{text}</span>
+      ),
     },
+    {
+      title: <span className="text-blue-600 font-semibold text-base">Trạng thái</span>,
+      dataIndex: "timeStatus",
+      key: "timeStatus",
+      render: (timeStatus: string) => (
+        <span className={`px-3 py-1 rounded-full text-sm font-medium
+          ${timeStatus === 'not_done' ? 'bg-yellow-100 text-yellow-700' : 
+            timeStatus === 'is_done' ? 'bg-green-100 text-green-700' : ''}`}>
+          {timeStatus === 'not_done' ? 'Chưa hoàn thành' : 
+           timeStatus === 'is_done' ? 'Đã hoàn thành' : ''}
+        </span>
+      ),
+    }
   ];
 
   return (
@@ -276,11 +299,14 @@ const CatechistClassList: React.FC = () => {
             rowKey="id"
             pagination={pagination}
             onChange={handleTableChange}
-            className="mb-4 overflow-x-auto"
-            rowClassName="hover:bg-gray-50"
+            className="mb-4 overflow-x-auto shadow-sm rounded-lg"
+            rowClassName={() => 
+              "hover:bg-blue-50 transition-colors duration-200 text-base border-b"
+            }
             onRow={(record) => ({
               onClick: () => handleRowClick(record),
               style: { cursor: "pointer" },
+              className: "hover:shadow-md transition-shadow duration-200"
             })}
           />
         </Spin>
