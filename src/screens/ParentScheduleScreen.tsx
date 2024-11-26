@@ -10,6 +10,7 @@ import {
   Select,
   message,
   Spin,
+  Tag,
 } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import styled from "styled-components";
@@ -584,6 +585,8 @@ const ParentScheduleScreen: React.FC = () => {
     });
   };
 
+  const isYearPassed = academicYears.find(y => y.year === selectedYear)?.timeStatus === "PASS";
+
   const renderCalendar = (
     timetable: { [key: string]: { [key: string]: Slot | null } },
     classItem: Class
@@ -715,6 +718,7 @@ const ParentScheduleScreen: React.FC = () => {
                               type="primary"
                               icon={<EllipsisOutlined />}
                               size="middle"
+                              disabled={isYearPassed}
                               className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
                               onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
@@ -816,11 +820,23 @@ const ParentScheduleScreen: React.FC = () => {
                 <label className="text-sm font-medium text-gray-600">
                   Niên khóa
                 </label>
-                <div className="space-y-2">
-                  <Text strong className="text-lg">
-                    Niên Khóa: {selectedYear}
-                  </Text>
-                </div>
+                <Select
+                  className="w-full"
+                  value={selectedYear}
+                  onChange={(value) => setSelectedYear(value)}
+                  placeholder="Chọn niên khóa"
+                >
+                  {academicYears.map((year) => (
+                    <Select.Option key={year.id} value={year.year}>
+                      {year.year}
+                      {year.timeStatus === "NOW" && (
+                        <Tag color="blue" className="ml-2">
+                          Hiện tại
+                        </Tag>
+                      )}
+                    </Select.Option>
+                  ))}
+                </Select>
               </div>
 
               <div className="space-y-2">

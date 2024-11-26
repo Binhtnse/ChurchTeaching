@@ -23,6 +23,19 @@ interface ChildHistory {
   isTuitioned: string;
 }
 
+interface UserDetails {
+  id: number;
+  fullName: string;
+  email: string | null;
+  dob: string;
+  address: string | null;
+  gender: string;
+  phoneNumber: string | null;
+  role: string;
+  status: string;
+  account: string;
+}
+
 const ParentChildrenDetailScreen: React.FC = () => {
   const { childId } = useParams();
   const [history, setHistory] = useState<ChildHistory[]>([]);
@@ -30,18 +43,22 @@ const ParentChildrenDetailScreen: React.FC = () => {
   const { isLoggedIn, role } = useAuthState();
   const { setPageTitle } = usePageTitle();
   const navigate = useNavigate();
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
   useEffect(() => {
     setPageTitle("Chi tiết học tập", "#4154f1");
   }, [setPageTitle]);
 
   useEffect(() => {
-    const fetchChildHistory = async () => {
+    const fetchData = async () => {
       if (!isLoggedIn || role !== "PARENT") return;
 
       try {
+        setLoading(true);
         const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get(
+
+        // Fetch child history
+        const historyResponse = await axios.get(
           `https://sep490-backend-production.up.railway.app/api/v1/get-histody-child/${childId}`,
           {
             headers: {
@@ -49,16 +66,30 @@ const ParentChildrenDetailScreen: React.FC = () => {
             },
           }
         );
-        setHistory(response.data.data);
+        setHistory(historyResponse.data.data);
+
+        // Fetch user details
+        const userResponse = await axios.get(
+          `https://sep490-backend-production.up.railway.app/api/v1/user?id=${childId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (userResponse.data.status === "success") {
+          setUserDetails(userResponse.data.data);
+        }
       } catch (error) {
-        console.error("Error fetching child history:", error);
-        message.error("Không thể tải lịch sử học tập");
+        console.error("Error fetching data:", error);
+        message.error("Không thể tải thông tin");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchChildHistory();
+    fetchData();
   }, [childId, isLoggedIn, role]);
 
   const columns = [
@@ -123,26 +154,83 @@ const ParentChildrenDetailScreen: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <Button
-        type="link"
-        icon={<LeftOutlined />}
-        onClick={() => navigate("/children-list")}
-        className="mb-4"
-      >
-        Quay lại
-      </Button>
-      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
-        Lịch sử học tập
-      </h1>
+    <div className="p-8 bg-gradient-to-b from-white to-blue-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <Button
+          type="link"
+          icon={<LeftOutlined />}
+          onClick={() => navigate("/children-list")}
+          className="mb-6 hover:text-blue-700 flex items-center text-lg"
+        >
+          Quay lại
+        </Button>
 
-      <Table
-        columns={columns}
-        dataSource={history}
-        rowKey={(record) => `${record.yearId}-${record.classId}`}
-        pagination={false}
-        className="w-full bg-white rounded-lg shadow"
-      />
+        {userDetails && (
+          <div className="mb-8 bg-white rounded-xl shadow-lg p-6 border border-blue-100">
+            <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
+              Thông tin thiếu nhi
+            </h1>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <span className="font-semibold text-gray-700 w-32">
+                    Họ và tên:
+                  </span>
+                  <span className="text-gray-800">{userDetails.fullName}</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="font-semibold text-gray-700 w-32">
+                    Ngày sinh:
+                  </span>
+                  <span className="text-gray-800">{userDetails.dob}</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="font-semibold text-gray-700 w-32">
+                    Giới tính:
+                  </span>
+                  <span className="text-gray-800">
+                    {userDetails.gender === "MALE" ? "Nam" : "Nữ"}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <span className="font-semibold text-gray-700 w-32">
+                    Email:
+                  </span>
+                  <span className="text-gray-800">
+                    {userDetails.email || "Chưa cập nhật"}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <span className="font-semibold text-gray-700 w-32">
+                    Số điện thoại:
+                  </span>
+                  <span className="text-gray-800">
+                    {userDetails.phoneNumber || "Chưa cập nhật"}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <span className="font-semibold text-gray-700 w-32">
+                    Địa chỉ:
+                  </span>
+                  <span className="text-gray-800">
+                    {userDetails.address || "Chưa cập nhật"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <Table
+              columns={columns}
+              dataSource={history}
+              rowKey={(record) => `${record.yearId}-${record.classId}`}
+              pagination={false}
+              className="w-full mt-6"
+              rowClassName="hover:bg-blue-50 transition-colors"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

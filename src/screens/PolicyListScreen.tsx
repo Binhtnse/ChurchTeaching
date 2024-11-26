@@ -61,6 +61,12 @@ const PolicyListScreen: React.FC = () => {
       render: (value: number | null) => value ?? "N/A",
     },
     {
+      title: "Số thiếu nhi 1 lớp",
+      dataIndex: "numberOfMember",
+      key: "numberOfMember",
+      align: "center" as const,
+    },
+    {
       title: "Học phí",
       dataIndex: "tuitionFee",
       key: "tuitionFee",

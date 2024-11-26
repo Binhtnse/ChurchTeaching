@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message } from "antd";
+import { Card, Typography, Spin, Select, message, Tag } from "antd";
 import styled from "styled-components";
 
 const { Title, Text } = Typography;
@@ -97,6 +97,9 @@ const StudentScheduleScreen: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string; timeStatus: string }[]
+  >([]);
 
   const fetchSchedule = useCallback(async () => {
     setScheduleLoading(true);
@@ -151,6 +154,7 @@ const StudentScheduleScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
+      setAcademicYears(response.data);
       const currentYear = response.data.find(
         (year: { timeStatus: string }) => year.timeStatus === "NOW"
       );
@@ -382,14 +386,26 @@ const StudentScheduleScreen: React.FC = () => {
       <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600">
+          <label className="text-sm font-medium text-gray-600">
               Niên khóa
             </label>
-            <div className="space-y-2">
-              <Text strong className="text-lg">
-                Niên Khóa: {selectedYear}
-              </Text>
-            </div>
+            <Select
+              className="w-full"
+              value={selectedYear}
+              onChange={(value) => setSelectedYear(value)}
+              placeholder="Chọn niên khóa"
+            >
+              {academicYears.map((year) => (
+                <Select.Option key={year.id} value={year.year}>
+                  {year.year}
+                  {year.timeStatus === "NOW" && (
+                      <Tag color="blue" className="ml-2">
+                        Hiện tại
+                      </Tag>
+                    )}
+                </Select.Option>
+              ))}
+            </Select>
           </div>
 
           <div className="space-y-2">

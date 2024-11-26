@@ -94,6 +94,7 @@ const StudentListScreen: React.FC = () => {
                 ...student,
                 gender: detailsResponse.data.data.gender,
                 email: detailsResponse.data.data.email,
+                account: detailsResponse.data.data.account,
                 phoneNumber: detailsResponse.data.data.phoneNumber,
               };
             }
@@ -163,6 +164,7 @@ const StudentListScreen: React.FC = () => {
       render: (gender: string) => gender === "MALE" ? "Nam" : "Nữ"
     },
     { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Tên tài khoản", dataIndex: "account", key: "account" },
     { title: "Số điện thoại", dataIndex: "phoneNumber", key: "phoneNumber" },
   ];  
 

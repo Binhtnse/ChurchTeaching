@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Card, Typography, Spin, Select, message, Button } from "antd";
+import { Card, Typography, Spin, Select, message, Button, Tag } from "antd";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
@@ -113,16 +113,19 @@ const CatechistScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [classes, setClasses] = useState<ClassData[]>([]);
-  console.log(classes)
+  console.log(classes);
   const [classesLoading, setClassesLoading] = useState(false);
-  console.log(classesLoading)
+  console.log(classesLoading);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const savedWeek = localStorage.getItem("selectedWeek");
-  const [academicYears, setAcademicYears] = useState<{ id: number; year: string; timeStatus: string }[]>([]);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string; timeStatus: string }[]
+  >([]);
   const [selectedWeek, setSelectedWeek] = useState<number>(
     savedWeek ? parseInt(savedWeek) : 1
   );
   const navigate = useNavigate();
+  const [isPastYear, setIsPastYear] = useState(false);
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -256,25 +259,25 @@ const CatechistScheduleScreen: React.FC = () => {
   };
 
   const fetchClasses = async () => {
-    console.log('Fetching classes with year:', selectedYear);
+    console.log("Fetching classes with year:", selectedYear);
     setClassesLoading(true);
     try {
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
       const userId = user ? user.id : null;
-  
+
       if (!userId || !selectedYear) {
-        console.log('Missing userId or selectedYear');
+        console.log("Missing userId or selectedYear");
         return;
       }
-  
+
       const yearObj = academicYears.find((year) => year.year === selectedYear);
       if (!yearObj) {
-        console.log('Year object not found for:', selectedYear);
+        console.log("Year object not found for:", selectedYear);
         return;
       }
-      console.log('Found year object:', yearObj);
-  
+      console.log("Found year object:", yearObj);
+
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/class/catechist/${userId}?page=1&size=100&academicYearId=${yearObj.id}`,
@@ -284,7 +287,7 @@ const CatechistScheduleScreen: React.FC = () => {
           },
         }
       );
-      console.log('API Response:', response.data);
+      console.log("API Response:", response.data);
       if (response.data.data) {
         setClasses(response.data.data);
       }
@@ -300,7 +303,7 @@ const CatechistScheduleScreen: React.FC = () => {
     if (selectedYear) {
       fetchClasses();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   const currentWeek = scheduleData?.schedule.find(
@@ -331,6 +334,12 @@ const CatechistScheduleScreen: React.FC = () => {
     };
     return mappings[day] || day;
   };
+
+  const handleYearChange = (value: string) => {
+    setSelectedYear(value);
+    const selectedYearData = academicYears.find(year => year.year === value);
+    setIsPastYear(selectedYearData?.timeStatus === 'PASS');
+  };  
 
   const renderCalendar = (timetable: Timetable) => {
     const days = [
@@ -456,6 +465,7 @@ const CatechistScheduleScreen: React.FC = () => {
                               <Button
                                 type="primary"
                                 size="middle"
+                                disabled={isPastYear}
                                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
                                 onClick={(e: React.MouseEvent) => {
                                   e.stopPropagation();
@@ -482,15 +492,6 @@ const CatechistScheduleScreen: React.FC = () => {
                                   const matchingClass = classes.find(
                                     (c) => c.name === classSlot.className
                                   );
-                                  console.log({
-                                    timeTableId: classSlot.timeTableId,
-                                    dayOfWeek: classSlot.dayOfWeek,
-                                    weekNumber: selectedWeek,
-                                    time: classSlot.time,
-                                    date: formattedDate,
-                                    classId: matchingClass?.id
-                                  });
-                                  console.log('Matching class:', matchingClass);
                                   if (matchingClass) {
                                     navigate(
                                       `/schedule/attendance/${classSlot.timeTableId}?dayOfWeek=${classSlot.dayOfWeek}&weekNumber=${selectedWeek}&time=${classSlot.time}&date=${formattedDate}&classId=${matchingClass.id}`
@@ -526,11 +527,23 @@ const CatechistScheduleScreen: React.FC = () => {
             <label className="text-sm font-medium text-gray-600">
               Niên khóa
             </label>
-            <div className="space-y-2">
-              <Text strong className="text-lg">
-                Niên Khóa: {selectedYear}
-              </Text>
-            </div>
+            <Select
+              className="w-full"
+              value={selectedYear}
+              onChange={handleYearChange}
+              placeholder="Chọn niên khóa"
+            >
+              {academicYears.map((year) => (
+                <Select.Option key={year.id} value={year.year}>
+                  {year.year}
+                  {year.timeStatus === "NOW" && (
+                      <Tag color="blue" className="ml-2">
+                        Hiện tại
+                      </Tag>
+                    )}
+                </Select.Option>
+              ))}
+            </Select>
           </div>
 
           <div className="space-y-2">

@@ -54,6 +54,7 @@ const AdminGradeLeaderScreen: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [addForm] = Form.useForm();
+  const [isSelectedYearPast, setIsSelectedYearPast] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editingGradeLeader, setEditingGradeLeader] =
@@ -335,6 +336,8 @@ const AdminGradeLeaderScreen: React.FC = () => {
 
   const handleYearChange = (value: number) => {
     setSelectedYear(value);
+    const selectedYearData = academicYears.find((year) => year.id === value);
+    setIsSelectedYearPast(selectedYearData?.timeStatus === "PASS");
   };
 
   const handleGradeChange = (value: number) => {
@@ -401,10 +404,15 @@ const AdminGradeLeaderScreen: React.FC = () => {
             type="primary"
             onClick={() => handleEdit(record)}
             className="bg-blue-500 hover:bg-blue-600"
+            disabled={isSelectedYearPast}
           >
             Chỉnh sửa
           </Button>
-          <Button danger onClick={() => handleDelete(record.id)}>
+          <Button
+            danger
+            onClick={() => handleDelete(record.id)}
+            disabled={isSelectedYearPast}
+          >
             Xóa
           </Button>
         </Space>
@@ -465,7 +473,7 @@ const AdminGradeLeaderScreen: React.FC = () => {
           type="primary"
           onClick={showModal}
           className="bg-blue-600 hover:bg-blue-700"
-          disabled={!selectedGrade || !selectedYear}
+          disabled={!selectedGrade || !selectedYear || isSelectedYearPast}
         >
           Thêm trưởng/phó khối
         </Button>

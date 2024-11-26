@@ -239,11 +239,20 @@ const EnrollListScreen: React.FC = () => {
     {
       title: "Hành động",
       key: "action",
-      render: (_: unknown, record: DataType) => (
-        <Link to={`/enroll-list/${record.key}`} state={{ status: record.status }}>
-          Xem chi tiết
-        </Link>
-      ),
+      render: (_: unknown, record: DataType) => {
+        const selectedYear = academicYears.find(year => year.id === selectedAcademicYear);
+        const isPastYear = selectedYear?.timeStatus === 'PASS';
+  
+        return (
+          <Link 
+            to={isPastYear ? '#' : `/enroll-list/${record.key}`}
+            state={{ status: record.status }}
+            className={`${isPastYear ? 'pointer-events-none text-gray-400' : ''}`}
+          >
+            {isPastYear ? 'Không khả dụng' : 'Xem chi tiết'}
+          </Link>
+        );
+      },
     },
   ];
 
