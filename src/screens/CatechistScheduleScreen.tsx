@@ -351,9 +351,11 @@ const CatechistScheduleScreen: React.FC = () => {
       String.fromCharCode(84, 104, 432, 769, 32, 66, 97, 777, 121),
       String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
     ];
-    const times = Object.values(timetable).some(
-      (day) => Object.keys(day).length > 0
-    )
+    const hasValidSlots = currentWeek?.classes.some(
+      classItem => classItem.slots && classItem.slots.length > 0
+    );
+    
+    const times = hasValidSlots 
       ? Array.from(
           new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
         ).sort()
