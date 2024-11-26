@@ -357,7 +357,7 @@ const CatechistScheduleScreen: React.FC = () => {
       ? Array.from(
           new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
         ).sort()
-      : ["Chưa có"];
+      : [];
 
     const weekStart = new Date(currentWeek!.startDate);
     const dates = days.map((_, index) => {
@@ -365,6 +365,28 @@ const CatechistScheduleScreen: React.FC = () => {
       date.setDate(weekStart.getDate() + index);
       return formatDate(date);
     });
+
+    if (times.length === 0) {
+      return (
+        <CalendarGrid>
+          <CalendarCell />
+          {days.map((day, index) => (
+            <DayCell key={day}>
+              <div>{day}</div>
+              <div className="text-sm mt-1">{dates[index]}</div>
+            </DayCell>
+          ))}
+          <TimeCell>Chưa có</TimeCell>
+          {days.map((day) => (
+            <CalendarCell key={`${day}-no-slots`}>
+              <div className="flex items-center justify-center h-full text-gray-500 text-center">
+                Lịch học của lớp đang chờ khối trưởng sắp xếp
+              </div>
+            </CalendarCell>
+          ))}
+        </CalendarGrid>
+      );
+    }
 
     return (
       <div>
@@ -384,12 +406,7 @@ const CatechistScheduleScreen: React.FC = () => {
                 const slot = timetable[day] && timetable[day][time];
                 return (
                   <CellComponent key={`${day}-${time}`}>
-                    {!slot ? (
-                      <div className="flex items-center justify-center h-full text-gray-500 text-center">
-                        Lịch học của lớp đang chờ khối trưởng sắp xếp
-                      </div>
-                    ) : (
-                      slot &&
+                    {slot &&
                       slot.map((classSlot, idx) => (
                         <div
                           key={idx}
@@ -481,7 +498,7 @@ const CatechistScheduleScreen: React.FC = () => {
                                   const weekStart = new Date(
                                     currentWeek!.startDate
                                   );
-                                  weekStart.setHours(0, 0, 0, 0); // Reset time part
+                                  weekStart.setHours(0, 0, 0, 0);
                                   const dayIndex = [
                                     "Thứ Hai",
                                     "Thứ Ba",
@@ -513,8 +530,7 @@ const CatechistScheduleScreen: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                      ))
-                    )}
+                      ))}
                   </CellComponent>
                 );
               })}
