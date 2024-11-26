@@ -58,16 +58,16 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "study-attendance", label: "Xem điểm danh" },
         ],
       },
-      {
-        key: "transaction-pay-children",
-        label: "Đóng học phí",
-        icon: <CreditCardOutlined />,
-      },
-      {
-        key: "transaction-history-user",
-        label: "Lịch sử giao dịch",
-        icon: <AccountBookOutlined />,
-      },
+      // {
+      //   key: "transaction-pay-children",
+      //   label: "Đóng học phí",
+      //   icon: <CreditCardOutlined />,
+      // },
+      // {
+      //   key: "transaction-history-user",
+      //   label: "Lịch sử giao dịch",
+      //   icon: <AccountBookOutlined />,
+      // },
       {
         key: "student-certificate-list",
         label: "Danh sách chứng chỉ lên lớp",
