@@ -337,9 +337,9 @@ const CatechistScheduleScreen: React.FC = () => {
 
   const handleYearChange = (value: string) => {
     setSelectedYear(value);
-    const selectedYearData = academicYears.find(year => year.year === value);
-    setIsPastYear(selectedYearData?.timeStatus === 'PASS');
-  };  
+    const selectedYearData = academicYears.find((year) => year.year === value);
+    setIsPastYear(selectedYearData?.timeStatus === "PASS");
+  };
 
   const renderCalendar = (timetable: Timetable) => {
     const days = [
@@ -351,9 +351,13 @@ const CatechistScheduleScreen: React.FC = () => {
       String.fromCharCode(84, 104, 432, 769, 32, 66, 97, 777, 121),
       String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
     ];
-    const times = Array.from(
-      new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
-    ).sort();
+    const times = Object.values(timetable).some(
+      (day) => Object.keys(day).length > 0
+    )
+      ? Array.from(
+          new Set(Object.values(timetable).flatMap((day) => Object.keys(day)))
+        ).sort()
+      : ["Chưa có"];
 
     const weekStart = new Date(currentWeek!.startDate);
     const dates = days.map((_, index) => {
@@ -380,7 +384,12 @@ const CatechistScheduleScreen: React.FC = () => {
                 const slot = timetable[day] && timetable[day][time];
                 return (
                   <CellComponent key={`${day}-${time}`}>
-                    {slot &&
+                    {!slot ? (
+                      <div className="flex items-center justify-center h-full text-gray-500 text-center">
+                        Lịch học của lớp đang chờ khối trưởng sắp xếp
+                      </div>
+                    ) : (
+                      slot &&
                       slot.map((classSlot, idx) => (
                         <div
                           key={idx}
@@ -504,7 +513,8 @@ const CatechistScheduleScreen: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </CellComponent>
                 );
               })}
@@ -537,10 +547,10 @@ const CatechistScheduleScreen: React.FC = () => {
                 <Select.Option key={year.id} value={year.year}>
                   {year.year}
                   {year.timeStatus === "NOW" && (
-                      <Tag color="blue" className="ml-2">
-                        Hiện tại
-                      </Tag>
-                    )}
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
                 </Select.Option>
               ))}
             </Select>

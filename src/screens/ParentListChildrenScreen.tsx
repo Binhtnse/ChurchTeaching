@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Table as AntTable, Tag, Pagination, message } from 'antd';
-import axios from 'axios';
-import { useAuthState } from '../hooks/useAuthState';
-import ForbiddenScreen from './ForbiddenScreen';
-import usePageTitle from '../hooks/usePageTitle';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from "react";
+import { Table as AntTable, Tag, Pagination, message } from "antd";
+import axios from "axios";
+import { useAuthState } from "../hooks/useAuthState";
+import ForbiddenScreen from "./ForbiddenScreen";
+import usePageTitle from "../hooks/usePageTitle";
+import { useNavigate } from "react-router-dom";
 
 interface Child {
   id: number;
@@ -18,13 +18,13 @@ interface Child {
 }
 
 interface ApiResponse {
-    data: Child[];
-  }
+  data: Child[];
+}
 
 const ParentListChildrenScreen: React.FC = () => {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isLoggedIn, role} = useAuthState();
+  const { isLoggedIn, role } = useAuthState();
   const { setPageTitle } = usePageTitle();
   const [pagination, setPagination] = useState({
     current: 1,
@@ -34,92 +34,98 @@ const ParentListChildrenScreen: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setPageTitle('Danh sách con', '#4154f1');
+    setPageTitle("Danh sách con", "#4154f1");
   }, [setPageTitle]);
 
   const fetchChildren = useCallback(async () => {
-    if (isLoggedIn && role === 'PARENT') {
+    if (isLoggedIn && role === "PARENT") {
       setLoading(true);
       try {
-        const accessToken = localStorage.getItem('accessToken');
+        const accessToken = localStorage.getItem("accessToken");
         const userString = localStorage.getItem("userLogin");
         const user = userString ? JSON.parse(userString) : null;
         const parentId = user?.id;
         const response = await axios.get<ApiResponse>(
-            `https://sep490-backend-production.up.railway.app/api/v1/get-list-child/${parentId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
+          `https://sep490-backend-production.up.railway.app/api/v1/get-list-child/${parentId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
 
         setChildren(response.data.data);
-        setPagination(prev => ({
+        setPagination((prev) => ({
           ...prev,
-          total: response.data.data.length
+          total: response.data.data.length,
         }));
       } catch (error) {
-        console.error('Error fetching children:', error);
-        message.error('Không thể tải danh sách con');
+        console.error("Error fetching children:", error);
+        message.error("Không thể tải danh sách con");
       } finally {
         setLoading(false);
       }
     }
-  }, [isLoggedIn, role]); 
+  }, [isLoggedIn, role]);
 
   useEffect(() => {
     fetchChildren();
   }, [fetchChildren]);
 
+  const getCurrentPageData = () => {
+    const startIndex = (pagination.current - 1) * pagination.pageSize;
+    const endIndex = startIndex + pagination.pageSize;
+    return children.slice(startIndex, endIndex);
+  };
+
   const columns = [
     {
-      title: 'STT',
-      key: 'index',
-      render: (_: unknown, __: unknown, index: number) => 
+      title: "STT",
+      key: "index",
+      render: (_: unknown, __: unknown, index: number) =>
         (pagination.current - 1) * pagination.pageSize + index + 1,
     },
     {
-      title: 'Tên tài khoản',
-      dataIndex: 'account',
-      key: 'account',
+      title: "Tên tài khoản",
+      dataIndex: "account",
+      key: "account",
     },
     {
-      title: 'Họ và tên',
-      dataIndex: 'name',
-      key: 'name',
+      title: "Họ và tên",
+      dataIndex: "name",
+      key: "name",
     },
     {
-      title: 'Khối',
-      dataIndex: 'grade',
-      key: 'grade',
+      title: "Khối",
+      dataIndex: "grade",
+      key: "grade",
     },
     {
-      title: 'Năm học',
-      dataIndex: 'year',
-      key: 'year',
+      title: "Năm học",
+      dataIndex: "year",
+      key: "year",
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'isEnrollInClass',
-      key: 'isEnrollInClass',
+      title: "Trạng thái",
+      dataIndex: "isEnrollInClass",
+      key: "isEnrollInClass",
       render: (isEnrolled: string) => {
-        const color = isEnrolled === 'true' ? 'green' : 'red';
-        const text = isEnrolled === 'true' ? 'Đã có lớp' : 'Chưa có lớp';
+        const color = isEnrolled === "true" ? "green" : "red";
+        const text = isEnrolled === "true" ? "Đã có lớp" : "Chưa có lớp";
         return <Tag color={color}>{text}</Tag>;
       },
     },
   ];
 
   const handlePaginationChange = (page: number, pageSize?: number) => {
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       current: page,
       pageSize: pageSize || prev.pageSize,
     }));
   };
 
-  if (!isLoggedIn || role !== 'PARENT') {
+  if (!isLoggedIn || role !== "PARENT") {
     return <ForbiddenScreen />;
   }
 
@@ -131,14 +137,14 @@ const ParentListChildrenScreen: React.FC = () => {
 
       <AntTable
         columns={columns}
-        dataSource={children}
+        dataSource={getCurrentPageData()}
         rowKey={(record) => record.id.toString()}
         loading={loading}
         className="w-full bg-white rounded-lg shadow"
         pagination={false}
         onRow={(record) => ({
           onClick: () => navigate(`/children-list/${record.id}`),
-          style: { cursor: 'pointer' }
+          style: { cursor: "pointer" },
         })}
       />
 

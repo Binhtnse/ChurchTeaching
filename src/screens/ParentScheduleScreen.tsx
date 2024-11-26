@@ -286,7 +286,7 @@ const ParentScheduleScreen: React.FC = () => {
   console.log(parentDetailsLoading);
   const [modalKey, setModalKey] = useState(0);
   console.log(modalKey);
-  const [academicYears] = useState<
+  const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
   const [parentDetails, setParentDetails] = useState<{
@@ -331,6 +331,7 @@ const ParentScheduleScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
+      setAcademicYears(response.data);
       const currentYear = response.data.find(
         (year: { timeStatus: string }) => year.timeStatus === "NOW"
       );
@@ -585,7 +586,8 @@ const ParentScheduleScreen: React.FC = () => {
     });
   };
 
-  const isYearPassed = academicYears.find(y => y.year === selectedYear)?.timeStatus === "PASS";
+  const isYearPassed =
+    academicYears.find((y) => y.year === selectedYear)?.timeStatus === "PASS";
 
   const renderCalendar = (
     timetable: { [key: string]: { [key: string]: Slot | null } },
@@ -601,7 +603,10 @@ const ParentScheduleScreen: React.FC = () => {
       String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
     ];
 
-    const times = [...new Set(classItem.slots.map((slot) => slot.time))].sort();
+    const times =
+      classItem.slots.length === 0
+        ? ["Chưa có"]
+        : [...new Set(classItem.slots.map((slot) => slot.time))].sort();
 
     days.forEach((day) => {
       if (!timetable[day]) {
@@ -638,99 +643,106 @@ const ParentScheduleScreen: React.FC = () => {
               const slot = timetable[day]?.[time] ?? null;
               return (
                 <CellComponent key={`${day}-${time}`}>
-                  {slot && (
-                    <div className="flex flex-col h-full">
-                      <Text className="text-gray-500 mb-1">
-                        Phòng: {classItem.roomNo}
-                      </Text>
-                      <strong className="text-blue-600 mb-1">
-                        {slot.name}
-                      </strong>
-                      <div className="mt-auto">
-                        {slot.session && (
-                          <Text className="text-green-600">
-                            Chương: {slot.session.name}
-                          </Text>
-                        )}
-                        {slot.noteOfSlot && (
-                          <Text className="text-orange-600 block mt-1">
-                            Ghi chú: {slot.noteOfSlot}
-                          </Text>
-                        )}
-                        {slot.exams && (
-                          <Text className="text-red-600 block mt-1">
-                            Kiểm tra: {slot.exams}
-                          </Text>
-                        )}
-                        {slot.materials && slot.materials.length > 0 && (
-                          <div className="mt-2">
-                            <Text className="text-purple-600 font-medium">
-                              Tài liệu:
+                  {classItem.slots.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-gray-500 text-center">
+                      Lịch học của lớp đang chờ khối trưởng sắp xếp
+                    </div>
+                  ) : (
+                    slot && (
+                      <div className="flex flex-col h-full">
+                        <Text className="text-gray-500 mb-1">
+                          Phòng: {classItem.roomNo}
+                        </Text>
+                        <strong className="text-blue-600 mb-1">
+                          {slot.name}
+                        </strong>
+                        <div className="mt-auto">
+                          {slot.session && (
+                            <Text className="text-green-600">
+                              Chương: {slot.session.name}
                             </Text>
-                            <ul className="list-disc pl-4">
-                              {slot.materials.map((material, index) => (
-                                <li key={index}>
-                                  <a
-                                    href={material.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500 hover:text-blue-700 underline"
-                                  >
-                                    {material.name}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {slot.attendance && (
-                          <div className="mt-2 pt-2 border-t border-gray-200">
-                            <Text
-                              className={`${
-                                !slot.attendance?.isAbsent ||
-                                slot.attendance.isAbsent === "PRESENT"
-                                  ? "text-green-600"
+                          )}
+                          {slot.noteOfSlot && (
+                            <Text className="text-orange-600 block mt-1">
+                              Ghi chú: {slot.noteOfSlot}
+                            </Text>
+                          )}
+                          {slot.exams && (
+                            <Text className="text-red-600 block mt-1">
+                              Kiểm tra: {slot.exams}
+                            </Text>
+                          )}
+                          {slot.materials && slot.materials.length > 0 && (
+                            <div className="mt-2">
+                              <Text className="text-purple-600 font-medium">
+                                Tài liệu:
+                              </Text>
+                              <ul className="list-disc pl-4">
+                                {slot.materials.map((material, index) => (
+                                  <li key={index}>
+                                    <a
+                                      href={material.link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:text-blue-700 underline"
+                                    >
+                                      {material.name}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {slot.attendance && (
+                            <div className="mt-2 pt-2 border-t border-gray-200">
+                              <Text
+                                className={`${
+                                  !slot.attendance?.isAbsent ||
+                                  slot.attendance.isAbsent === "PRESENT"
+                                    ? "text-green-600"
+                                    : slot.attendance.isAbsentWithPermission ===
+                                      "TRUE"
+                                    ? "text-yellow-600"
+                                    : "text-red-600"
+                                } font-medium`}
+                              >
+                                Trạng thái điểm danh:
+                                {!slot.attendance?.isAbsent
+                                  ? " Chưa điểm danh"
+                                  : slot.attendance.isAbsent === "PRESENT"
+                                  ? " Có mặt"
                                   : slot.attendance.isAbsentWithPermission ===
                                     "TRUE"
-                                  ? "text-yellow-600"
-                                  : "text-red-600"
-                              } font-medium`}
-                            >
-                              Trạng thái điểm danh:
-                              {!slot.attendance?.isAbsent
-                                ? " Chưa điểm danh"
-                                : slot.attendance.isAbsent === "PRESENT"
-                                ? " Có mặt"
-                                : slot.attendance.isAbsentWithPermission ===
-                                  "TRUE"
-                                ? " Vắng có phép"
-                                : " Vắng không phép"}
-                            </Text>
-                          </div>
-                        )}
-                        <div className="mt-2">
-                          {(!slot.attendance?.isAbsent ||
-                            slot.attendance.isAbsent === "ABSENT" ||
-                            slot.attendance.isAbsentWithPermission === "TRUE" ||
-                            slot.attendance.isAbsentWithPermission ===
-                              "FALSE") && (
-                            <Button
-                              type="primary"
-                              icon={<EllipsisOutlined />}
-                              size="middle"
-                              disabled={isYearPassed}
-                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                showModal(slot, classItem);
-                              }}
-                            >
-                              Xin nghỉ
-                            </Button>
+                                  ? " Vắng có phép"
+                                  : " Vắng không phép"}
+                              </Text>
+                            </div>
                           )}
+                          <div className="mt-2">
+                            {(!slot.attendance?.isAbsent ||
+                              slot.attendance.isAbsent === "ABSENT" ||
+                              slot.attendance.isAbsentWithPermission ===
+                                "TRUE" ||
+                              slot.attendance.isAbsentWithPermission ===
+                                "FALSE") && (
+                              <Button
+                                type="primary"
+                                icon={<EllipsisOutlined />}
+                                size="middle"
+                                disabled={isYearPassed}
+                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                  showModal(slot, classItem);
+                                }}
+                              >
+                                Xin nghỉ
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )
                   )}
                 </CellComponent>
               );
