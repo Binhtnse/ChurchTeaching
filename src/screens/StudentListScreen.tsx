@@ -62,6 +62,12 @@ const StudentListScreen: React.FC = () => {
   const [classDetails, setClassDetails] = useState<ClassDetails | null>(null);
   const navigate = useNavigate();
   const { classId } = useParams<{ classId: string }>();
+  const [academicYears, setAcademicYears] = useState<{ id: number; year: string; timeStatus: string }[]>([]);
+  console.log(academicYears)
+const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
+console.log(grades)
+const [dataLoaded, setDataLoaded] = useState(false);
+
 
   useEffect(() => {
     setPageTitle("Danh sách thiếu nhi", "#4154f1");
@@ -70,6 +76,31 @@ const StudentListScreen: React.FC = () => {
   useEffect(() => {
     checkAuthState();
   }, [checkAuthState]);
+
+  const fetchAcademicYears = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+        setAcademicYears(response.data);
+      
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  }, []);
+  
+  const fetchGrades = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=30"
+      );
+      if (response.data.status === "success") {
+        setGrades(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+    }
+  }, []);
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -133,10 +164,20 @@ const StudentListScreen: React.FC = () => {
 
   useEffect(() => {
     if (isLoggedIn && role === "CATECHIST" && classId) {
-      fetchClassDetails();
-      fetchStudents();
+      const loadData = async () => {
+        await Promise.all([
+          fetchClassDetails(),
+          fetchStudents(),
+          fetchAcademicYears(),
+          fetchGrades()
+        ]);
+        setDataLoaded(true);
+      };
+      loadData();
     }
-  }, [isLoggedIn, role, classId, fetchClassDetails, fetchStudents]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, role, classId]);
+  
 
   const handleBack = () => {
     navigate(-1);
@@ -170,14 +211,23 @@ const StudentListScreen: React.FC = () => {
 
   const handleViewClassGrades = () => {
     const id = classInfo?.classId || classId;
-    if (id) {
-      navigate(`/catechist-grade/${id}`);
-    } else {
-      console.error("Class ID is undefined");
-      message.error("Unable to view grades. Class ID is missing.");
+    if (id && classDetails && dataLoaded) {
+      const academicYear = academicYears.find((year) => year.year === classDetails.academicYear);
+      const grade = grades.find((g) => g.name === classDetails.gradeName);
+  
+      if (academicYear && grade) {
+        navigate(`/catechist-grade/${id}`, {
+          state: {
+            academicYearId: academicYear.id,
+            gradeId: grade.id
+          }
+        });
+      } else {
+        message.error("Không tìm thấy năm học hoặc khối lớp phù hợp");
+      }
     }
   };
-
+  
   if (!isLoggedIn || role !== "CATECHIST") {
     return <ForbiddenScreen />;
   }

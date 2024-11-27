@@ -30,12 +30,25 @@ interface FormValues {
   studentClassId: number;
 }
 
+interface AcademicYear {
+  id: number;
+  year: string;
+  timeStatus: string;
+}
+
 const ParentTransactionScreen: React.FC = () => {
   const [form] = Form.useForm();
   const [children, setChildren] = useState<Child[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
+  console.log(policies)
   const [minAmount, setMinAmount] = useState<number>(0);
   const [churchDonation, setChurchDonation] = useState(false);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<
+    number | null
+  >(null);
+  const [academicYears, setAcademicYears] = useState<
+    { id: number; year: string; timeStatus: string }[]
+  >([]);
   const [donationAmount, setDonationAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isLoadingPolicy, setIsLoadingPolicy] = useState(false);
@@ -45,36 +58,61 @@ const ParentTransactionScreen: React.FC = () => {
 
   const token = localStorage.getItem("accessToken");
 
-  useEffect(() => {
-    const fetchChildren = async () => {
-      try {
-        const childrenRes = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        
-        if (!childrenRes.data.data || childrenRes.data.data.length === 0) {
-          message.info("Không tìm thấy thiếu nhi nào được liên kết với tài khoản");
-          setChildren([]);
-          return;
-        }
-        
-        setChildren(childrenRes.data.data);
-      } catch (error) {
-        message.error("Không thể tải danh sách thiếu nhi. Vui lòng thử lại sau");
-        setChildren([]);
-        console.log(error);
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
+      );
+      setAcademicYears(response.data);
+      const currentYear = response.data.find(
+        (year: AcademicYear) => year.timeStatus === "NOW"
+      );
+      if (currentYear) {
+        setSelectedAcademicYear(currentYear.id);
       }
-    };
+    } catch (error) {
+      console.log(error);
+      message.error("Không thể lấy danh sách niên khóa");
+    }
+  };
 
-    fetchChildren();
-  }, [parentId, token]);
+  const fetchChildren = async () => {
+    try {
+      const childrenRes = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students?yearId=${selectedAcademicYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  console.log(policies);
+      if (!childrenRes.data.data || childrenRes.data.data.length === 0) {
+        message.info(
+          "Không tìm thấy thiếu nhi nào được liên kết với tài khoản"
+        );
+        setChildren([]);
+        return;
+      }
+
+      setChildren(childrenRes.data.data);
+    } catch (error) {
+      message.error("Không thể tải danh sách thiếu nhi. Vui lòng thử lại sau");
+      setChildren([]);
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAcademicYears();
+  }, []);
+
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      fetchChildren();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAcademicYear, parentId, token]);
 
   const handleChildSelect = async (childId: number) => {
     setIsLoadingPolicy(true);
@@ -141,6 +179,25 @@ const ParentTransactionScreen: React.FC = () => {
               Vui lòng chọn thiếu nhi bạn muốn đóng học phí
             </p>
           </div>
+
+          <Form.Item
+            name="academicYear"
+            label={<span className="text-base font-medium">Niên khóa</span>}
+            rules={[{ required: true, message: "Vui lòng chọn niên khóa" }]}
+          >
+            <Select
+              placeholder="Chọn niên khóa"
+              onChange={(value) => setSelectedAcademicYear(value)}
+              className="rounded-lg text-base"
+              size="large"
+            >
+              {academicYears.map((year: AcademicYear) => (
+                <Option key={year.id} value={year.id}>
+                  {year.year}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
 
           <Form
             form={form}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import axios from "axios";
 import {
   Table,
@@ -56,6 +56,7 @@ const CatechistClassGradeScreen: React.FC = () => {
   const [gradeTemplate, setGradeTemplate] = useState<GradeTemplate | null>(
     null
   );
+  const [gradeTemplateId, setGradeTemplateId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [allCellsFilled, setAllCellsFilled] = useState(false);
@@ -66,6 +67,26 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
     pageSize: 10,
     total: 0,
   });
+
+  const location = useLocation();
+  const { academicYearId, gradeId } = location.state || {};
+
+  const fetchSyllabus = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=1&size=10&gradeId=${gradeId}&yearId=${academicYearId}`
+      );
+
+      if (response.data.status === "success" && response.data.data.length > 0) {
+        const syllabusData = response.data.data[0];
+        const templateId = syllabusData.syllabus.gradeTemplate.id;
+        setGradeTemplateId(templateId);
+      }
+    } catch (error) {
+      console.error("Failed to fetch syllabus:", error);
+      message.error("Failed to fetch syllabus data");
+    }
+  }, [academicYearId, gradeId]);
 
   const fetchClassGrades = useCallback(async () => {
     setLoading(true);
@@ -127,10 +148,12 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
   }, [classId, gradeTemplate]);
 
   const fetchGradeTemplate = useCallback(async () => {
+    if (!gradeTemplateId) return;
+    
     try {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get<{ data: GradeTemplate }>(
-        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/1`,
+        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/${gradeTemplateId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       setGradeTemplate(response.data.data);
@@ -139,7 +162,13 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
       console.error("Failed to fetch grade template:", error);
       message.error("Failed to fetch grade template");
     }
-  }, []);
+  }, [gradeTemplateId]);
+
+  useEffect(() => {
+    if (isLoggedIn && role === "CATECHIST" && classId) {
+      fetchSyllabus();
+    }
+  }, [isLoggedIn, role, classId, fetchSyllabus]);
 
   useEffect(() => {
     if (isLoggedIn && role === "CATECHIST" && classId) {
@@ -189,6 +218,7 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         message.success("Thay đổi thành công");
+        window.location.reload();
       } else {
         message.info("Không có thay đổi để lưu");
       }
@@ -255,7 +285,7 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
       );
   
       message.success("Tổng kết điểm thành công");
-      fetchClassGrades(); // Refresh the data after finalizing
+      window.location.reload(); // Refresh the data after finalizing
     } catch (error) {
       console.error("Failed to finalize grades:", error);
       message.error("Tổng kết điểm thất bại");

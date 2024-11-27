@@ -85,6 +85,27 @@ const StudentGradesProgressScreen: React.FC = () => {
     }
   };
 
+  const fetchSyllabus = useCallback(async () => {
+    if (!selectedAcademicYear || !selectedGrade) return;
+    
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=1&size=10&gradeId=${selectedGrade}&yearId=${selectedAcademicYear}`
+      );
+  
+      if (response.data.status === "success" && response.data.data.length > 0) {
+        const syllabusData = response.data.data[0];
+        const templateId = syllabusData.syllabus.gradeTemplate.id;
+        // Pass the template ID to fetchGradeTemplate
+        fetchGradeTemplate(templateId);
+      }
+    } catch (error) {
+      console.error("Failed to fetch syllabus:", error);
+      message.error("Không thể lấy thông tin giáo án");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAcademicYear, selectedGrade]);
+
   const fetchClasses = useCallback(async () => {
     if (!selectedAcademicYear || !selectedGrade) return;
     const studentId = getCurrentStudentId();
@@ -120,11 +141,11 @@ const StudentGradesProgressScreen: React.FC = () => {
     }
   }, [selectedAcademicYear, selectedGrade]);
 
-  const fetchGradeTemplate = useCallback(async () => {
+  const fetchGradeTemplate = useCallback(async (templateId: number) => {
     try {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get<{ data: GradeTemplate }>(
-        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/1`,
+        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/${templateId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       setGradeTemplate(response.data.data);
@@ -167,8 +188,10 @@ const StudentGradesProgressScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchGradeTemplate();
-  }, [fetchGradeTemplate]);
+    if (selectedAcademicYear && selectedGrade) {
+      fetchSyllabus();
+    }
+  }, [selectedAcademicYear, selectedGrade, fetchSyllabus]);
 
   useEffect(() => {
     if (selectedAcademicYear && selectedGrade) {

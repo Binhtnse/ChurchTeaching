@@ -149,13 +149,40 @@ const ParentGradesProgressScreen: React.FC = () => {
       message.error("Không thể lấy danh sách lớp");
     }
   }, [selectedAcademicYear, selectedGrade, selectedStudent]);
+
+  const fetchSyllabus = useCallback(async () => {
+    if (!selectedAcademicYear || !selectedGrade) return;
+    
+    try {
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=1&size=10&gradeId=${selectedGrade}&yearId=${selectedAcademicYear}`
+      );
+  
+      if (response.data.status === "success" && response.data.data.length > 0) {
+        const syllabusData = response.data.data[0];
+        const templateId = syllabusData.syllabus.gradeTemplate.id;
+        // Pass the template ID to fetchGradeTemplate
+        fetchGradeTemplate(templateId);
+      }
+    } catch (error) {
+      console.error("Failed to fetch syllabus:", error);
+      message.error("Không thể lấy thông tin giáo án");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAcademicYear, selectedGrade]);
+
+  useEffect(() => {
+    if (selectedAcademicYear && selectedGrade) {
+      fetchSyllabus();
+    }
+  }, [selectedAcademicYear, selectedGrade, fetchSyllabus]);
   
 
-  const fetchGradeTemplate = useCallback(async () => {
+  const fetchGradeTemplate = useCallback(async (templateId: number) => {
     try {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get<{ data: GradeTemplate }>(
-        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/1`,
+        `https://sep490-backend-production.up.railway.app/api/v1/grade-template/${templateId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       setGradeTemplate(response.data.data);
@@ -203,10 +230,6 @@ const ParentGradesProgressScreen: React.FC = () => {
   }, [fetchStudents]);
 
   useEffect(() => {
-    fetchGradeTemplate();
-  }, [fetchGradeTemplate]);
-
-  useEffect(() => {
     if (selectedAcademicYear && selectedGrade) {
       fetchClasses();
     }
@@ -233,7 +256,7 @@ const ParentGradesProgressScreen: React.FC = () => {
     });
 
     return totalWeight > 0
-      ? (totalWeightedScore / totalWeight).toFixed(2)
+      ? (totalWeightedScore / totalWeight)
       : null;
   };
 
@@ -281,7 +304,7 @@ const ParentGradesProgressScreen: React.FC = () => {
               {score}
             </span>
             <span className="text-gray-500 text-sm ml-2">
-              ({weightedScore.toFixed(2)} điểm hệ số)
+              ({weightedScore} điểm hệ số)
             </span>
           </div>
         );
