@@ -80,6 +80,27 @@ const AdminStudentList: React.FC = () => {
     }
   };
 
+  const handleNextYear = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.post(
+        "https://sep490-backend-production.up.railway.app/api/academic-years/next?status=ACTIVE",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response)
+      message.success("Chuyển năm thành công");
+      fetchAcademicYears(); // Refresh the academic years list
+    } catch (error: unknown) {
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Chuyển năm thất bại";
+      message.error(errorMessage);
+    }
+  };
+
   const fetchGrades = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -349,6 +370,14 @@ const AdminStudentList: React.FC = () => {
               </button>
             </Upload>
           </div>
+          <div className="space-y-2 flex items-end">
+  <Button
+    onClick={handleNextYear}
+    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+  >
+    Chuyển năm
+  </Button>
+</div>
         </div>
       </Card>
       <Spin spinning={loading}>
