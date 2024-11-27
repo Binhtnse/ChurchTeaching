@@ -53,16 +53,11 @@ const ParentListChildrenScreen: React.FC = () => {
             },
           }
         );
-  
-        // Filter children to get distinct IDs
-        const distinctChildren = Array.from(
-          new Map(response.data.data.map(child => [child.id, child])).values()
-        );
-  
-        setChildren(distinctChildren);
+
+        setChildren(response.data.data);
         setPagination((prev) => ({
           ...prev,
-          total: distinctChildren.length,
+          total: response.data.data.length,
         }));
       } catch (error) {
         console.error("Error fetching children:", error);

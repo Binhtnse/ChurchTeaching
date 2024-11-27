@@ -79,7 +79,7 @@ const ParentTransactionScreen: React.FC = () => {
   const fetchChildren = async () => {
     try {
       const childrenRes = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students?yearId=${selectedAcademicYear}`,
+        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students/tuition?yearId=${selectedAcademicYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
