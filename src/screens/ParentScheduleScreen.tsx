@@ -300,14 +300,15 @@ const ParentScheduleScreen: React.FC = () => {
       const user = userString ? JSON.parse(userString) : null;
       const parentId = user?.id;
       const token = localStorage.getItem("accessToken");
-
+      const yearId = academicYears?.find((year) => year.year === selectedYear)?.id;
+  
       if (!parentId) {
         message.error("Không tìm thấy thông tin phụ huynh");
         return;
       }
-
+  
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
+        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students${yearId ? `?yearId=${yearId}` : ''}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -320,7 +321,7 @@ const ParentScheduleScreen: React.FC = () => {
       message.error("Không thể lấy danh sách thiếu nhi");
       setLoading(false);
     }
-  }, []);
+  }, [selectedYear, academicYears]);
 
   useEffect(() => {
     fetchStudents();
@@ -500,15 +501,7 @@ const ParentScheduleScreen: React.FC = () => {
 
   const handleStudentChange = (studentId: number) => {
     setSelectedStudent(studentId);
-    // Immediately set the year and trigger schedule fetch
-    const currentYear = academicYears?.find(
-      (year) => year.timeStatus === "NOW"
-    );
-    const yearToSet = currentYear ? currentYear.year : academicYears[0]?.year;
-
-    if (yearToSet) {
-      setSelectedYear(yearToSet);
-      // Directly fetch the schedule here
+    if (selectedYear && studentId) {
       fetchSchedule(studentId);
       fetchAttendanceData(studentId);
     }
@@ -524,7 +517,7 @@ const ParentScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),  
+      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
     ];
 
     if (!slots.length) {
@@ -744,8 +737,7 @@ const ParentScheduleScreen: React.FC = () => {
                         <div className="mt-2">
                           {(!slot.attendance?.isAbsent ||
                             slot.attendance.isAbsent === "ABSENT" ||
-                            slot.attendance.isAbsentWithPermission ===
-                              "TRUE" ||
+                            slot.attendance.isAbsentWithPermission === "TRUE" ||
                             slot.attendance.isAbsentWithPermission ===
                               "FALSE") && (
                             <Button
@@ -832,6 +824,30 @@ const ParentScheduleScreen: React.FC = () => {
       </h1>
 
       <div className="flex flex-col space-y-6 mb-6">
+        <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+          <div className="space-y-2 p-4">
+            <label className="text-sm font-medium text-gray-600">
+              Niên khóa
+            </label>
+            <Select
+              className="w-full"
+              value={selectedYear}
+              onChange={(value) => setSelectedYear(value)}
+              placeholder="Chọn niên khóa"
+            >
+              {academicYears.map((year) => (
+                <Select.Option key={year.id} value={year.year}>
+                  {year.year}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+        </Card>
         <Select
           style={{ width: 300 }}
           placeholder="Chọn thiếu nhi"
@@ -851,28 +867,12 @@ const ParentScheduleScreen: React.FC = () => {
           <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">
-                  Niên khóa
-                </label>
-                <Select
-                  className="w-full"
-                  value={selectedYear}
-                  onChange={(value) => setSelectedYear(value)}
-                  placeholder="Chọn niên khóa"
-                >
-                  {academicYears.map((year) => (
-                    <Select.Option key={year.id} value={year.year}>
-                      {year.year}
-                      {year.timeStatus === "NOW" && (
-                        <Tag color="blue" className="ml-2">
-                          Hiện tại
-                        </Tag>
-                      )}
-                    </Select.Option>
-                  ))}
-                </Select>
+                <div className="mb-4">
+                  <Text strong className="text-lg text-blue-600">
+                    Niên khóa: {selectedYear}
+                  </Text>
+                </div>
               </div>
-
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-600">
                   Tuần

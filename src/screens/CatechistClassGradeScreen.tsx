@@ -59,6 +59,8 @@ const CatechistClassGradeScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [allCellsFilled, setAllCellsFilled] = useState(false);
+  const [isGradeFinalized, setIsGradeFinalized] = useState(false);
+const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -84,7 +86,8 @@ const CatechistClassGradeScreen: React.FC = () => {
       const students = studentsResponse.data.data.students;
       const grades = gradesResponse.data.data;
 
-      console.log("Raw grades data:", grades);
+      setIsGradeFinalized(gradesResponse.data.status === "true");
+    setCanShowFinalizeButton(gradesResponse.data.message === "true");
 
       const combinedStudents = students.map((student: Student) => {
         const scores = {};
@@ -353,13 +356,16 @@ const CatechistClassGradeScreen: React.FC = () => {
         Danh sách điểm số
       </h1>
       <Spin spinning={loading} tip="Đang tải...">
+      {!isGradeFinalized && (
         <Button
           onClick={isEditing ? saveGrades : toggleEditing}
           className="mb-4 mr-4 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          disabled={isGradeFinalized}
         >
           {isEditing ? "Lưu thay đổi" : "Ghi nhận điểm"}
         </Button>
-        {allCellsFilled && (
+      )}
+        {allCellsFilled && canShowFinalizeButton && !isGradeFinalized &&(
           <Button
             onClick={handleFinalize}
             className="mb-4 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
