@@ -65,7 +65,7 @@ const ParentCertificateListScreen: React.FC = () => {
   const fetchChildren = useCallback(async () => {
     try {
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
+        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students?yearId=${selectedYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -86,7 +86,7 @@ const ParentCertificateListScreen: React.FC = () => {
       setChildren([]); // Reset children array
       message.error("Không thể lấy danh sách thiếu nhi");
     }
-  }, [parentId, token]);
+  }, [parentId, selectedYear, token]);
 
   const fetchAcademicYears = async () => {
     try {

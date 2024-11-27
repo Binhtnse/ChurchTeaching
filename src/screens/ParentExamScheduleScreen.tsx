@@ -100,8 +100,12 @@ const ParentExamScheduleScreen: React.FC = () => {
         return;
       }
   
+      // Find the year ID based on the selected year
+      const selectedYearObj = academicYears.find(year => year.year === selectedYear);
+      const yearId = selectedYearObj?.id;
+  
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students`,
+        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students?yearId=${yearId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -121,7 +125,8 @@ const ParentExamScheduleScreen: React.FC = () => {
       message.error("Không thể lấy danh sách thiếu nhi");
       setStudents([]);
     }
-  }, []);
+  }, [selectedYear, academicYears]);
+  
 
   const fetchAcademicYears = async () => {
     try {
