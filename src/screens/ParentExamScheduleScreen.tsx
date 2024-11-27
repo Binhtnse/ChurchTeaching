@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Spin, Table, Tag, message, Select } from "antd";
+import { Spin, Table, Tag, message, Select, Card } from "antd";
 import type { ColumnsType } from "antd/es/table";
 
 const { Option } = Select;
@@ -194,9 +194,15 @@ const ParentExamScheduleScreen: React.FC = () => {
   }, [selectedStudent, selectedYear]);
 
   useEffect(() => {
-    fetchStudents();
+    if (selectedYear) {
+      fetchStudents();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
+
+  useEffect(() => {
     fetchAcademicYears();
-  }, [fetchStudents]);
+  }, []);
 
   useEffect(() => {
     if (selectedStudent && selectedYear) {
@@ -223,6 +229,31 @@ const ParentExamScheduleScreen: React.FC = () => {
         <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
           Lịch Kiểm Tra Của Con
         </h1>
+
+        <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+  <div className="space-y-2 p-4">
+    <label className="text-sm font-medium text-gray-600">
+      Niên khóa
+    </label>
+    <Select
+      className="w-full"
+      value={selectedYear}
+      onChange={(value) => setSelectedYear(value)}
+      placeholder="Chọn niên khóa"
+    >
+      {academicYears.map((year) => (
+        <Select.Option key={year.id} value={year.year}>
+          {year.year}
+          {year.timeStatus === "NOW" && (
+            <Tag color="blue" className="ml-2">
+              Hiện tại
+            </Tag>
+          )}
+        </Select.Option>
+      ))}
+    </Select>
+  </div>
+</Card>
         
         <div className="mt-4">
           <Select

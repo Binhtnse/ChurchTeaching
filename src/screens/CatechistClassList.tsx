@@ -235,9 +235,9 @@ const CatechistClassList: React.FC = () => {
       render: (timeStatus: string) => (
         <span className={`px-3 py-1 rounded-full text-sm font-medium
           ${timeStatus === 'not_done' ? 'bg-yellow-100 text-yellow-700' : 
-            timeStatus === 'is_done' ? 'bg-green-100 text-green-700' : ''}`}>
+            timeStatus === 'done' ? 'bg-green-100 text-green-700' : ''}`}>
           {timeStatus === 'not_done' ? 'Chưa hoàn thành' : 
-           timeStatus === 'is_done' ? 'Đã hoàn thành' : ''}
+           timeStatus === 'done' ? 'Đã hoàn thành' : ''}
         </span>
       ),
     }
