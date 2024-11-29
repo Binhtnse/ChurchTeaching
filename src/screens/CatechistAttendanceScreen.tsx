@@ -70,11 +70,10 @@ const CatechistAttendanceScreen: React.FC = () => {
     studentClassId: number,
     values: string[]
   ) => {
-  
     setInitialAttendance((prev) => {
       const newMap = new Map(prev);
       const latestValue = values[values.length - 1];
-      
+
       if (latestValue === "PRESENT") {
         newMap.set(studentClassId, false);
       } else if (latestValue === "ABSENT") {
@@ -82,7 +81,7 @@ const CatechistAttendanceScreen: React.FC = () => {
       } else {
         newMap.delete(studentClassId);
       }
-      
+
       return newMap;
     });
   };
@@ -127,14 +126,32 @@ const CatechistAttendanceScreen: React.FC = () => {
         fetchStudents(classId);
       }
     }
-  }, [isLoggedIn, role, timeTableId, fetchAttendanceData, classId, dayOfWeek, weekNumber, time, date]);
+  }, [
+    isLoggedIn,
+    role,
+    timeTableId,
+    fetchAttendanceData,
+    classId,
+    dayOfWeek,
+    weekNumber,
+    time,
+    date,
+  ]);
 
   const handleBack = () => {
     navigate("/schedule");
   };
 
-  const handleAttendanceChange = (attendanceId: number, isAbsent: boolean) => {
+  const isPastEditWindow = (dateString: string | null) => {
+    if (!dateString) return false;
+    const attendanceDate = new Date(dateString);
+    const today = new Date();
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(today.getDate() - 7);
+    return attendanceDate < oneWeekAgo;
+  };
 
+  const handleAttendanceChange = (attendanceId: number, isAbsent: boolean) => {
     setAttendanceData((prevData) => {
       if (!prevData) return null;
       return {
@@ -266,8 +283,12 @@ const CatechistAttendanceScreen: React.FC = () => {
         <div className="flex items-center">
           <Checkbox.Group
             value={
-              initialAttendance.has(student.studentClassId) 
-                ? [initialAttendance.get(student.studentClassId) ? "ABSENT" : "PRESENT"]
+              initialAttendance.has(student.studentClassId)
+                ? [
+                    initialAttendance.get(student.studentClassId)
+                      ? "ABSENT"
+                      : "PRESENT",
+                  ]
                 : []
             }
             onChange={(values) =>
@@ -284,6 +305,9 @@ const CatechistAttendanceScreen: React.FC = () => {
           </Checkbox.Group>
           {date && isFutureDate(date) && (
             <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
+          )}
+          {date && isPastEditWindow(date) && (
+            <span className="ml-2 text-orange-500">Điểm danh quá 1 tuần</span>
           )}
         </div>
       ),
@@ -318,9 +342,7 @@ const CatechistAttendanceScreen: React.FC = () => {
               const isAbsent = values[values.length - 1] === "ABSENT";
               handleAttendanceChange(record.attendanceId, isAbsent);
             }}
-            disabled={
-              record.isAbsentWithPermission === "TRUE" 
-            }
+            disabled={record.isAbsentWithPermission === "TRUE"}
             className="flex space-x-4"
           >
             <Checkbox value="PRESENT" checked={record.isAbsent === "PRESENT"}>
@@ -335,6 +357,9 @@ const CatechistAttendanceScreen: React.FC = () => {
           )}
           {date && isFutureDate(date) && (
             <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
+          )}
+          {date && isPastEditWindow(date) && (
+            <span className="ml-2 text-orange-500">Điểm danh quá 1 tuần</span>
           )}
         </div>
       ),
@@ -426,11 +451,9 @@ const CatechistAttendanceScreen: React.FC = () => {
                 icon={<SaveOutlined />}
                 onClick={handleCreateAttendance}
                 loading={saveLoading}
-                disabled={
-                  !validateAllAttendanceMarked()
-                }
+                disabled={!validateAllAttendanceMarked()}
                 className={`${
-                  (date && isFutureDate(date)) || !validateAllAttendanceMarked()
+                  (date && isFutureDate(date)) || !validateAllAttendanceMarked() || isPastEditWindow(date)
                     ? "bg-gray-400"
                     : "bg-green-500 hover:bg-green-600"
                 } text-white font-bold py-2 px-4 rounded-full transition-colors duration-300`}
