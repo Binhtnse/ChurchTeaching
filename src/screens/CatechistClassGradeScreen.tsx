@@ -8,9 +8,12 @@ import {
   Button,
   Input,
   Pagination,
+  Modal,
+  Form as AntForm,
 } from "antd";
 import { useAuthState } from "../hooks/useAuthState";
 import ForbiddenScreen from "./ForbiddenScreen";
+import CloudinaryUploadWidget from "../components/CloudinaryUploadWidget";
 
 interface ScoreData {
   examId: number;
@@ -61,12 +64,15 @@ const CatechistClassGradeScreen: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [allCellsFilled, setAllCellsFilled] = useState(false);
   const [isGradeFinalized, setIsGradeFinalized] = useState(false);
-const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
+  const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
+  const [isReFinalizeModalVisible, setIsReFinalizeModalVisible] =
+    useState(false);
+  const [reFinalizeForm] = AntForm.useForm();
 
   const location = useLocation();
   const { academicYearId, gradeId } = location.state || {};
@@ -108,7 +114,7 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
       const grades = gradesResponse.data.data;
 
       setIsGradeFinalized(gradesResponse.data.status === "true");
-    setCanShowFinalizeButton(gradesResponse.data.message === "true");
+      setCanShowFinalizeButton(gradesResponse.data.message === "true");
 
       const combinedStudents = students.map((student: Student) => {
         const scores = {};
@@ -147,9 +153,36 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
     }
   }, [classId, gradeTemplate]);
 
+  const handleReFinalize = async (values: { reason: string; link: string }) => {
+    try {
+      setLoading(true);
+      const accessToken = localStorage.getItem("accessToken");
+
+      await axios.post(
+        "https://sep490-backend-production.up.railway.app/api/v1/class/re-finalize",
+        {
+          classId: Number(classId),
+          reason: values.reason,
+          link: values.link,
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      message.success("Yêu cầu xem xét lại điểm thành công");
+      setIsReFinalizeModalVisible(false);
+      reFinalizeForm.resetFields();
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to submit re-finalize request:", error);
+      message.error("Yêu cầu xem xét lại điểm thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchGradeTemplate = useCallback(async () => {
     if (!gradeTemplateId) return;
-    
+
     try {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get<{ data: GradeTemplate }>(
@@ -193,24 +226,30 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
     try {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-  
+
       // Track only changed scores using Object.prototype.hasOwnProperty.call()
       const changedScores = students
-        .filter(student => 
-          Object.values(student.scores).some(score => 
-            Object.prototype.hasOwnProperty.call(score, 'isChanged') && score['isChanged']
+        .filter((student) =>
+          Object.values(student.scores).some(
+            (score) =>
+              Object.prototype.hasOwnProperty.call(score, "isChanged") &&
+              score["isChanged"]
           )
         )
-        .map(student => ({
+        .map((student) => ({
           studentClassId: student.studentClassId,
           exams: Object.entries(student.scores)
-            .filter(([, score]) => Object.prototype.hasOwnProperty.call(score, 'isChanged') && score['isChanged'])
+            .filter(
+              ([, score]) =>
+                Object.prototype.hasOwnProperty.call(score, "isChanged") &&
+                score["isChanged"]
+            )
             .map(([, score]) => ({
               examId: score.examId,
               score: score.score,
             })),
         }));
-  
+
       if (changedScores.length > 0) {
         await axios.put(
           "https://sep490-backend-production.up.railway.app/api/v1/student-grade",
@@ -222,7 +261,7 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
       } else {
         message.info("Không có thay đổi để lưu");
       }
-  
+
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save grades:", error);
@@ -230,10 +269,15 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
     } finally {
       setLoading(false);
     }
-  };   
+  };
 
   const handleScoreChange = useCallback(
-    (studentClassId: number, examId: number, examName: string, value: string) => {
+    (
+      studentClassId: number,
+      examId: number,
+      examName: string,
+      value: string
+    ) => {
       setStudents((prevStudents) =>
         prevStudents.map((student) =>
           student.studentClassId === studentClassId
@@ -253,7 +297,7 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
       );
     },
     []
-  );  
+  );
 
   const checkAllCellsFilled = useCallback(() => {
     const allFilledAndNonZero = students.every((student) =>
@@ -277,13 +321,13 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
     try {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-      
+
       await axios.post(
         `https://sep490-backend-production.up.railway.app/api/v1/student-grade/finalize/class/${classId}`,
         {},
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-  
+
       message.success("Tổng kết điểm thành công");
       window.location.reload(); // Refresh the data after finalizing
     } catch (error) {
@@ -293,7 +337,6 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
       setLoading(false);
     }
   };
-  
 
   const EditableCell: React.FC<{
     value: number | undefined | null;
@@ -301,27 +344,27 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
     studentClassId: number;
     examId: number;
     examName: string;
-}> = React.memo(({ value, onChange }) => (
+  }> = React.memo(({ value, onChange }) => (
     <Input
-        value={value !== null && value !== undefined ? value.toString() : ""}
-        onChange={(e) => {
-            const numValue = parseFloat(e.target.value);
-            if (e.target.value === "" || (numValue >= 0 && numValue <= 10)) {
-                onChange(e.target.value);
-            }
-        }}
-        onBlur={(e) => {
-            const numValue = parseFloat(e.target.value);
-            if (!isNaN(numValue)) {
-                // Ensure value is between 0 and 10
-                const clampedValue = Math.min(Math.max(numValue, 0), 10);
-                onChange(clampedValue.toString());
-            }
-        }}
-        min={0}
-        max={10}
+      value={value !== null && value !== undefined ? value.toString() : ""}
+      onChange={(e) => {
+        const numValue = parseFloat(e.target.value);
+        if (e.target.value === "" || (numValue >= 0 && numValue <= 10)) {
+          onChange(e.target.value);
+        }
+      }}
+      onBlur={(e) => {
+        const numValue = parseFloat(e.target.value);
+        if (!isNaN(numValue)) {
+          // Ensure value is between 0 and 10
+          const clampedValue = Math.min(Math.max(numValue, 0), 10);
+          onChange(clampedValue.toString());
+        }
+      }}
+      min={0}
+      max={10}
     />
-));
+  ));
 
   const classGradeColumns = [
     {
@@ -381,21 +424,20 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4"
-      >
+      <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
         Danh sách điểm số
       </h1>
       <Spin spinning={loading} tip="Đang tải...">
-      {!isGradeFinalized && (
-        <Button
-          onClick={isEditing ? saveGrades : toggleEditing}
-          className="mb-4 mr-4 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          disabled={isGradeFinalized}
-        >
-          {isEditing ? "Lưu thay đổi" : "Ghi nhận điểm"}
-        </Button>
-      )}
-        {allCellsFilled && canShowFinalizeButton && !isGradeFinalized &&(
+        {!isGradeFinalized && (
+          <Button
+            onClick={isEditing ? saveGrades : toggleEditing}
+            className="mb-4 mr-4 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            disabled={isGradeFinalized}
+          >
+            {isEditing ? "Lưu thay đổi" : "Ghi nhận điểm"}
+          </Button>
+        )}
+        {allCellsFilled && canShowFinalizeButton && !isGradeFinalized && (
           <Button
             onClick={handleFinalize}
             className="mb-4 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -403,6 +445,63 @@ const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
             Tổng kết
           </Button>
         )}
+        {isGradeFinalized && !isEditing && !canShowFinalizeButton && (
+          <Button
+            onClick={() => setIsReFinalizeModalVisible(true)}
+            className="mb-4 bg-yellow-600 text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+          >
+            Yêu cầu xem xét lại điểm
+          </Button>
+        )}
+
+        <Modal
+          title="Yêu cầu xem xét lại điểm"
+          open={isReFinalizeModalVisible}
+          onCancel={() => {
+            setIsReFinalizeModalVisible(false);
+            reFinalizeForm.resetFields();
+          }}
+          footer={null}
+        >
+          <AntForm
+            form={reFinalizeForm}
+            layout="vertical"
+            onFinish={handleReFinalize}
+          >
+            <AntForm.Item
+              name="reason"
+              label="Lý do xem xét lại"
+              rules={[{ required: true, message: "Vui lòng nhập lý do" }]}
+            >
+              <Input.TextArea rows={4} />
+            </AntForm.Item>
+
+            <AntForm.Item
+              name="link"
+              label="Tài liệu đính kèm"
+              rules={[{ required: true, message: "Vui lòng tải lên tài liệu" }]}
+            >
+              <CloudinaryUploadWidget
+                onUploadSuccess={(info: unknown) => {
+                  const uploadInfo = info as { secure_url: string };
+                  reFinalizeForm.setFieldsValue({
+                    link: uploadInfo.secure_url,
+                  });
+                }}
+                onUploadFailure={(error) => {
+                  console.error("Upload failed:", error);
+                  message.error("Tải file lên thất bại");
+                }}
+              />
+            </AntForm.Item>
+
+            <AntForm.Item>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                Gửi yêu cầu
+              </Button>
+            </AntForm.Item>
+          </AntForm>
+        </Modal>
         <Table
           columns={classGradeColumns}
           dataSource={students}

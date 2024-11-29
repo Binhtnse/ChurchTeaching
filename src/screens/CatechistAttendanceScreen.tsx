@@ -17,6 +17,8 @@ interface AttendanceRecord {
   };
   isAbsent: "PRESENT" | "ABSENT";
   isAbsentWithPermission: "TRUE" | "FALSE";
+  leaveWithoutPermission: number;
+  leaveWithPermission: number;
 }
 
 interface Student {
@@ -33,6 +35,8 @@ interface Student {
 interface AttendanceData {
   timeTableId: number;
   slotName: string;
+  totalAbsenceLimit: number;
+  totalAbsenceWithPermissionLimit: number;
   isAttendanceMarked: "true" | "false";
   attendanceRecords: AttendanceRecord[];
 }
@@ -303,6 +307,7 @@ const CatechistAttendanceScreen: React.FC = () => {
               <span className="text-red-600 font-medium">Vắng mặt</span>
             </Checkbox>
           </Checkbox.Group>
+          
           {date && isFutureDate(date) && (
             <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
           )}
@@ -355,6 +360,16 @@ const CatechistAttendanceScreen: React.FC = () => {
           {record.isAbsentWithPermission === "TRUE" && (
             <span className="ml-2 text-gray-500">Vắng có phép</span>
           )}
+          {record.leaveWithoutPermission > (attendanceData?.totalAbsenceLimit || 3) && (
+          <div className="text-red-500 font-medium mt-2">
+            Vắng không phép: {record.leaveWithoutPermission}/{attendanceData?.totalAbsenceLimit || 3} (Vượt quá giới hạn)
+          </div>
+        )}
+        {record.leaveWithPermission > (attendanceData?.totalAbsenceWithPermissionLimit || 3) && (
+          <div className="text-orange-500 font-medium mt-2">
+            Vắng có phép: {record.leaveWithPermission}/{attendanceData?.totalAbsenceWithPermissionLimit || 3} (Vượt quá giới hạn)
+          </div>
+        )}
           {date && isFutureDate(date) && (
             <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
           )}
