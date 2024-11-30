@@ -155,7 +155,7 @@ const AdminUserListScreen: React.FC = () => {
           setLoading(false);
         } catch (error) {
           console.error("Error fetching users:", error);
-          message.error("Failed to load user data");
+          message.error("Lấy danh sách người dùng thất bại");
           setLoading(false);
         }
       }

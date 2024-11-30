@@ -55,7 +55,6 @@ const ListSyllabusScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching grades:", error);
-      message.error("An error occurred while fetching grades");
     }
   };
 
@@ -67,7 +66,6 @@ const ListSyllabusScreen: React.FC = () => {
       setAcademicYears(response.data);
     } catch (error) {
       console.error("Error fetching academic years:", error);
-      message.error("Failed to fetch academic years");
     }
   };
 
@@ -100,11 +98,11 @@ const ListSyllabusScreen: React.FC = () => {
             pageSize: response.data.pageResponse.pageSize,
           }));
         } else {
-          message.error("Failed to fetch syllabuses");
+          message.error("Lấy danh sách giáo trình thất bại");
         }
       } catch (error) {
         console.error("Error fetching syllabuses:", error);
-        message.error("An error occurred while fetching syllabuses");
+        message.error("Lấy danh sách giáo trình thất bại");
       } finally {
         setTableLoading(false);
       }

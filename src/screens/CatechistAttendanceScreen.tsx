@@ -30,6 +30,8 @@ interface Student {
   gender?: string;
   email?: string;
   phoneNumber?: string;
+  leaveWithoutPermission: number;
+  leaveWithPermission: number;
 }
 
 interface AttendanceData {
@@ -284,35 +286,54 @@ const CatechistAttendanceScreen: React.FC = () => {
       key: "attendance",
       className: "bg-gray-100 font-semibold",
       render: (_, student) => (
-        <div className="flex items-center">
-          <Checkbox.Group
-            value={
-              initialAttendance.has(student.studentClassId)
-                ? [
-                    initialAttendance.get(student.studentClassId)
-                      ? "ABSENT"
-                      : "PRESENT",
-                  ]
-                : []
-            }
-            onChange={(values) =>
-              handleInitialAttendanceChange(student.studentClassId, values)
-            }
-            className="flex space-x-4"
-          >
-            <Checkbox value="PRESENT">
-              <span className="text-green-600 font-medium">Có mặt</span>
-            </Checkbox>
-            <Checkbox value="ABSENT">
-              <span className="text-red-600 font-medium">Vắng mặt</span>
-            </Checkbox>
-          </Checkbox.Group>
-          
-          {date && isFutureDate(date) && (
-            <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
+        <div className="flex flex-col">
+          <div className="flex items-center">
+            <Checkbox.Group
+              value={
+                initialAttendance.has(student.studentClassId)
+                  ? [
+                      initialAttendance.get(student.studentClassId)
+                        ? "ABSENT"
+                        : "PRESENT",
+                    ]
+                  : []
+              }
+              onChange={(values) =>
+                handleInitialAttendanceChange(student.studentClassId, values)
+              }
+              className="flex space-x-4"
+            >
+              <Checkbox value="PRESENT">
+                <span className="text-green-600 font-medium">Có mặt</span>
+              </Checkbox>
+              <Checkbox value="ABSENT">
+                <span className="text-red-600 font-medium">Vắng mặt</span>
+              </Checkbox>
+            </Checkbox.Group>
+
+            {date && isFutureDate(date) && (
+              <span className="ml-2 text-yellow-500">
+                Buổi học chưa diễn ra
+              </span>
+            )}
+            {date && isPastEditWindow(date) && (
+              <span className="ml-2 text-orange-500">Điểm danh quá 1 tuần</span>
+            )}
+          </div>
+          {student.leaveWithoutPermission >
+            (attendanceData?.totalAbsenceLimit || 3) && (
+            <div className="text-red-500 font-medium mt-2">
+              Vắng không phép: {student.leaveWithoutPermission}/
+              {attendanceData?.totalAbsenceLimit || 3} (Vượt quá giới hạn)
+            </div>
           )}
-          {date && isPastEditWindow(date) && (
-            <span className="ml-2 text-orange-500">Điểm danh quá 1 tuần</span>
+          {student.leaveWithPermission >
+            (attendanceData?.totalAbsenceWithPermissionLimit || 3) && (
+            <div className="text-orange-500 font-medium mt-2">
+              Vắng có phép: {student.leaveWithPermission}/
+              {attendanceData?.totalAbsenceWithPermissionLimit || 3} (Vượt quá
+              giới hạn)
+            </div>
           )}
         </div>
       ),
@@ -340,41 +361,50 @@ const CatechistAttendanceScreen: React.FC = () => {
       key: "attendance",
       className: "bg-gray-100 font-semibold",
       render: (_, record) => (
-        <div className="flex items-center">
-          <Checkbox.Group
-            value={[record.isAbsent]}
-            onChange={(values) => {
-              const isAbsent = values[values.length - 1] === "ABSENT";
-              handleAttendanceChange(record.attendanceId, isAbsent);
-            }}
-            disabled={record.isAbsentWithPermission === "TRUE"}
-            className="flex space-x-4"
-          >
-            <Checkbox value="PRESENT" checked={record.isAbsent === "PRESENT"}>
-              <span className="text-green-600 font-medium">Có mặt</span>
-            </Checkbox>
-            <Checkbox value="ABSENT" checked={record.isAbsent === "ABSENT"}>
-              <span className="text-red-600 font-medium">Vắng mặt</span>
-            </Checkbox>
-          </Checkbox.Group>
-          {record.isAbsentWithPermission === "TRUE" && (
-            <span className="ml-2 text-gray-500">Vắng có phép</span>
-          )}
-          {record.leaveWithoutPermission > (attendanceData?.totalAbsenceLimit || 3) && (
-          <div className="text-red-500 font-medium mt-2">
-            Vắng không phép: {record.leaveWithoutPermission}/{attendanceData?.totalAbsenceLimit || 3} (Vượt quá giới hạn)
+        <div className="flex flex-col">
+          <div className="flex items-center">
+            <Checkbox.Group
+              value={[record.isAbsent]}
+              onChange={(values) => {
+                const isAbsent = values[values.length - 1] === "ABSENT";
+                handleAttendanceChange(record.attendanceId, isAbsent);
+              }}
+              disabled={record.isAbsentWithPermission === "TRUE"}
+              className="flex space-x-4"
+            >
+              <Checkbox value="PRESENT" checked={record.isAbsent === "PRESENT"}>
+                <span className="text-green-600 font-medium">Có mặt</span>
+              </Checkbox>
+              <Checkbox value="ABSENT" checked={record.isAbsent === "ABSENT"}>
+                <span className="text-red-600 font-medium">Vắng mặt</span>
+              </Checkbox>
+            </Checkbox.Group>
+            {record.isAbsentWithPermission === "TRUE" && (
+              <span className="ml-2 text-gray-500">Vắng có phép</span>
+            )}
+            {date && isFutureDate(date) && (
+              <span className="ml-2 text-yellow-500">
+                Buổi học chưa diễn ra
+              </span>
+            )}
+            {date && isPastEditWindow(date) && (
+              <span className="ml-2 text-orange-500">Điểm danh quá 1 tuần</span>
+            )}
           </div>
-        )}
-        {record.leaveWithPermission > (attendanceData?.totalAbsenceWithPermissionLimit || 3) && (
-          <div className="text-orange-500 font-medium mt-2">
-            Vắng có phép: {record.leaveWithPermission}/{attendanceData?.totalAbsenceWithPermissionLimit || 3} (Vượt quá giới hạn)
-          </div>
-        )}
-          {date && isFutureDate(date) && (
-            <span className="ml-2 text-yellow-500">Buổi học chưa diễn ra</span>
+          {record.leaveWithoutPermission >
+            (attendanceData?.totalAbsenceLimit || 3) && (
+            <div className="text-red-500 font-medium mt-2">
+              Vắng không phép: {record.leaveWithoutPermission}/
+              {attendanceData?.totalAbsenceLimit || 3} (Vượt quá giới hạn)
+            </div>
           )}
-          {date && isPastEditWindow(date) && (
-            <span className="ml-2 text-orange-500">Điểm danh quá 1 tuần</span>
+          {record.leaveWithPermission >
+            (attendanceData?.totalAbsenceWithPermissionLimit || 3) && (
+            <div className="text-orange-500 font-medium mt-2">
+              Vắng có phép: {record.leaveWithPermission}/
+              {attendanceData?.totalAbsenceWithPermissionLimit || 3} (Vượt quá
+              giới hạn)
+            </div>
           )}
         </div>
       ),
@@ -468,7 +498,9 @@ const CatechistAttendanceScreen: React.FC = () => {
                 loading={saveLoading}
                 disabled={!validateAllAttendanceMarked()}
                 className={`${
-                  (date && isFutureDate(date)) || !validateAllAttendanceMarked() || isPastEditWindow(date)
+                  (date && isFutureDate(date)) ||
+                  !validateAllAttendanceMarked() ||
+                  isPastEditWindow(date)
                     ? "bg-gray-400"
                     : "bg-green-500 hover:bg-green-600"
                 } text-white font-bold py-2 px-4 rounded-full transition-colors duration-300`}

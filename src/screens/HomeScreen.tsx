@@ -58,7 +58,7 @@ const HomeScreen: React.FC = () => {
       setLatestPosts(fetchedPosts.slice(0, 5)); // Bài viết mới nhất
     } catch (error) {
       console.error("Error fetching posts:", error);
-      message.error("Failed to fetch posts");
+      message.error("Lấy bài đăng thất bại");
     } finally {
       setLoading(false);
     }

@@ -68,7 +68,6 @@ const EnrollListScreen: React.FC = () => {
       setAcademicYears(response.data);
     } catch (error) {
       console.error("Error fetching academic years:", error);
-      message.error("Failed to fetch academic years");
     }
   };
 
@@ -85,12 +84,9 @@ const EnrollListScreen: React.FC = () => {
       );
       if (response.data.status === "success") {
         setGrades(response.data.data);
-      } else {
-        message.error("Failed to fetch grades");
-      }
+      } 
     } catch (error) {
       console.error("Error fetching grades:", error);
-      message.error("An error occurred while fetching grades");
     }
   };
 
@@ -132,6 +128,7 @@ const EnrollListScreen: React.FC = () => {
         }));
       } catch (error) {
         console.error("Error fetching data:", error);
+        message.error("Không thể lấy danh sách đơn đăng ký. Vui lòng thử lại sau.");
       } finally {
         setLoading(false);
       }

@@ -88,7 +88,7 @@ const AdminPostScreen: React.FC = () => {
       setPosts(response.data);
     } catch (error) {
       console.error("Error fetching posts:", error);
-      message.error("Failed to fetch posts");
+      message.error("Không thể tải bài viết ");
     } finally {
       setLoading(false);
     }
@@ -134,7 +134,7 @@ const AdminPostScreen: React.FC = () => {
         }
       );
       if (response.status === 200) {
-        message.success("Post created successfully");
+        message.success("Tạo bài viết thành công");
         // setIsEditorModalVisible(false);
         // fetchPosts();
         // form.resetFields();
@@ -143,7 +143,7 @@ const AdminPostScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error creating post:", error);
-      message.error("Failed to create post");
+      message.error("Tạo bài viết thất bại");
     } finally {
       setSubmitLoading(false);
     }

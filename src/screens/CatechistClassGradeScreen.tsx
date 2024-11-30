@@ -73,6 +73,7 @@ const CatechistClassGradeScreen: React.FC = () => {
   const [isReFinalizeModalVisible, setIsReFinalizeModalVisible] =
     useState(false);
   const [reFinalizeForm] = AntForm.useForm();
+  const [isReopenStatus, setIsReopenStatus] = useState(false);
 
   const location = useLocation();
   const { academicYearId, gradeId } = location.state || {};
@@ -114,6 +115,7 @@ const CatechistClassGradeScreen: React.FC = () => {
       const grades = gradesResponse.data.data;
 
       setIsGradeFinalized(gradesResponse.data.status === "true");
+      setIsReopenStatus(gradesResponse.data.status === "reopen");
       setCanShowFinalizeButton(gradesResponse.data.message === "true");
 
       const combinedStudents = students.map((student: Student) => {
@@ -152,6 +154,54 @@ const CatechistClassGradeScreen: React.FC = () => {
       setLoading(false);
     }
   }, [classId, gradeTemplate]);
+
+  const saveReopenGrades = async () => {
+    try {
+      setLoading(true);
+      const accessToken = localStorage.getItem("accessToken");
+
+      const changedScores = students
+        .filter((student) =>
+          Object.values(student.scores).some(
+            (score) =>
+              Object.prototype.hasOwnProperty.call(score, "isChanged") &&
+              score["isChanged"]
+          )
+        )
+        .map((student) => ({
+          studentClassId: student.studentClassId,
+          exams: Object.entries(student.scores)
+            .filter(
+              ([, score]) =>
+                Object.prototype.hasOwnProperty.call(score, "isChanged") &&
+                score["isChanged"]
+            )
+            .map(([, score]) => ({
+              examId: score.examId,
+              score: score.score,
+            })),
+        }));
+
+      if (changedScores.length > 0) {
+        await axios.put(
+          `https://sep490-backend-production.up.railway.app/api/v1/student-grade-reopen/class/${classId}`,
+          { studentClassScores: changedScores },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        message.success("Thay đổi thành công");
+        window.location.reload();
+      } else {
+        message.info("Không có thay đổi để lưu");
+      }
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to save reopen grades:", error);
+      message.error("Lưu thay đổi thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleReFinalize = async (values: { reason: string; link: string }) => {
     try {
@@ -428,14 +478,24 @@ const CatechistClassGradeScreen: React.FC = () => {
         Danh sách điểm số
       </h1>
       <Spin spinning={loading} tip="Đang tải...">
-        {!isGradeFinalized && (
+        {isReopenStatus ? (
           <Button
-            onClick={isEditing ? saveGrades : toggleEditing}
+            onClick={isEditing ? saveReopenGrades : toggleEditing}
             className="mb-4 mr-4 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            disabled={isGradeFinalized}
           >
             {isEditing ? "Lưu thay đổi" : "Ghi nhận điểm"}
           </Button>
+        ) : (
+          // Existing button logic
+          !isGradeFinalized && (
+            <Button
+              onClick={isEditing ? saveGrades : toggleEditing}
+              className="mb-4 mr-4 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              disabled={isGradeFinalized}
+            >
+              {isEditing ? "Lưu thay đổi" : "Ghi nhận điểm"}
+            </Button>
+          )
         )}
         {allCellsFilled && canShowFinalizeButton && !isGradeFinalized && (
           <Button

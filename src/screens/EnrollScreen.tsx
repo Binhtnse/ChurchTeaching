@@ -308,11 +308,11 @@ const EnrollScreen: React.FC = () => {
                     const isJpgOrPng =
                       file.type === "image/jpeg" || file.type === "image/png";
                     if (!isJpgOrPng) {
-                      message.error("You can only upload JPG/PNG file!");
+                      message.error("Bạn chỉ có thể tải lên file định dạng JPG/PNG!");
                     }
                     const isLt2M = file.size / 1024 / 1024 < 2;
                     if (!isLt2M) {
-                      message.error("Image must smaller than 2MB!");
+                      message.error("Hình phải nhỏ hơn 2MB!");
                     }
                     return isJpgOrPng && isLt2M;
                   }}

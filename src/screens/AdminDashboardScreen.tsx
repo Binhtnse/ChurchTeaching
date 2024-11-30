@@ -81,7 +81,7 @@ const AdminDashboardScreen: React.FC = () => {
       setStatistics(response.data.data);
     } catch (error) {
       console.error("Error fetching statistics:", error);
-      message.error("Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.");
+      message.error("Không lấy được dữ liệu. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }

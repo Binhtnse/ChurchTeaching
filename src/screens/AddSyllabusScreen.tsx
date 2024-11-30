@@ -288,7 +288,7 @@ const AddSyllabusScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error creating syllabus:", error);
-      message.error("An error occurred while creating the syllabus");
+      message.error("Tạo chương trình học thất bại");
     } finally {
       setLoading(false);
     }
@@ -306,7 +306,6 @@ const AddSyllabusScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching policies:", error);
-      message.error("An error occurred while fetching policies");
     }
   };
 
@@ -321,7 +320,6 @@ const AddSyllabusScreen: React.FC = () => {
         }
       } catch (error) {
         console.error("Error fetching grade templates:", error);
-        message.error("Failed to fetch grade templates");
       }
     };
 
@@ -341,7 +339,6 @@ const AddSyllabusScreen: React.FC = () => {
         setAcademicYears(response.data);
       } catch (error) {
         console.error("Error fetching academic years:", error);
-        message.error("Failed to fetch academic years");
       }
     };
 
@@ -367,7 +364,6 @@ const AddSyllabusScreen: React.FC = () => {
         }
       } catch (error) {
         console.error("Error fetching grades:", error);
-        message.error("An error occurred while fetching grades");
       }
     };
 
