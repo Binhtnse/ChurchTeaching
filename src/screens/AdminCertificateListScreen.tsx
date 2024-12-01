@@ -59,7 +59,6 @@ const AdminCertificateListScreen: React.FC = () => {
       setAcademicYears(response.data);
     } catch (error) {
       console.error("Error fetching academic years:", error);
-      message.error("Failed to fetch academic years");
     }
   };
 
@@ -79,7 +78,6 @@ const AdminCertificateListScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching grades:", error);
-      message.error("An error occurred while fetching grades");
     }
   };
 
@@ -113,7 +111,7 @@ const AdminCertificateListScreen: React.FC = () => {
         }
       } catch (error) {
         console.error("Error fetching certificates:", error);
-        message.error("Cannot load certificates list");
+        message.error("Tải danh sách chứng chỉ thất bại");
         setCertificates([]);
       } finally {
         setLoading(false);

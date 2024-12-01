@@ -186,7 +186,7 @@ const ParentExamScheduleScreen: React.FC = () => {
       setExamSchedules(examData);
     } catch (error) {
       console.error(error);
-      message.error("Failed to fetch exam schedule");
+      message.error("Lấy lịch kiểm tra thất bại");
       setExamSchedules([]);
     } finally {
       setLoading(false);

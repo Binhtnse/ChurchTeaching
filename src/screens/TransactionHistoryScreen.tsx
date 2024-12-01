@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Select, Tag, Card } from "antd";
+import { Table, Select, Tag, Card, message } from "antd";
 import axios from "axios";
 
 const { Option } = Select;
@@ -130,8 +130,10 @@ const TransactionHistoryScreen: React.FC = () => {
         `https://sep490-backend-production.up.railway.app/api/v1/tuition/admin/transactions?page=1&size=10&academicYearId=${selectedAcademicYear}${gradeParam}${classParam}`
       );
       setTransactions(response.data.data);
+      message.success('Tải danh sách giao dịch thành công');
     } catch (error) {
       console.error("Error fetching transactions:", error);
+      message.error('Tải danh sách giao dịch thất bại');
     } finally {
       setLoading(false);
     }

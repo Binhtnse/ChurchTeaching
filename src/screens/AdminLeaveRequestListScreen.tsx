@@ -49,7 +49,6 @@ const AdminLeaveRequestListScreen: React.FC = () => {
       setAcademicYears(response.data);
     } catch (error) {
       console.error("Error fetching academic years:", error);
-      message.error("Failed to fetch academic years");
     }
   };
 
@@ -69,7 +68,6 @@ const AdminLeaveRequestListScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching grades:", error);
-      message.error("Failed to fetch grades");
     }
   };
 
@@ -88,7 +86,7 @@ const AdminLeaveRequestListScreen: React.FC = () => {
       setLeaveRequests(response.data.data);
     } catch (error) {
       console.error("Error fetching leave requests:", error);
-      message.error("Failed to fetch leave requests");
+      message.error("Tải danh sách đơn xin nghỉ thất bại");
     } finally {
       setLoading(false);
     }

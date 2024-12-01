@@ -82,15 +82,9 @@ const AdminStudentList: React.FC = () => {
 
   const handleNextYear = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.post(
+      const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years/next?status=ACTIVE",
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
       console.log(response)
       message.success("Chuyển năm thành công");

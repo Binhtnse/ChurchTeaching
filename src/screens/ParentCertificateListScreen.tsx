@@ -148,7 +148,7 @@ const ParentCertificateListScreen: React.FC = () => {
         }
       } catch (error) {
         console.log(error);
-        message.error("Cannot load certificates list");
+        message.error("Không thể lấy danh sách chứng chỉ");
         setCertificates([]);
       } finally {
         setLoading(false);

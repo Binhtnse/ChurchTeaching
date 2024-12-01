@@ -81,7 +81,6 @@ const AdminClassListScreen: React.FC = () => {
       setAcademicYears(response.data);
     } catch (error) {
       console.error("Error fetching academic years:", error);
-      message.error("Failed to fetch academic years");
     }
   };
 
@@ -103,7 +102,6 @@ const AdminClassListScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching grades:", error);
-      message.error("An error occurred while fetching grades");
     }
   };
 
@@ -157,7 +155,7 @@ const AdminClassListScreen: React.FC = () => {
         }));
       } catch (error) {
         console.error("Error fetching data:", error);
-        // Clear data on error
+        message.error("Không thể tải danh sách lớp giáo lý. Vui lòng thử lại sau");
         setAllData([]);
         setDataSource([]);
         setPagination((prevPagination) => ({

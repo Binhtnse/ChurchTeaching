@@ -160,7 +160,7 @@ const ParentTransactionScreen: React.FC = () => {
       const { paymentUrl } = response.data;
       window.location.href = paymentUrl;
     } catch (error) {
-      message.error("Transaction failed");
+      message.error("Giao dịch thất bại");
       console.log(error);
     } finally {
       setLoading(false);

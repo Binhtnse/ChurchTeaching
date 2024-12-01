@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Spin } from "antd";
+import { Table, Button, Spin, message } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -46,6 +46,7 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
         setLeaveRequests(response.data.data);
       } catch (error) {
         console.error("Error fetching leave requests:", error);
+        message.error("Lấy danh sách đơn xin nghỉ thất bại")
       } finally {
         setLoading(false);
       }
@@ -69,6 +70,7 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
+      message.error("Chấp thuận đơn xin nghỉ thành công")
 
       // Refresh the leave requests list
       const response = await axios.get(
@@ -102,6 +104,7 @@ const CatechistLeaveRequestListScreen: React.FC = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
+      message.error("Từ chối đơn xin nghỉ thành công")
 
       // Refresh the leave requests list
       const response = await axios.get(

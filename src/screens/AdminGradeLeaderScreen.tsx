@@ -82,7 +82,6 @@ const AdminGradeLeaderScreen: React.FC = () => {
       setAcademicYears(response.data);
     } catch (error) {
       console.error("Error fetching academic years:", error);
-      message.error("Failed to fetch academic years");
     }
   };
 
@@ -102,7 +101,6 @@ const AdminGradeLeaderScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching grades:", error);
-      message.error("An error occurred while fetching grades");
     }
   };
 
@@ -137,7 +135,7 @@ const AdminGradeLeaderScreen: React.FC = () => {
         }
       } catch (error) {
         console.error("Error fetching grade leaders:", error);
-        message.error("Cannot load grade leaders list");
+        message.error("Tải danh sách khối trưởng thất bại");
         setGradeLeaders([]); // Clear data on error
       } finally {
         setLoading(false);

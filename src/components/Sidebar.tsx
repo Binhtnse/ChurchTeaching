@@ -58,16 +58,6 @@ const getMenuItems = (role: string): MenuItem[] => {
           { key: "study-attendance", label: "Xem điểm danh" },
         ],
       },
-      // {
-      //   key: "transaction-pay-children",
-      //   label: "Đóng học phí",
-      //   icon: <CreditCardOutlined />,
-      // },
-      // {
-      //   key: "transaction-history-user",
-      //   label: "Lịch sử giao dịch",
-      //   icon: <AccountBookOutlined />,
-      // },
       {
         key: "student-certificate-list",
         label: "Danh sách chứng chỉ lên lớp",
@@ -217,6 +207,15 @@ const getMenuItems = (role: string): MenuItem[] => {
         key: "transaction-history",
         label: "Lịch sử giao dịch",
         icon: <AccountBookOutlined />,
+      },
+      {
+        key: "edit-request-list",
+        label: "Đơn xin sửa điểm và điểm danh",
+        icon: <AccountBookOutlined />,
+        children: [
+          { key: "grades-edit-list", label: "Đơn xin sửa điểm" },
+          { key: "attendance-edit-list", label: "Đơn xin sửa điểm danh" },
+        ],
       },
       {
         key: "leave-request-history",

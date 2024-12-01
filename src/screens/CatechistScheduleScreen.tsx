@@ -178,6 +178,7 @@ const CatechistScheduleScreen: React.FC = () => {
       } catch (error) {
         console.log(error);
         setScheduleData(null);
+        message.error("Lấy lịch giảng dạy thất bại")
       } finally {
         setLoading(false);
         setScheduleLoading(false);

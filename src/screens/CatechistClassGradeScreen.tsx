@@ -21,6 +21,16 @@ interface ScoreData {
   isChanged?: boolean;
 }
 
+interface RequestData {
+  id: number;
+  nameCreator: string;
+  className: string;
+  classId: number;
+  reason: string;
+  link: string;
+  status: string;
+}
+
 interface Student {
   studentId: number;
   studentClassId: number;
@@ -65,6 +75,7 @@ const CatechistClassGradeScreen: React.FC = () => {
   const [allCellsFilled, setAllCellsFilled] = useState(false);
   const [isGradeFinalized, setIsGradeFinalized] = useState(false);
   const [canShowFinalizeButton, setCanShowFinalizeButton] = useState(false);
+  const [userRequests, setUserRequests] = useState<RequestData[]>([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -79,21 +90,57 @@ const CatechistClassGradeScreen: React.FC = () => {
   const { academicYearId, gradeId } = location.state || {};
 
   const fetchSyllabus = useCallback(async () => {
+    console.log('Fetching syllabus with:', {gradeId, academicYearId});
     try {
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=1&size=10&gradeId=${gradeId}&yearId=${academicYearId}`
       );
-
+  
       if (response.data.status === "success" && response.data.data.length > 0) {
-        const syllabusData = response.data.data[0];
-        const templateId = syllabusData.syllabus.gradeTemplate.id;
+        const templateId = response.data.data[0].syllabus.gradeTemplate.id;
+        console.log('Got template ID:', templateId);
         setGradeTemplateId(templateId);
       }
     } catch (error) {
       console.error("Failed to fetch syllabus:", error);
-      message.error("Failed to fetch syllabus data");
     }
   }, [academicYearId, gradeId]);
+
+  const checkUserReopenRequests = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const userString = localStorage.getItem("userLogin");
+      const user = userString ? JSON.parse(userString) : null;
+  
+      const response = await axios.get(
+        "https://sep490-backend-production.up.railway.app/api/v1/get-reopen-request",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (response.data.status === "success") {
+        const userRequest = response.data.data.find(
+          (request: RequestData) => 
+            request.nameCreator === user.account && 
+            request.classId === Number(classId) &&
+            request.status !== "REJECT"
+        );
+        setUserRequests(userRequest ? [userRequest] : []);
+      }
+    } catch (error) {
+      console.error("Error fetching reopen requests:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && role === "CATECHIST" && classId) {
+      checkUserReopenRequests();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, role, classId]);
 
   const fetchClassGrades = useCallback(async () => {
     setLoading(true);
@@ -106,7 +153,7 @@ const CatechistClassGradeScreen: React.FC = () => {
           { headers: { Authorization: `Bearer ${accessToken}` } }
         ),
         axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=1&size=1000`,
+          `https://sep490-backend-production.up.railway.app/api/v1/student-grade/class/${classId}?page=1&size=1000&academicYearId=${academicYearId}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         ),
       ]);
@@ -138,8 +185,6 @@ const CatechistClassGradeScreen: React.FC = () => {
         return { ...student, scores };
       });
 
-      console.log("Combined students with scores:", combinedStudents);
-
       setStudents(combinedStudents);
       setPagination((prev) => ({
         ...prev,
@@ -149,11 +194,11 @@ const CatechistClassGradeScreen: React.FC = () => {
       }));
     } catch (error) {
       console.error("Failed to fetch class grades:", error);
-      message.error("Failed to fetch class grades");
+      message.error("Lấy điểm lớp thất bại");
     } finally {
       setLoading(false);
     }
-  }, [classId, gradeTemplate]);
+  }, [academicYearId, classId, gradeTemplate?.exams]);
 
   const saveReopenGrades = async () => {
     try {
@@ -189,7 +234,11 @@ const CatechistClassGradeScreen: React.FC = () => {
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         message.success("Thay đổi thành công");
-        window.location.reload();
+        await Promise.all([
+          fetchSyllabus(),
+          fetchGradeTemplate(),
+          fetchClassGrades()
+        ]);
       } else {
         message.info("Không có thay đổi để lưu");
       }
@@ -221,7 +270,11 @@ const CatechistClassGradeScreen: React.FC = () => {
       message.success("Yêu cầu xem xét lại điểm thành công");
       setIsReFinalizeModalVisible(false);
       reFinalizeForm.resetFields();
-      window.location.reload();
+      await Promise.all([
+        fetchSyllabus(),
+        fetchGradeTemplate(),
+        fetchClassGrades()
+      ]);
     } catch (error) {
       console.error("Failed to submit re-finalize request:", error);
       message.error("Yêu cầu xem xét lại điểm thất bại");
@@ -307,7 +360,11 @@ const CatechistClassGradeScreen: React.FC = () => {
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         message.success("Thay đổi thành công");
-        window.location.reload();
+        await Promise.all([
+          fetchSyllabus(),
+          fetchGradeTemplate(),
+          fetchClassGrades()
+        ]);
       } else {
         message.info("Không có thay đổi để lưu");
       }
@@ -315,7 +372,7 @@ const CatechistClassGradeScreen: React.FC = () => {
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save grades:", error);
-      message.error("Lưu thay đổi thất bại");
+      message.error("Thay đổi thất bại");
     } finally {
       setLoading(false);
     }
@@ -379,7 +436,11 @@ const CatechistClassGradeScreen: React.FC = () => {
       );
 
       message.success("Tổng kết điểm thành công");
-      window.location.reload(); // Refresh the data after finalizing
+      await Promise.all([
+        fetchSyllabus(),
+        fetchGradeTemplate(), 
+        fetchClassGrades()
+      ]);// Refresh the data after finalizing
     } catch (error) {
       console.error("Failed to finalize grades:", error);
       message.error("Tổng kết điểm thất bại");
@@ -497,7 +558,7 @@ const CatechistClassGradeScreen: React.FC = () => {
             </Button>
           )
         )}
-        {allCellsFilled && canShowFinalizeButton && !isGradeFinalized && (
+        {allCellsFilled && canShowFinalizeButton && !isGradeFinalized && !isReopenStatus &&(
           <Button
             onClick={handleFinalize}
             className="mb-4 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -505,7 +566,7 @@ const CatechistClassGradeScreen: React.FC = () => {
             Tổng kết
           </Button>
         )}
-        {isGradeFinalized && !isEditing && !canShowFinalizeButton && (
+        {isGradeFinalized && !isEditing && canShowFinalizeButton && userRequests.length === 0 &&(
           <Button
             onClick={() => setIsReFinalizeModalVisible(true)}
             className="mb-4 bg-yellow-600 text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"

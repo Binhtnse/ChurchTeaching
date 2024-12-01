@@ -30,11 +30,11 @@ const PolicyListScreen: React.FC = () => {
       if (response.data.status === "success") {
         setPolicies(response.data.data);
       } else {
-        message.error("Failed to fetch policies");
+        message.error("Tải danh sách quy định thất bại");
       }
     } catch (error) {
       console.error("Error fetching policies:", error);
-      message.error("An error occurred while fetching policies");
+      message.error("Tải danh sách quy định thất bại");
     } finally {
       setLoading(false);
     }

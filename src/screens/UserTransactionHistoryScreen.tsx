@@ -186,7 +186,7 @@ const UserTransactionHistoryScreen: React.FC = () => {
 
       } catch (error) {
         console.error("Error fetching transactions:", error);
-        message.error("Failed to fetch transaction history");
+        message.error("Tải danh sách giao dịch thất bại");
         setTransactions([]); // Clear transactions on error
         setPagination((prev) => ({
           ...prev,

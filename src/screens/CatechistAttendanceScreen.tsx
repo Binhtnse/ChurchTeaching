@@ -107,7 +107,7 @@ const CatechistAttendanceScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching attendance data:", error);
-      message.error("Failed to fetch attendance data");
+      message.error("Lấy thông tin điểm danh thất bại");
     } finally {
       setLoading(false);
     }
@@ -286,22 +286,16 @@ const CatechistAttendanceScreen: React.FC = () => {
       key: "attendance",
       className: "bg-gray-100 font-semibold",
       render: (_, student) => (
-        <div className="flex flex-col">
-          <div className="flex items-center">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center justify-between border-b pb-2">
             <Checkbox.Group
               value={
                 initialAttendance.has(student.studentClassId)
-                  ? [
-                      initialAttendance.get(student.studentClassId)
-                        ? "ABSENT"
-                        : "PRESENT",
-                    ]
+                  ? [initialAttendance.get(student.studentClassId) ? "ABSENT" : "PRESENT"]
                   : []
               }
-              onChange={(values) =>
-                handleInitialAttendanceChange(student.studentClassId, values)
-              }
-              className="flex space-x-4"
+              onChange={(values) => handleInitialAttendanceChange(student.studentClassId, values)}
+              className="flex space-x-6"
             >
               <Checkbox value="PRESENT">
                 <span className="text-green-600 font-medium">Có mặt</span>
@@ -310,31 +304,48 @@ const CatechistAttendanceScreen: React.FC = () => {
                 <span className="text-red-600 font-medium">Vắng mặt</span>
               </Checkbox>
             </Checkbox.Group>
-
-            {date && isFutureDate(date) && (
-              <span className="ml-2 text-yellow-500">
-                Buổi học chưa diễn ra
-              </span>
-            )}
-            {date && isPastEditWindow(date) && (
-              <span className="ml-2 text-orange-500">Điểm danh quá 1 tuần</span>
-            )}
+  
+            <div className="flex items-center space-x-4">
+              {date && isFutureDate(date) && (
+                <span className="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-sm">
+                  Buổi học chưa diễn ra
+                </span>
+              )}
+              {date && isPastEditWindow(date) && (
+                <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">
+                  Điểm danh quá 1 tuần
+                </span>
+              )}
+            </div>
           </div>
-          {student.leaveWithoutPermission >
-            (attendanceData?.totalAbsenceLimit || 3) && (
-            <div className="text-red-500 font-medium mt-2">
-              Vắng không phép: {student.leaveWithoutPermission}/
-              {attendanceData?.totalAbsenceLimit || 3} (Vượt quá giới hạn)
+  
+          <div className="grid grid-cols-2 gap-4">
+            <div className={`flex items-center space-x-2 ${
+              student.leaveWithoutPermission > (attendanceData?.totalAbsenceLimit || 3) 
+                ? 'text-red-500' 
+                : 'text-gray-600'
+            }`}>
+              <div className="font-medium">
+                Vắng không phép: {student.leaveWithoutPermission}/{attendanceData?.totalAbsenceLimit || 3}
+              </div>
+              {student.leaveWithoutPermission > (attendanceData?.totalAbsenceLimit || 3) && (
+                <span className="text-sm">(Vượt quá giới hạn)</span>
+              )}
             </div>
-          )}
-          {student.leaveWithPermission >
-            (attendanceData?.totalAbsenceWithPermissionLimit || 3) && (
-            <div className="text-orange-500 font-medium mt-2">
-              Vắng có phép: {student.leaveWithPermission}/
-              {attendanceData?.totalAbsenceWithPermissionLimit || 3} (Vượt quá
-              giới hạn)
+  
+            <div className={`flex items-center space-x-2 ${
+              student.leaveWithPermission > (attendanceData?.totalAbsenceWithPermissionLimit || 3)
+                ? 'text-orange-500'
+                : 'text-gray-600'
+            }`}>
+              <div className="font-medium">
+                Vắng có phép: {student.leaveWithPermission}/{attendanceData?.totalAbsenceWithPermissionLimit || 3}
+              </div>
+              {student.leaveWithPermission > (attendanceData?.totalAbsenceWithPermissionLimit || 3) && (
+                <span className="text-sm">(Vượt quá giới hạn)</span>
+              )}
             </div>
-          )}
+          </div>
         </div>
       ),
     },
@@ -361,51 +372,73 @@ const CatechistAttendanceScreen: React.FC = () => {
       key: "attendance",
       className: "bg-gray-100 font-semibold",
       render: (_, record) => (
-        <div className="flex flex-col">
-          <div className="flex items-center">
+        <div className="flex flex-col space-y-3">
+          {/* Attendance Status Row */}
+          <div className="flex items-center justify-between border-b pb-2">
             <Checkbox.Group
               value={[record.isAbsent]}
               onChange={(values) => {
                 const isAbsent = values[values.length - 1] === "ABSENT";
                 handleAttendanceChange(record.attendanceId, isAbsent);
               }}
-              disabled={record.isAbsentWithPermission === "TRUE"}
-              className="flex space-x-4"
+              className="flex space-x-6"
             >
-              <Checkbox value="PRESENT" checked={record.isAbsent === "PRESENT"}>
+              <Checkbox value="PRESENT">
                 <span className="text-green-600 font-medium">Có mặt</span>
               </Checkbox>
-              <Checkbox value="ABSENT" checked={record.isAbsent === "ABSENT"}>
+              <Checkbox value="ABSENT">
                 <span className="text-red-600 font-medium">Vắng mặt</span>
               </Checkbox>
             </Checkbox.Group>
-            {record.isAbsentWithPermission === "TRUE" && (
-              <span className="ml-2 text-gray-500">Vắng có phép</span>
-            )}
-            {date && isFutureDate(date) && (
-              <span className="ml-2 text-yellow-500">
-                Buổi học chưa diễn ra
-              </span>
-            )}
-            {date && isPastEditWindow(date) && (
-              <span className="ml-2 text-orange-500">Điểm danh quá 1 tuần</span>
-            )}
+      
+            {/* Status Indicators */}
+            <div className="flex items-center space-x-4">
+              {record.isAbsentWithPermission === "TRUE" && (
+                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
+                  Vắng có phép
+                </span>
+              )}
+              {date && isFutureDate(date) && (
+                <span className="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-sm">
+                  Buổi học chưa diễn ra
+                </span>
+              )}
+              {date && isPastEditWindow(date) && (
+                <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">
+                  Điểm danh quá 1 tuần
+                </span>
+              )}
+            </div>
           </div>
-          {record.leaveWithoutPermission >
-            (attendanceData?.totalAbsenceLimit || 3) && (
-            <div className="text-red-500 font-medium mt-2">
-              Vắng không phép: {record.leaveWithoutPermission}/
-              {attendanceData?.totalAbsenceLimit || 3} (Vượt quá giới hạn)
+      
+          {/* Absence Statistics Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className={`flex items-center space-x-2 ${
+              record.leaveWithoutPermission > (attendanceData?.totalAbsenceLimit || 3) 
+                ? 'text-red-500' 
+                : 'text-gray-600'
+            }`}>
+              <div className="font-medium">
+                Vắng không phép: {record.leaveWithoutPermission}/{attendanceData?.totalAbsenceLimit || 3}
+              </div>
+              {record.leaveWithoutPermission > (attendanceData?.totalAbsenceLimit || 3) && (
+                <span className="text-sm">(Vượt quá giới hạn)</span>
+              )}
             </div>
-          )}
-          {record.leaveWithPermission >
-            (attendanceData?.totalAbsenceWithPermissionLimit || 3) && (
-            <div className="text-orange-500 font-medium mt-2">
-              Vắng có phép: {record.leaveWithPermission}/
-              {attendanceData?.totalAbsenceWithPermissionLimit || 3} (Vượt quá
-              giới hạn)
+      
+            <div className={`flex items-center space-x-2 ${
+              record.leaveWithPermission > (attendanceData?.totalAbsenceWithPermissionLimit || 3)
+                ? 'text-orange-500'
+                : 'text-gray-600'
+            }`}>
+              <div className="font-medium">
+                Vắng có phép: {record.leaveWithPermission}/{attendanceData?.totalAbsenceWithPermissionLimit || 3}
+              </div>
+              {record.leaveWithPermission > (attendanceData?.totalAbsenceWithPermissionLimit || 3) && (
+                <span className="text-sm">(Vượt quá giới hạn)</span>
+              )}
             </div>
-          )}
+          </div>
         </div>
       ),
     },

@@ -22,7 +22,7 @@ const AddPolicyScreen: React.FC = () => {
       form.resetFields();
       console.log(response);
     } catch (error) {
-      message.error("Failed to create policy");
+      message.error("Tạo quy định thất bại");
       console.log(error);
     } finally {
       setLoading(false);
