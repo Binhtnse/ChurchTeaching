@@ -112,6 +112,11 @@ const ParentChildrenDetailScreen: React.FC = () => {
       title: "Kết quả",
       dataIndex: "result",
       key: "result",
+      render: (result: string) => {
+        const color = result === "PASS" ? "green" : "red";
+        const text = result === "PASS" ? "Đạt" : "Không đạt";
+        return <Tag color={color}>{text}</Tag>;
+      },
     },
     {
       title: "Điểm tổng kết",
