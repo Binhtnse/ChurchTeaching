@@ -21,6 +21,7 @@ interface ChildHistory {
   linkCer: string;
   status: string;
   isTuitioned: string;
+  note: string | "";
 }
 
 interface UserDetails {
@@ -142,6 +143,11 @@ const ParentChildrenDetailScreen: React.FC = () => {
         const text = isTuitioned === "true" ? "Đã đóng" : "Chưa đóng";
         return <Tag color={color}>{text}</Tag>;
       },
+    },
+    {
+      title: "Ghi chú",
+      dataIndex: "note",
+      key: "note",
     },
   ];
 
