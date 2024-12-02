@@ -22,6 +22,7 @@ interface StudentData {
   address: string;
   phoneNumber: string;
   status: string;
+  note: string | null;
 }
 
 interface ApiResponse {
@@ -39,6 +40,7 @@ interface ApiResponse {
         phoneNumber: string | null;
       };
       studyStatus: string;
+      note: string | null;
     }>;
     totalElements: number;
     totalPages: number;
@@ -142,6 +144,7 @@ const AdminStudentList: React.FC = () => {
           address: item.student.address || "",
           phoneNumber: item.student.phoneNumber || "",
           status: item.studyStatus,
+          note: item.note || "",
         }));
 
         setStudents(transformedStudents);
@@ -272,6 +275,11 @@ const AdminStudentList: React.FC = () => {
       dataIndex: "phoneNumber",
       key: "phoneNumber",
     },
+    {
+      title: <span className="text-blue-600 font-semibold">Ghi chú</span>,
+      dataIndex: "note",
+      key: "note",
+    }
   ];
 
   return (

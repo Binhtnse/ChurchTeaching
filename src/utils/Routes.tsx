@@ -51,6 +51,7 @@ import AdminGradeTemplateListScreen from "../screens/AdminGradeTemplateListScree
 import AdminCreateGradeTemplateScreen from "../screens/AdminCreateGradeTemplateScreen";
 import ParentChildrenDetailScreen from "../screens/ParentChildrenDetailScreen";
 import AdminEditGradesRequesetScreen from "../screens/AdminEditGradesRequesetScreen";
+import StudentStudyHistoryScreen from "../screens/StudentStudyHistoryScreen";
 
 const Layout = lazy(() => import("../components/MainLayout"));
 const ProtectedRoute = lazy(() => import("../utils/ProtectedRoute"));
@@ -283,6 +284,14 @@ export const AppRoutes = createBrowserRouter([
             element={
               <ProtectedRoute allowedRoles={["STUDENT"]}>
                 <StudentGradesProgressScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student-study-history"
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT"]}>
+                <StudentStudyHistoryScreen />
               </ProtectedRoute>
             }
           />

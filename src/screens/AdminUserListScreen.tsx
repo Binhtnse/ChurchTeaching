@@ -438,11 +438,13 @@ const AdminUserListScreen: React.FC = () => {
       title: "Thao tác",
       key: "actions",
       render: (_: unknown, record: User) => (
-        <Space>
-          <Button danger onClick={() => handleDelete(record.id)}>
-            Xóa
-          </Button>
-        </Space>
+        record.role !== "ADMIN" && (
+          <Space>
+            <Button danger onClick={() => handleDelete(record.id)}>
+              Xóa
+            </Button>
+          </Space>
+        )
       ),
     },
   ];

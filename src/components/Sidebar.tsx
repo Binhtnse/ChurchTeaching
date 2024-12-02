@@ -59,6 +59,11 @@ const getMenuItems = (role: string): MenuItem[] => {
         ],
       },
       {
+        key: "student-study-history",
+        label: "Lịch sử học tập",
+        icon: <FilePdfOutlined />,
+      },
+      {
         key: "student-certificate-list",
         label: "Danh sách chứng chỉ lên lớp",
         icon: <FilePdfOutlined />,

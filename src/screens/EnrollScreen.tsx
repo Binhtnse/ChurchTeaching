@@ -208,8 +208,8 @@ const EnrollScreen: React.FC = () => {
                           ...(question.questionId === 6
                             ? [
                                 {
-                                  pattern: /^[0-9]{10}$/,
-                                  message: "Số điện thoại phải có 10 chữ số!",
+                                  pattern: /^0[0-9]{9}$/,
+                                  message: "Số điện thoại phải bắt đầu bằng số 0 và có 10 chữ số!",
                                 },
                               ]
                             : []),
