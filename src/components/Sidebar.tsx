@@ -214,13 +214,9 @@ const getMenuItems = (role: string): MenuItem[] => {
         icon: <AccountBookOutlined />,
       },
       {
-        key: "edit-request-list",
-        label: "Đơn xin sửa điểm và điểm danh",
+        key: "grades-edit-list",
+        label: "Đơn xin sửa điểm",
         icon: <AccountBookOutlined />,
-        children: [
-          { key: "grades-edit-list", label: "Đơn xin sửa điểm" },
-          { key: "attendance-edit-list", label: "Đơn xin sửa điểm danh" },
-        ],
       },
       {
         key: "leave-request-history",

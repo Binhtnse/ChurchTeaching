@@ -74,13 +74,18 @@ const AdminUserDetailScreen: React.FC = () => {
   const handleEdit = async (values: Partial<UserData>) => {
     try {
       const token = localStorage.getItem("accessToken");
+      // Format the request body according to the API specification
       const updateData = {
-        ...values,
         id: Number(id),
+        fullName: values.fullName,
+        dob: values.dob,
+        address: values.address,
+        gender: values.gender,
+        phoneNumber: values.phoneNumber
       };
-
+  
       await axios.put(
-        `https://sep490-backend-production.up.railway.app/api/v1/user?id=${id}`,
+        `https://sep490-backend-production.up.railway.app/api/v1/user/update`,
         updateData,
         {
           headers: {
@@ -90,6 +95,8 @@ const AdminUserDetailScreen: React.FC = () => {
       );
       message.success("Cập nhật thông tin thành công");
       setIsEditModalVisible(false);
+      
+      // Refresh user data after update
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/user?id=${id}`,
         {
@@ -103,7 +110,7 @@ const AdminUserDetailScreen: React.FC = () => {
       console.error("Error updating user:", error);
       message.error("Cập nhật thông tin thất bại");
     }
-  };
+  };  
 
   if (!isLoggedIn || role !== "ADMIN") {
     return <ForbiddenScreen />;

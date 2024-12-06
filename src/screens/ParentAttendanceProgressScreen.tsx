@@ -85,7 +85,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
   const fetchActivePolicy = async () => {
     try {
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/policy"
+        `https://sep490-backend-production.up.railway.app/api/v1/policy/student/${selectedStudent}`
       );
       if (response.data.status === "success") {
         const activePolicy = response.data.data.find(
@@ -155,6 +155,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
     fetchAcademicYears();
     fetchGrades();
     fetchActivePolicy();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchStudents]);
 
   useEffect(() => {

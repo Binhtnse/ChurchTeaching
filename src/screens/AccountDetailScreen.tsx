@@ -8,6 +8,7 @@ import {
   Modal,
   Form,
   Input,
+  Select,
 } from "antd";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
@@ -29,6 +30,7 @@ const AccountDetailScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { isLoggedIn } = useAuthState();
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -61,6 +63,49 @@ const AccountDetailScreen: React.FC = () => {
 
     fetchUserData();
   }, [isLoggedIn]);
+
+  const handleEdit = async (values: Partial<UserData>) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const userString = localStorage.getItem("userLogin");
+      const user = userString ? JSON.parse(userString) : null;
+
+      const updateData = {
+        id: user?.id,
+        fullName: values.fullName,
+        dob: values.dob,
+        address: values.address,
+        gender: values.gender,
+        phoneNumber: values.phoneNumber,
+      };
+
+      await axios.put(
+        "https://sep490-backend-production.up.railway.app/api/v1/user/update",
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      message.success("Cập nhật thông tin thành công");
+      setIsEditModalVisible(false);
+
+      // Refresh user data
+      const response = await axios.get(
+        `https://sep490-backend-production.up.railway.app/api/v1/user?id=${user?.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setUserData(response.data.data);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      message.error("Cập nhật thông tin thất bại");
+    }
+  };
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -99,6 +144,11 @@ const AccountDetailScreen: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (userData) {
+      form.setFieldsValue(userData);
+    }
+  }, [userData, form]);
 
   if (!loading && !userData) {
     return (
@@ -118,8 +168,11 @@ const AccountDetailScreen: React.FC = () => {
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-gray-50 min-h-screen">
-      <Spin spinning={loading} size="large" className="flex justify-center items-center h-screen">
-
+      <Spin
+        spinning={loading}
+        size="large"
+        className="flex justify-center items-center h-screen"
+      >
         <Card
           title={
             <span className="text-2xl font-semibold text-blue-700">
@@ -127,6 +180,15 @@ const AccountDetailScreen: React.FC = () => {
             </span>
           }
           className="shadow-xl rounded-lg hover:shadow-2xl transition-shadow duration-300"
+          extra={
+            <Button
+              type="primary"
+              onClick={() => setIsEditModalVisible(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Chỉnh sửa thông tin
+            </Button>
+          }
         >
           <Descriptions
             bordered
@@ -144,7 +206,9 @@ const AccountDetailScreen: React.FC = () => {
             <Descriptions.Item label="Họ tên">
               {userData?.fullName}
             </Descriptions.Item>
-            <Descriptions.Item label="Email">{userData?.email}</Descriptions.Item>
+            <Descriptions.Item label="Email">
+              {userData?.email}
+            </Descriptions.Item>
             <Descriptions.Item label="Ngày sinh">
               {userData?.dob}
             </Descriptions.Item>
@@ -157,15 +221,20 @@ const AccountDetailScreen: React.FC = () => {
             <Descriptions.Item label="Số điện thoại">
               {userData?.phoneNumber}
             </Descriptions.Item>
-            <Descriptions.Item label="Vai trò"> {userData?.role === "CATECHIST"
-              ? "Giáo lý viên"
-              : userData?.role === "PARENT"
+            <Descriptions.Item label="Vai trò">
+              {" "}
+              {userData?.role === "CATECHIST"
+                ? "Giáo lý viên"
+                : userData?.role === "PARENT"
                 ? "Phụ huynh"
                 : userData?.role === "STUDENT"
-                  ? "Thiếu nhi thánh thể"
-                  : userData?.role}</Descriptions.Item>
+                ? "Thiếu nhi thánh thể"
+                : userData?.role}
+            </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              {userData?.status === "ACTIVE" ? "Đang hoạt động" : "Không hoạt động"}
+              {userData?.status === "ACTIVE"
+                ? "Đang hoạt động"
+                : "Không hoạt động"}
             </Descriptions.Item>
           </Descriptions>
           <Button
@@ -234,6 +303,55 @@ const AccountDetailScreen: React.FC = () => {
               Thay đổi mật khẩu
             </Button>
           </Form.Item>
+        </Form>
+      </Modal>
+      <Modal
+        title="Chỉnh sửa thông tin"
+        visible={isEditModalVisible}
+        onCancel={() => setIsEditModalVisible(false)}
+        footer={null}
+      >
+        <Form form={form} onFinish={handleEdit} layout="vertical">
+          <Form.Item
+            name="fullName"
+            label="Họ tên"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item name="dob" label="Ngày sinh" rules={[{ required: true }]}>
+            <Input type="date" />
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Địa chỉ"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="gender"
+            label="Giới tính"
+            rules={[{ required: true }]}
+          >
+            <Select>
+              <Select.Option value="MALE">Nam</Select.Option>
+              <Select.Option value="FEMALE">Nữ</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="phoneNumber"
+            label="Số điện thoại"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setIsEditModalVisible(false)}>Hủy</Button>
+            <Button type="primary" htmlType="submit" className="bg-blue-600">
+              Lưu thay đổi
+            </Button>
+          </div>
         </Form>
       </Modal>
     </div>

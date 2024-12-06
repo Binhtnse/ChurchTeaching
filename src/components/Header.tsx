@@ -1,6 +1,6 @@
 import React from "react";
 import { Layout, Button, Typography, Space, Dropdown, Menu } from "antd";
-import { BellOutlined, UserOutlined } from "@ant-design/icons";
+import { UserOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuthState } from "../hooks/useAuthState";
@@ -52,13 +52,6 @@ const Header: React.FC<{ isLoggedIn: boolean; userName: string }> = ({ isLoggedI
         </Title>
       </Space>
       <Space>
-        <Button
-          icon={<BellOutlined />}
-          className="mr-2"
-          onClick={() => {
-            /* Handle notifications */
-          }}
-        />
         {isLoggedIn ? (
           <Dropdown overlay={menu} placement="bottomRight">
             <Button icon={<UserOutlined />}>
