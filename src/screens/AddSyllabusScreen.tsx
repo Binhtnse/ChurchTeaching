@@ -221,6 +221,7 @@ const AddSyllabusScreen: React.FC = () => {
   const onFinish = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("accessToken");
       const currentFormValues = form.getFieldsValue(true);
       const formattedData = {
         academicYearId: Number(currentFormValues.academicYearId),
@@ -275,7 +276,12 @@ const AddSyllabusScreen: React.FC = () => {
 
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/syllabus",
-        formattedData
+        formattedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // Add this header
+          }
+        }
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -296,8 +302,14 @@ const AddSyllabusScreen: React.FC = () => {
 
   const fetchPolicies = async () => {
     try {
+      const token = localStorage.getItem("accessToken"); 
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/policy"
+        "https://sep490-backend-production.up.railway.app/api/v1/policy",
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // Add this header
+          }
+        }
       );
       if (response.data.status === "success") {
         setPolicies(response.data.data);
@@ -312,8 +324,14 @@ const AddSyllabusScreen: React.FC = () => {
   useEffect(() => {
     const fetchGradeTemplates = async () => {
       try {
+        const token = localStorage.getItem("accessToken");
         const response = await axios.get(
-          "https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10"
+          "https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10",
+          {
+            headers: {
+              Authorization: `Bearer ${token}` // Add this header
+            }
+          }
         );
         if (response.data.status === "success") {
           setAllGradeTemplates(response.data.data);
@@ -994,8 +1012,14 @@ const AddSyllabusScreen: React.FC = () => {
 
   const checkSyllabusExists = async (gradeId: number, yearId: number) => {
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/syllabus/check?gradeId=${gradeId}&yearId=${yearId}`
+        `https://sep490-backend-production.up.railway.app/api/syllabus/check?gradeId=${gradeId}&yearId=${yearId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // Add this header
+          }
+        }
       );
       return response.data;
     } catch (error) {

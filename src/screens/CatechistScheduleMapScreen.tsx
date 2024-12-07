@@ -170,12 +170,23 @@ const AdminScheduleMapScreen: React.FC = () => {
     if (!selectedGrade || !selectedYear) return;
 
     try {
+      const token = localStorage.getItem("accessToken");
       const [lessonsResponse, schedulesResponse] = await Promise.all([
         axios.get(
-          `https://sep490-backend-production.up.railway.app/api/syllabus/get-lesson?gradeId=${selectedGrade}&yearId=${selectedYear}`
+          `https://sep490-backend-production.up.railway.app/api/syllabus/get-lesson?gradeId=${selectedGrade}&yearId=${selectedYear}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         ),
         axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/timetable/get-schedule?gradeId=${selectedGrade}&yearId=${selectedYear}`
+          `https://sep490-backend-production.up.railway.app/api/v1/timetable/get-schedule?gradeId=${selectedGrade}&yearId=${selectedYear}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         ),
       ]);
 
@@ -360,6 +371,7 @@ const AdminScheduleMapScreen: React.FC = () => {
   const handleSubmitSchedule = async () => {
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem("accessToken");
       const formattedResults = mappingResults.map((result) => ({
         orderSchedule: result.orderSchedule,
         idSlot: result.idSlot || null,
@@ -368,7 +380,12 @@ const AdminScheduleMapScreen: React.FC = () => {
 
       const response = await axios.post(
         `https://sep490-backend-production.up.railway.app/api/time-table-detail?gradeId=${selectedGrade}&yearId=${selectedYear}`,
-        formattedResults
+        formattedResults,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       message.success(

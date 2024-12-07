@@ -78,17 +78,27 @@ const ListSyllabusScreen: React.FC = () => {
 
   const fetchSyllabuses = useCallback(
     async (page: number = 1, pageSize: number = 10, gradeId: number = 0) => {
+      if (!selectedYear) return; // Add this guard clause
+      
       setTableLoading(true);
       try {
+        const token = localStorage.getItem("accessToken");
         const params = new URLSearchParams();
-        if (selectedYear) params.append('yearId', selectedYear.toString());
+        params.append('yearId', selectedYear.toString());
         if (selectedStatus) params.append('status', selectedStatus);
         params.append('page', page.toString());
         params.append('size', pageSize.toString());
         params.append('gradeId', gradeId.toString());
+        
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/syllabus?${params.toString()}`
+          `https://sep490-backend-production.up.railway.app/api/syllabus?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
+        
         if (response.data.status === "success") {
           setSyllabuses(response.data.data);
           setPagination((prevPagination) => ({
@@ -108,7 +118,7 @@ const ListSyllabusScreen: React.FC = () => {
       }
     },
     [selectedYear, selectedStatus]
-  );
+  );  
 
   const handlePaginationChange = (page: number, pageSize?: number) => {
     fetchSyllabuses(page, pageSize || pagination.pageSize);
@@ -121,32 +131,18 @@ const ListSyllabusScreen: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (isLoggedIn && role === "ADMIN" && selectedYear !== null) {
-      fetchSyllabuses(1, pagination.pageSize);
-    }
-  }, [
-    isLoggedIn,
-    role,
-    pagination.pageSize,
-    fetchSyllabuses,
-    selectedYear,
-    selectedStatus,
-  ]);
-
   const handleYearChange = (value: number | null) => {
     setSelectedYear(value);
     setIsYearSelected(value !== null);
-    if (value !== null) {
-      fetchSyllabuses(1, pagination.pageSize, selectedGrade || 0);
-    }
+    // Remove the fetch call from here as it will be handled by the useEffect
   };
 
   useEffect(() => {
-    if (isLoggedIn && role === "ADMIN" && isYearSelected) {
-      fetchSyllabuses(1, pagination.pageSize);
+    if (isLoggedIn && role === "ADMIN" && selectedYear !== null) {
+      fetchSyllabuses(1, pagination.pageSize, selectedGrade || 0);
     }
-  }, [isLoggedIn, role, pagination.pageSize, fetchSyllabuses, isYearSelected]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear, selectedGrade, selectedStatus]);
 
   const columns = [
     {

@@ -84,8 +84,12 @@ const ParentAttendanceProgressScreen: React.FC = () => {
 
   const fetchActivePolicy = async () => {
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/policy/student/${selectedStudent}`
+        `https://sep490-backend-production.up.railway.app/api/v1/policy/student/${selectedStudent}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       if (response.data.status === "success") {
         const activePolicy = response.data.data.find(

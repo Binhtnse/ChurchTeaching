@@ -117,18 +117,23 @@ const CatechistClassList: React.FC = () => {
         }));
         return;
       }
-
+  
       try {
         setLoading(true);
         const userString = localStorage.getItem("userLogin");
         const user = userString ? JSON.parse(userString) : null;
         const userId = user ? user.id : null;
-
+  
         if (!userId) {
           setClasses([]); // Clear data if no user ID
+          setPagination((prev) => ({
+            ...prev,
+            total: 0,
+            current: 1,
+          }));
           return;
         }
-
+  
         const accessToken = localStorage.getItem("accessToken");
         const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
         const response = await axios.get<ApiResponse>(
@@ -139,7 +144,7 @@ const CatechistClassList: React.FC = () => {
             },
           }
         );
-
+  
         // Clear data immediately when response has no data
         if (!response.data.data || response.data.data.length === 0) {
           setClasses([]);
@@ -151,7 +156,7 @@ const CatechistClassList: React.FC = () => {
           message.info("Không tìm thấy lớp học nào");
           return;
         }
-
+  
         setClasses(response.data.data);
         setPagination((prev) => ({
           ...prev,
@@ -160,7 +165,7 @@ const CatechistClassList: React.FC = () => {
           pageSize: pageSize,
         }));
       } catch (error) {
-        console.log(error)
+        console.log(error);
         setClasses([]);
         setPagination((prev) => ({
           ...prev,
@@ -179,11 +184,23 @@ const CatechistClassList: React.FC = () => {
     setSelectedYear(value);
     setSelectedGrade(null);
     setGrades([]); 
+    setClasses([]); // Clear classes data
+    setPagination((prev) => ({
+      ...prev,
+      total: 0,
+      current: 1,
+    }));
     fetchClasses(1, pagination.pageSize);
   };
 
   const handleGradeChange = (value: number) => {
     setSelectedGrade(value);
+    setClasses([]); // Clear classes data
+    setPagination((prev) => ({
+      ...prev,
+      total: 0,
+      current: 1,
+    }));
     fetchClasses(1, pagination.pageSize);
   };
 

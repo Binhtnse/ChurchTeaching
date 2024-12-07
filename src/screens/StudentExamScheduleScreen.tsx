@@ -102,6 +102,7 @@ const StudentExamScheduleScreen: React.FC = () => {
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
       const userId = user?.id;
+      const token = localStorage.getItem("accessToken");
       
       if (!userId) {
         console.error("User ID not found");
@@ -110,7 +111,12 @@ const StudentExamScheduleScreen: React.FC = () => {
       }
 
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${userId}?academicYear=${selectedYear}`
+        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${userId}?academicYear=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       if (!response.data.data) {

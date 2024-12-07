@@ -99,8 +99,14 @@ const TransactionHistoryScreen: React.FC = () => {
   const fetchClasses = useCallback(async () => {
     if (!selectedAcademicYear || !selectedGrade) return;
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`
+        `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       if (!response.data.data || response.data.data.length === 0) {
         setClasses([]);
@@ -124,10 +130,16 @@ const TransactionHistoryScreen: React.FC = () => {
 
     try {
       setLoading(true);
+      const token = localStorage.getItem("accessToken");
       const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
       const classParam = selectedClass ? `&classId=${selectedClass}` : "";
       const response = await axios.get<ApiResponse>(
-        `https://sep490-backend-production.up.railway.app/api/v1/tuition/admin/transactions?page=1&size=10&academicYearId=${selectedAcademicYear}${gradeParam}${classParam}`
+        `https://sep490-backend-production.up.railway.app/api/v1/tuition/admin/transactions?page=1&size=10&academicYearId=${selectedAcademicYear}${gradeParam}${classParam}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setTransactions(response.data.data);
       message.success('Tải danh sách giao dịch thành công');

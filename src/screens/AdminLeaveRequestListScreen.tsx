@@ -72,17 +72,23 @@ const AdminLeaveRequestListScreen: React.FC = () => {
   };
 
   const fetchLeaveRequests = useCallback(async () => {
+    if (!selectedAcademicYear) return; // Guard clause
+    
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/leave-requests",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      let url = `https://sep490-backend-production.up.railway.app/api/v1/leave-requests?academicYearId=${selectedAcademicYear}`;
+      
+      // Add grade parameter if selected
+      if (selectedGrade) {
+        url += `&gradeId=${selectedGrade}`;
+      }
+  
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setLeaveRequests(response.data.data);
     } catch (error) {
       console.error("Error fetching leave requests:", error);
@@ -90,15 +96,20 @@ const AdminLeaveRequestListScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedAcademicYear, selectedGrade]);
 
   useEffect(() => {
     if (isLoggedIn && role === "ADMIN") {
       fetchAcademicYears();
       fetchGrades();
+    }
+  }, [isLoggedIn, role]);
+
+  useEffect(() => {
+    if (isLoggedIn && role === "ADMIN" && selectedAcademicYear) {
       fetchLeaveRequests();
     }
-  }, [isLoggedIn, role, fetchLeaveRequests]);
+  }, [isLoggedIn, role, selectedAcademicYear, selectedGrade, fetchLeaveRequests]);
 
   const columns = [
     {
@@ -164,7 +175,10 @@ const AdminLeaveRequestListScreen: React.FC = () => {
             <Select
               className="w-full"
               placeholder="Chọn niên khóa"
-              onChange={setSelectedAcademicYear}
+              onChange={(value) => {
+                setSelectedAcademicYear(value);
+                setSelectedGrade(null); // Reset grade when academic year changes
+              }}
               allowClear
             >
               {academicYears.map((year) => (
@@ -185,6 +199,7 @@ const AdminLeaveRequestListScreen: React.FC = () => {
             <Select
               className="w-full"
               placeholder="Chọn khối"
+              value={selectedGrade}
               onChange={setSelectedGrade}
               allowClear
             >

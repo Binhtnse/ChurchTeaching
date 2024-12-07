@@ -21,9 +21,15 @@ const AddPolicyScreen: React.FC = () => {
   }) => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/policy",
-        values
+        values,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       message.success("Tạo quy định thành công");
       form.resetFields();

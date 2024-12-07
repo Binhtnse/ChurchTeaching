@@ -82,8 +82,14 @@ const AdminPostScreen: React.FC = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get<PostDTO[]>(
-        "https://sep490-backend-production.up.railway.app/api/posts"
+        "https://sep490-backend-production.up.railway.app/api/posts",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setPosts(response.data);
     } catch (error) {
@@ -96,8 +102,14 @@ const AdminPostScreen: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get<Category[]>(
-        "https://sep490-backend-production.up.railway.app/api/categories"
+        "https://sep490-backend-production.up.railway.app/api/categories",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setCategories(response.data);
     } catch (error) {
@@ -113,6 +125,7 @@ const AdminPostScreen: React.FC = () => {
   const handlePostSubmit = async (values: any) => {
     setSubmitLoading(true);
     try {
+      const token = localStorage.getItem("accessToken");
       const userLogin = JSON.parse(localStorage.getItem("userLogin") || "{}");
       const postData: PostDTO = {
         ...values,
@@ -130,6 +143,7 @@ const AdminPostScreen: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
             accept: "*/*",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -153,6 +167,7 @@ const AdminPostScreen: React.FC = () => {
     if (editingPost) {
       setSubmitLoading(true);
       try {
+        const token = localStorage.getItem("accessToken");
         const userLogin = JSON.parse(localStorage.getItem("userLogin") || "{}");
         const postData: PostDTO = {
           ...values,
@@ -169,6 +184,7 @@ const AdminPostScreen: React.FC = () => {
             headers: {
               "Content-Type": "application/json",
               accept: "application/json",
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -194,8 +210,14 @@ const AdminPostScreen: React.FC = () => {
     if (postToDelete) {
       setLoading(true);
       try {
+        const token = localStorage.getItem("accessToken");
         const response = await axios.delete(
-          `https://sep490-backend-production.up.railway.app/api/posts/${postToDelete.id}`
+          `https://sep490-backend-production.up.railway.app/api/posts/${postToDelete.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         if (response.status === 200) {
           message.success("Xóa bài viết thành công");

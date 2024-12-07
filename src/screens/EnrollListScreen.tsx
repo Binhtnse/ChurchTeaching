@@ -101,10 +101,16 @@ const EnrollListScreen: React.FC = () => {
       }
       setLoading(true);
       try {
+        const token = localStorage.getItem("accessToken");
         const gradeParam = selectedGrade ? `&gradeId=${selectedGrade}` : "";
         const statusParam = statusFilter ? `&status=${statusFilter}` : "";
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}${statusParam}`
+          `https://sep490-backend-production.up.railway.app/api/v1/register-infor?page=${page}&size=${pageSize}&academicYearId=${selectedAcademicYear}${gradeParam}${statusParam}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         const { data } = response.data;
         const formattedData = data.map((item: DataType) => ({

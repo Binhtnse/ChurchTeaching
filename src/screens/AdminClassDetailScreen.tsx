@@ -41,8 +41,14 @@ const AdminClassDetailScreen: React.FC = () => {
       if (classId) {
         setLoading(true);
         try {
+          const token = localStorage.getItem("accessToken");
           const response = await axios.get(
-            `https://sep490-backend-production.up.railway.app/api/v1/class/${classId}`
+            `https://sep490-backend-production.up.railway.app/api/v1/class/${classId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
           if (response.data.status === "success") {
             setClassData(response.data.data);

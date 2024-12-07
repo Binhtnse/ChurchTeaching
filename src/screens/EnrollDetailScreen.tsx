@@ -45,9 +45,15 @@ const EnrollDetailScreen: React.FC = () => {
   useEffect(() => {
     const fetchEnrollmentData = async () => {
       try {
+        const token = localStorage.getItem("accessToken");
         console.log("Fetching data for id:", id);
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}`
+          `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         console.log("Received data:", response.data);
         setEnrollmentData(response.data.data);
@@ -66,8 +72,14 @@ const EnrollDetailScreen: React.FC = () => {
     try {
       if (action === "approve") {
         setApprovalLoading(true);
+        const token = localStorage.getItem("accessToken");
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/approve`
+          `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/approve`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         console.log("Approval response:", response.data);
         message.success("Đã chấp nhận đơn đăng kí học!");
@@ -97,9 +109,15 @@ const EnrollDetailScreen: React.FC = () => {
   const handleReject = async () => {
     try {
       setApprovalLoading(true);
+      const token = localStorage.getItem("accessToken");
       const encodedReason = encodeURIComponent(rejectionReason);
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/reject?message=${encodedReason}`
+        `https://sep490-backend-production.up.railway.app/api/v1/register-infor/${id}/reject?message=${encodedReason}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       console.log("Rejection response:", response.data);
       message.success("Đã từ chối đơn đăng kí học!");

@@ -118,12 +118,22 @@ const ParentTransactionScreen: React.FC = () => {
     setIsLoadingPolicy(true);
     try {
       const classResponse = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/student/${childId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/class/student/${childId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const studentClassId = classResponse.data.data;
 
       const policyResponse = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/policy/student/${childId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/policy/student/${childId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const policyData = policyResponse.data;
@@ -155,7 +165,12 @@ const ParentTransactionScreen: React.FC = () => {
     try {
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/tuition/pay",
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const { paymentUrl } = response.data;
       window.location.href = paymentUrl;

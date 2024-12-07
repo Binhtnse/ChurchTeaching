@@ -20,6 +20,7 @@ const AdminCreateGradeTemplateScreen: React.FC = () => {
   }) => {
     try {
       setLoading(true);
+      const token = localStorage.getItem("accessToken");
       const formattedData = {
         name: values.name,
         maxExamCount: values.maxExamCount,
@@ -31,7 +32,12 @@ const AdminCreateGradeTemplateScreen: React.FC = () => {
 
       await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/grade-template",
-        formattedData
+        formattedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add authorization header
+          },
+        }
       );
 
       message.success("Grade template created successfully");

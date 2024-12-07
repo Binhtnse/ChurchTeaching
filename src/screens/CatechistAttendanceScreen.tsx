@@ -115,8 +115,14 @@ const CatechistAttendanceScreen: React.FC = () => {
 
   const fetchStudents = async (classId: string) => {
     try {
+      const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`
+        `https://sep490-backend-production.up.railway.app/api/v1/class/get-students?classId=${classId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
       setClassStudents(response.data.data.students);
     } catch (error) {

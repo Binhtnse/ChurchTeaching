@@ -135,6 +135,7 @@ const CatechistScheduleScreen: React.FC = () => {
         const userString = localStorage.getItem("userLogin");
         const user = userString ? JSON.parse(userString) : null;
         const userId = user?.id;
+        const accessToken = localStorage.getItem("accessToken");
         if (!userId) {
           console.error("User ID not found");
           setScheduleData(null);
@@ -142,7 +143,12 @@ const CatechistScheduleScreen: React.FC = () => {
           return;
         }
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/schedule/catechist/${userId}?academicYear=${selectedYear}`
+          `https://sep490-backend-production.up.railway.app/api/v1/schedule/catechist/${userId}?academicYear=${selectedYear}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}` // Add this headers object
+            }
+          }
         );
         if (!response.data.data || response.data.data.length === 0) {
           setScheduleData(null);

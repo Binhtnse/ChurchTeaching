@@ -132,8 +132,14 @@ const SyllabusDetailScreen: React.FC = () => {
   useEffect(() => {
     const fetchSyllabusDetail = async () => {
       try {
+        const token = localStorage.getItem("accessToken"); 
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/syllabus/${id}?status=ACTIVE`
+          `https://sep490-backend-production.up.railway.app/api/syllabus/${id}?status=ACTIVE`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Add Authorization header
+            },
+          }
         );
         setSyllabus(response.data.data);
       } catch (error) {

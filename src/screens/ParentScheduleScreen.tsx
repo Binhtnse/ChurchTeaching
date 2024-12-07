@@ -415,9 +415,15 @@ const ParentScheduleScreen: React.FC = () => {
         setLoading(true);
         setScheduleData(null);
         setSelectedWeek(1);
+        const token = localStorage.getItem("accessToken");
 
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}?academicYear=${selectedYear}`
+          `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${studentId}?academicYear=${selectedYear}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         if (response.data.data && response.data.data.schedule?.length > 0) {

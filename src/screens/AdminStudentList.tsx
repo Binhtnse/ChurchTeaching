@@ -84,15 +84,22 @@ const AdminStudentList: React.FC = () => {
 
   const handleNextYear = async () => {
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years/next?status=ACTIVE",
-        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      console.log(response)
+      console.log(response);
       message.success("Chuyển năm thành công");
       fetchAcademicYears(); // Refresh the academic years list
     } catch (error: unknown) {
-      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Chuyển năm thất bại";
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Chuyển năm thất bại";
       message.error(errorMessage);
     }
   };
@@ -170,7 +177,7 @@ const AdminStudentList: React.FC = () => {
       const token = localStorage.getItem("accessToken");
       const formData = new FormData();
       formData.append("file", file);
-  
+
       const response = await axios.post(
         "https://sep490-backend-production.up.railway.app/api/v1/timetable/import",
         formData,
@@ -183,13 +190,15 @@ const AdminStudentList: React.FC = () => {
       );
       message.success(response.data.message);
     } catch (error: unknown) {
-      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Nhập thời khóa biểu thất bại";
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Nhập thời khóa biểu thất bại";
       message.error(errorMessage);
     } finally {
       setIsUploading(false);
     }
   };
-  
+
   const customRequest = (options: UploadRequestOption) => {
     const { file, onSuccess } = options;
     if (file instanceof File && file.name.endsWith(".xlsx")) {
@@ -207,8 +216,14 @@ const AdminStudentList: React.FC = () => {
     }
     setIsAssigning(true);
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/student-grade-year/auto-assign-student-to-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}`
+        `https://sep490-backend-production.up.railway.app/api/student-grade-year/auto-assign-student-to-class?academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       message.success(response.data.message);
       fetchStudents(pagination.current, pagination.pageSize);
@@ -279,7 +294,7 @@ const AdminStudentList: React.FC = () => {
       title: <span className="text-blue-600 font-semibold">Ghi chú</span>,
       dataIndex: "note",
       key: "note",
-    }
+    },
   ];
 
   return (
@@ -373,13 +388,13 @@ const AdminStudentList: React.FC = () => {
             </Upload>
           </div>
           <div className="space-y-2 flex items-end">
-  <Button
-    onClick={handleNextYear}
-    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
-  >
-    Chuyển năm
-  </Button>
-</div>
+            <Button
+              onClick={handleNextYear}
+              className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+            >
+              Chuyển năm
+            </Button>
+          </div>
         </div>
       </Card>
       <Spin spinning={loading}>

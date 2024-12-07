@@ -97,8 +97,14 @@ const UserTransactionHistoryScreen: React.FC = () => {
   const fetchClasses = useCallback(async () => {
     if (!selectedYear || !selectedGrade) return;
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedYear}&gradeId=${selectedGrade}`
+        `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedYear}&gradeId=${selectedGrade}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       if (!response.data.data || response.data.data.length === 0) {
         setClasses([]);
@@ -124,7 +130,7 @@ const UserTransactionHistoryScreen: React.FC = () => {
 
   const fetchTransactions = useCallback(
     async (page: number = 1, pageSize: number = 10) => {
-      console.log('Selected Year ID:', selectedYear);
+      console.log("Selected Year ID:", selectedYear);
       try {
         setLoading(true);
         const userString = localStorage.getItem("userLogin");
@@ -181,9 +187,8 @@ const UserTransactionHistoryScreen: React.FC = () => {
 
         // Add a message when no data is found
         if (!response.data?.data?.length) {
-          message.info('Không tìm thấy dữ liệu phù hợp với bộ lọc');
+          message.info("Không tìm thấy dữ liệu phù hợp với bộ lọc");
         }
-
       } catch (error) {
         console.error("Error fetching transactions:", error);
         message.error("Tải danh sách giao dịch thất bại");
@@ -200,7 +205,6 @@ const UserTransactionHistoryScreen: React.FC = () => {
     [selectedYear, selectedGrade, selectedClass]
   );
 
-
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get("status");
@@ -215,8 +219,14 @@ const UserTransactionHistoryScreen: React.FC = () => {
       if (!hasProcessed) {
         const notifyPaymentSuccess = async () => {
           try {
+            const accessToken = localStorage.getItem("accessToken");
             await axios.post(
-              `https://sep490-backend-production.up.railway.app/api/v1/tuition/payment-success?amount=${amount}&payerId=${payerId}&studentClassId=${studentClassId}`
+              `https://sep490-backend-production.up.railway.app/api/v1/tuition/payment-success?amount=${amount}&payerId=${payerId}&studentClassId=${studentClassId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
             );
             sessionStorage.setItem(`payment_${transactionId}`, "true");
             // Clear URL parameters after successful processing
@@ -235,19 +245,19 @@ const UserTransactionHistoryScreen: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
-    
+
     const fetchData = async () => {
       if (mounted && selectedYear) {
         await fetchTransactions(1, pagination.pageSize);
       }
     };
-    
+
     fetchData();
-    
+
     return () => {
       mounted = false;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   const columns = [

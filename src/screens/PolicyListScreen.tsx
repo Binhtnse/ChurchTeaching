@@ -24,8 +24,14 @@ const PolicyListScreen: React.FC = () => {
 
   const fetchPolicies = async () => {
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/policy"
+        "https://sep490-backend-production.up.railway.app/api/v1/policy",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       if (response.data.status === "success") {
         setPolicies(response.data.data);

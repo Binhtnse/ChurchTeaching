@@ -119,16 +119,23 @@ const ParentGradesProgressScreen: React.FC = () => {
   const fetchClasses = useCallback(async () => {
     if (!selectedAcademicYear || !selectedGrade || !selectedStudent) return;
     try {
+      const token = localStorage.getItem("accessToken");
       // First API call to get student's class IDs
       const studentClassesResponse = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/student/${selectedStudent}/classes?academicYearId=${selectedAcademicYear}`
+        `https://sep490-backend-production.up.railway.app/api/v1/class/student/${selectedStudent}/classes?academicYearId=${selectedAcademicYear}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       
       const studentClassIds = studentClassesResponse.data.data;
   
       // Second API call to get all classes
       const allClassesResponse = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`
+        `https://sep490-backend-production.up.railway.app/api/v1/class/list?page=1&size=100&academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
   
       // Filter classes to show only matching ones
@@ -154,8 +161,12 @@ const ParentGradesProgressScreen: React.FC = () => {
     if (!selectedAcademicYear || !selectedGrade) return;
     
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=1&size=10&gradeId=${selectedGrade}&yearId=${selectedAcademicYear}`
+        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=1&size=10&gradeId=${selectedGrade}&yearId=${selectedAcademicYear}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
   
       if (response.data.status === "success" && response.data.data.length > 0) {

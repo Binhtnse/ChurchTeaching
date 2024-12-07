@@ -38,12 +38,14 @@ const ParentExamScheduleScreen: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<string>("");
-  const [academicYears, setAcademicYears] = useState<Array<{
-    id: number;
-    year: string;
-    timeStatus: string;
-  }>>([]);
-  console.log(academicYears)
+  const [academicYears, setAcademicYears] = useState<
+    Array<{
+      id: number;
+      year: string;
+      timeStatus: string;
+    }>
+  >([]);
+  console.log(academicYears);
   const [examSchedules, setExamSchedules] = useState<ExamSchedule[]>([]);
 
   const columns: ColumnsType<ExamSchedule> = [
@@ -94,16 +96,18 @@ const ParentExamScheduleScreen: React.FC = () => {
       const user = userString ? JSON.parse(userString) : null;
       const parentId = user?.id;
       const token = localStorage.getItem("accessToken");
-  
+
       if (!parentId) {
         message.error("Không tìm thấy thông tin phụ huynh");
         return;
       }
-  
+
       // Find the year ID based on the selected year
-      const selectedYearObj = academicYears.find(year => year.year === selectedYear);
+      const selectedYearObj = academicYears.find(
+        (year) => year.year === selectedYear
+      );
       const yearId = selectedYearObj?.id;
-  
+
       const response = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students?yearId=${yearId}`,
         {
@@ -112,13 +116,15 @@ const ParentExamScheduleScreen: React.FC = () => {
           },
         }
       );
-  
+
       if (!response.data.data || response.data.data.length === 0) {
-        message.info("Không tìm thấy thiếu nhi nào được liên kết với tài khoản");
+        message.info(
+          "Không tìm thấy thiếu nhi nào được liên kết với tài khoản"
+        );
         setStudents([]);
         return;
       }
-  
+
       setStudents(response.data.data);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -126,7 +132,6 @@ const ParentExamScheduleScreen: React.FC = () => {
       setStudents([]);
     }
   }, [selectedYear, academicYears]);
-  
 
   const fetchAcademicYears = async () => {
     try {
@@ -153,8 +158,14 @@ const ParentExamScheduleScreen: React.FC = () => {
     }
 
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${selectedStudent}?academicYear=${selectedYear}`
+        `https://sep490-backend-production.up.railway.app/api/v1/schedule/student/${selectedStudent}?academicYear=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       if (!response.data.data) {
@@ -168,7 +179,15 @@ const ParentExamScheduleScreen: React.FC = () => {
           classItem.slots.forEach((slot) => {
             if (slot.exams) {
               const date = new Date(week.startDate);
-              const dayIndex = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"].indexOf(slot.dayOfWeek);
+              const dayIndex = [
+                "Thứ Hai",
+                "Thứ Ba",
+                "Thứ Tư",
+                "Thứ Năm",
+                "Thứ Sáu",
+                "Thứ Bảy",
+                "Chủ Nhật",
+              ].indexOf(slot.dayOfWeek);
               date.setDate(date.getDate() + dayIndex);
 
               examData.push({
@@ -197,7 +216,7 @@ const ParentExamScheduleScreen: React.FC = () => {
     if (selectedYear) {
       fetchStudents();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   useEffect(() => {
@@ -231,30 +250,30 @@ const ParentExamScheduleScreen: React.FC = () => {
         </h1>
 
         <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
-  <div className="space-y-2 p-4">
-    <label className="text-sm font-medium text-gray-600">
-      Niên khóa
-    </label>
-    <Select
-      className="w-full"
-      value={selectedYear}
-      onChange={(value) => setSelectedYear(value)}
-      placeholder="Chọn niên khóa"
-    >
-      {academicYears.map((year) => (
-        <Select.Option key={year.id} value={year.year}>
-          {year.year}
-          {year.timeStatus === "NOW" && (
-            <Tag color="blue" className="ml-2">
-              Hiện tại
-            </Tag>
-          )}
-        </Select.Option>
-      ))}
-    </Select>
-  </div>
-</Card>
-        
+          <div className="space-y-2 p-4">
+            <label className="text-sm font-medium text-gray-600">
+              Niên khóa
+            </label>
+            <Select
+              className="w-full"
+              value={selectedYear}
+              onChange={(value) => setSelectedYear(value)}
+              placeholder="Chọn niên khóa"
+            >
+              {academicYears.map((year) => (
+                <Select.Option key={year.id} value={year.year}>
+                  {year.year}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+        </Card>
+
         <div className="mt-4">
           <Select
             style={{ width: 300 }}
@@ -273,27 +292,29 @@ const ParentExamScheduleScreen: React.FC = () => {
         </div>
 
         {selectedStudent && (
-          <p className="text-gray-600 mt-2">
-            Năm học: {selectedYear}
-          </p>
+          <p className="text-gray-600 mt-2">Năm học: {selectedYear}</p>
         )}
       </div>
 
       {!selectedStudent ? (
         <div className="text-center text-gray-500 py-8">
           <p className="text-lg font-semibold">Vui lòng chọn thiếu nhi</p>
-          <p className="text-sm">Vui lòng chọn thiếu nhi để xem lịch kiểm tra</p>
+          <p className="text-sm">
+            Vui lòng chọn thiếu nhi để xem lịch kiểm tra
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-lg overflow-hidden">
           <Table
             columns={columns}
             dataSource={examSchedules}
-            rowKey={(record) => `${record.date}-${record.time}-${record.examName}`}
+            rowKey={(record) =>
+              `${record.date}-${record.time}-${record.examName}`
+            }
             className="shadow-sm"
             pagination={false}
             rowClassName="hover:bg-gray-50 transition-colors"
-            style={{ borderRadius: '8px' }}
+            style={{ borderRadius: "8px" }}
           />
 
           {examSchedules.length === 0 && (

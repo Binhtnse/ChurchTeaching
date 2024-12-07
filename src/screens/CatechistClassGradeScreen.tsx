@@ -92,8 +92,14 @@ const CatechistClassGradeScreen: React.FC = () => {
   const fetchSyllabus = useCallback(async () => {
     console.log('Fetching syllabus with:', {gradeId, academicYearId});
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=1&size=10&gradeId=${gradeId}&yearId=${academicYearId}`
+        `https://sep490-backend-production.up.railway.app/api/syllabus?status=ACTIVE&page=1&size=10&gradeId=${gradeId}&yearId=${academicYearId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
   
       if (response.data.status === "success" && response.data.data.length > 0) {
