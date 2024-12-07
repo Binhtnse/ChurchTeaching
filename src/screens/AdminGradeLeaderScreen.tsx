@@ -302,26 +302,35 @@ const AdminGradeLeaderScreen: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    try {
-      const response = await axios.delete(
-        `https://sep490-backend-production.up.railway.app/api/v1/grade-leader/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa trưởng/phó khối này không?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          const response = await axios.delete(
+            `https://sep490-backend-production.up.railway.app/api/v1/grade-leader/${id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+            }
+          );
+  
+          if (response.data.status === "success") {
+            setGradeLeaders((prevLeaders) =>
+              prevLeaders.filter((leader) => leader.id !== id)
+            );
+            message.success("Xóa thành công");
+          }
+        } catch (error) {
+          console.error(error);
+          message.error("Không thể xóa");
         }
-      );
-
-      if (response.data.status === "success") {
-        setGradeLeaders((prevLeaders) =>
-          prevLeaders.filter((leader) => leader.id !== id)
-        );
-        message.success("Xóa thành công");
       }
-    } catch (error) {
-      console.error(error);
-      message.error("Không thể xóa");
-    }
+    });
   };
 
   const sortedGradeLeaders = [...gradeLeaders]

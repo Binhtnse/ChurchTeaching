@@ -6,6 +6,13 @@ const AddPolicyScreen: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
+  const validateAbsenceLimit = (_: unknown, value: number) => {
+    const absenceWithPermissionLimit = form.getFieldValue('absenceWithPermissionLimit');
+    if (value && absenceWithPermissionLimit && value > absenceWithPermissionLimit) {
+      return Promise.reject('Số ngày nghỉ không phép phải ít hơn hoặc bằng số ngày nghỉ có phép');
+    }
+    return Promise.resolve();
+  };
   const onFinish = async (values: {
     absenceLimit: number;
     absenceWithPermissionLimit: number;
@@ -68,7 +75,11 @@ const AddPolicyScreen: React.FC = () => {
               required: true,
               message: "Vui lòng nhập số ngày nghỉ không phép tối đa",
             },
+            {
+              validator: validateAbsenceLimit,
+            }
           ]}
+          dependencies={['absenceWithPermissionLimit']}
         >
           <Input type="number" className="w-full h-10 text-lg" />
         </Form.Item>
