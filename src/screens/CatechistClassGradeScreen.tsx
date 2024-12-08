@@ -90,7 +90,7 @@ const CatechistClassGradeScreen: React.FC = () => {
   const { academicYearId, gradeId } = location.state || {};
 
   const fetchSyllabus = useCallback(async () => {
-    console.log('Fetching syllabus with:', {gradeId, academicYearId});
+    console.log("Fetching syllabus with:", { gradeId, academicYearId });
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
@@ -101,10 +101,10 @@ const CatechistClassGradeScreen: React.FC = () => {
           },
         }
       );
-  
+
       if (response.data.status === "success" && response.data.data.length > 0) {
         const templateId = response.data.data[0].syllabus.gradeTemplate.id;
-        console.log('Got template ID:', templateId);
+        console.log("Got template ID:", templateId);
         setGradeTemplateId(templateId);
       }
     } catch (error) {
@@ -117,7 +117,7 @@ const CatechistClassGradeScreen: React.FC = () => {
       const token = localStorage.getItem("accessToken");
       const userString = localStorage.getItem("userLogin");
       const user = userString ? JSON.parse(userString) : null;
-  
+
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/v1/get-reopen-request",
         {
@@ -126,11 +126,11 @@ const CatechistClassGradeScreen: React.FC = () => {
           },
         }
       );
-  
+
       if (response.data.status === "success") {
         const userRequest = response.data.data.find(
-          (request: RequestData) => 
-            request.nameCreator === user.account && 
+          (request: RequestData) =>
+            request.nameCreator === user.account &&
             request.classId === Number(classId) &&
             request.status !== "REJECT"
         );
@@ -145,7 +145,7 @@ const CatechistClassGradeScreen: React.FC = () => {
     if (isLoggedIn && role === "CATECHIST" && classId) {
       checkUserReopenRequests();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, role, classId]);
 
   const fetchClassGrades = useCallback(async () => {
@@ -210,45 +210,29 @@ const CatechistClassGradeScreen: React.FC = () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-
-      const changedScores = students
-        .filter((student) =>
-          Object.values(student.scores).some(
-            (score) =>
-              Object.prototype.hasOwnProperty.call(score, "isChanged") &&
-              score["isChanged"]
-          )
-        )
-        .map((student) => ({
-          studentClassId: student.studentClassId,
-          exams: Object.entries(student.scores)
-            .filter(
-              ([, score]) =>
-                Object.prototype.hasOwnProperty.call(score, "isChanged") &&
-                score["isChanged"]
-            )
-            .map(([, score]) => ({
-              examId: score.examId,
-              score: score.score,
-            })),
-        }));
-
-      if (changedScores.length > 0) {
-        await axios.put(
-          `https://sep490-backend-production.up.railway.app/api/v1/student-grade-reopen/class/${classId}`,
-          { studentClassScores: changedScores },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        message.success("Thay đổi thành công");
-        await Promise.all([
-          fetchSyllabus(),
-          fetchGradeTemplate(),
-          fetchClassGrades()
-        ]);
-      } else {
-        message.info("Không có thay đổi để lưu");
-      }
-
+  
+      // Modified to include all scores for all students
+      const allScores = students.map((student) => ({
+        studentClassId: student.studentClassId,
+        exams: Object.entries(student.scores).map(([, score]) => ({
+          examId: score.examId,
+          score: score.score,
+        })),
+      }));
+  
+      await axios.put(
+        `https://sep490-backend-production.up.railway.app/api/v1/student-grade-reopen/class/${classId}`,
+        { studentClassScores: allScores },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      
+      message.success("Thay đổi thành công");
+      await Promise.all([
+        fetchSyllabus(),
+        fetchGradeTemplate(),
+        fetchClassGrades(),
+      ]);
+  
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save reopen grades:", error);
@@ -256,7 +240,7 @@ const CatechistClassGradeScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const handleReFinalize = async (values: { reason: string; link: string }) => {
     try {
@@ -279,7 +263,7 @@ const CatechistClassGradeScreen: React.FC = () => {
       await Promise.all([
         fetchSyllabus(),
         fetchGradeTemplate(),
-        fetchClassGrades()
+        fetchClassGrades(),
       ]);
     } catch (error) {
       console.error("Failed to submit re-finalize request:", error);
@@ -369,7 +353,7 @@ const CatechistClassGradeScreen: React.FC = () => {
         await Promise.all([
           fetchSyllabus(),
           fetchGradeTemplate(),
-          fetchClassGrades()
+          fetchClassGrades(),
         ]);
       } else {
         message.info("Không có thay đổi để lưu");
@@ -413,14 +397,16 @@ const CatechistClassGradeScreen: React.FC = () => {
   );
 
   const checkAllCellsFilled = useCallback(() => {
-    const allFilledAndNonZero = students.every((student) =>
+    const allFilledAndValid = students.every((student) =>
       gradeTemplate?.exams?.every((exam) => {
         const score = student.scores[exam.name]?.score;
-        return score !== undefined && score !== null && score !== 0;
+        // Changed condition to allow 0 scores
+        return score !== undefined && score !== null;
       })
     );
-    setAllCellsFilled(allFilledAndNonZero);
+    setAllCellsFilled(allFilledAndValid);
   }, [students, gradeTemplate]);
+  
 
   useEffect(() => {
     checkAllCellsFilled();
@@ -435,21 +421,25 @@ const CatechistClassGradeScreen: React.FC = () => {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
 
-      await axios.post(
+      const response = await axios.post(
         `https://sep490-backend-production.up.railway.app/api/v1/student-grade/finalize/class/${classId}`,
         {},
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      message.success("Tổng kết điểm thành công");
+      message.success(response.data.message || "Tổng kết điểm thành công");
       await Promise.all([
         fetchSyllabus(),
-        fetchGradeTemplate(), 
-        fetchClassGrades()
-      ]);// Refresh the data after finalizing
+        fetchGradeTemplate(),
+        fetchClassGrades(),
+      ]); // Refresh the data after finalizing
     } catch (error) {
       console.error("Failed to finalize grades:", error);
-      message.error("Tổng kết điểm thất bại");
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error("Tổng kết điểm thất bại");
+      }
     } finally {
       setLoading(false);
     }
@@ -466,14 +456,14 @@ const CatechistClassGradeScreen: React.FC = () => {
       value={value !== null && value !== undefined ? value.toString() : ""}
       onChange={(e) => {
         const numValue = parseFloat(e.target.value);
-        if (e.target.value === "" || (numValue >= 0 && numValue <= 10)) {
+        // Allow empty string or valid numbers including 0
+        if (e.target.value === "" || (!isNaN(numValue) && numValue >= 0 && numValue <= 10)) {
           onChange(e.target.value);
         }
       }}
       onBlur={(e) => {
         const numValue = parseFloat(e.target.value);
         if (!isNaN(numValue)) {
-          // Ensure value is between 0 and 10
           const clampedValue = Math.min(Math.max(numValue, 0), 10);
           onChange(clampedValue.toString());
         }
@@ -481,7 +471,7 @@ const CatechistClassGradeScreen: React.FC = () => {
       min={0}
       max={10}
     />
-  ));
+  ));  
 
   const classGradeColumns = [
     {
@@ -564,22 +554,29 @@ const CatechistClassGradeScreen: React.FC = () => {
             </Button>
           )
         )}
-        {allCellsFilled && canShowFinalizeButton && !isGradeFinalized && !isReopenStatus &&(
-          <Button
-            onClick={handleFinalize}
-            className="mb-4 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-          >
-            Tổng kết
-          </Button>
-        )}
-        {isGradeFinalized && !isEditing && canShowFinalizeButton && userRequests.length === 0 &&(
-          <Button
-            onClick={() => setIsReFinalizeModalVisible(true)}
-            className="mb-4 bg-yellow-600 text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-          >
-            Yêu cầu xem xét lại điểm
-          </Button>
-        )}
+        {allCellsFilled &&
+          canShowFinalizeButton &&
+          !isGradeFinalized &&
+          !isReopenStatus &&
+          !isEditing && (
+            <Button
+              onClick={handleFinalize}
+              className="mb-4 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              Tổng kết
+            </Button>
+          )}
+        {isGradeFinalized &&
+          !isEditing &&
+          canShowFinalizeButton &&
+          userRequests.length === 0 && (
+            <Button
+              onClick={() => setIsReFinalizeModalVisible(true)}
+              className="mb-4 bg-yellow-600 text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+            >
+              Yêu cầu xem xét lại điểm
+            </Button>
+          )}
 
         <Modal
           title="Yêu cầu xem xét lại điểm"

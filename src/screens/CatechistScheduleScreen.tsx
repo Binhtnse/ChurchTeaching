@@ -534,7 +534,7 @@ const CatechistScheduleScreen: React.FC = () => {
                                   }
                                 }}
                               >
-                                Điểm danh
+                                {classSlot.isAttendanceMarked === "true" ? "Sửa điểm danh" : "Điểm danh"}
                               </Button>
                             </div>
                           </div>
