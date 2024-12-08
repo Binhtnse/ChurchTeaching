@@ -455,18 +455,29 @@ const AddSyllabusScreen: React.FC = () => {
   };
 
   const removeSlot = (sessionIndex: number, slotIndex: number) => {
+    // Get the slot key before removing the slot
+    const slotKey = `${sessionIndex}-${slotIndex}`;
+  
+    // Remove slot from sessions
     const newSessions = [...sessions];
     newSessions[sessionIndex].slots.splice(slotIndex, 1);
     setSessions(newSessions);
-
-    // Also remove the slot from form values
+  
+    // Remove slot from form values
     const currentSessions = form.getFieldValue("sessions");
     currentSessions[sessionIndex].slots.splice(slotIndex, 1);
     form.setFieldsValue({ sessions: currentSessions });
-
+  
+    // Remove the exam from selectedExams
+    setSelectedExams(prev => {
+      const newSelectedExams = { ...prev };
+      delete newSelectedExams[slotKey];
+      return newSelectedExams;
+    });
+  
     // Update total slot count
     setTotalSlotCount((prev) => prev - 1);
-  };
+  };  
 
   const handleTypeChange = (
     sessionIndex: number,
