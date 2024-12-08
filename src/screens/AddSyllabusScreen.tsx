@@ -203,7 +203,13 @@ const AddSyllabusScreen: React.FC = () => {
   console.log(totalSlotCount);
   const [currentStep, setCurrentStep] = useState(0);
   const [policies, setPolicies] = useState<
-    { id: number; absenceLimit: number; absenceWithPermissionLimit: number; tuitionFee: number; numberOfMember: number }[]
+    {
+      id: number;
+      absenceLimit: number;
+      absenceWithPermissionLimit: number;
+      tuitionFee: number;
+      numberOfMember: number;
+    }[]
   >([]);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
@@ -279,8 +285,8 @@ const AddSyllabusScreen: React.FC = () => {
         formattedData,
         {
           headers: {
-            Authorization: `Bearer ${token}` // Add this header
-          }
+            Authorization: `Bearer ${token}`, // Add this header
+          },
         }
       );
 
@@ -302,13 +308,13 @@ const AddSyllabusScreen: React.FC = () => {
 
   const fetchPolicies = async () => {
     try {
-      const token = localStorage.getItem("accessToken"); 
+      const token = localStorage.getItem("accessToken");
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/v1/policy",
         {
           headers: {
-            Authorization: `Bearer ${token}` // Add this header
-          }
+            Authorization: `Bearer ${token}`, // Add this header
+          },
         }
       );
       if (response.data.status === "success") {
@@ -329,8 +335,8 @@ const AddSyllabusScreen: React.FC = () => {
           "https://sep490-backend-production.up.railway.app/api/v1/grade-template/list?page=1&size=10",
           {
             headers: {
-              Authorization: `Bearer ${token}` // Add this header
-            }
+              Authorization: `Bearer ${token}`, // Add this header
+            },
           }
         );
         if (response.data.status === "success") {
@@ -484,7 +490,7 @@ const AddSyllabusScreen: React.FC = () => {
   };
 
   const handleGradeTemplateChange = (templateId: number) => {
-    const selectedTemplate = allGradeTemplates.find(t => t.id === templateId);
+    const selectedTemplate = allGradeTemplates.find((t) => t.id === templateId);
     if (selectedTemplate) {
       setGradeTemplates(selectedTemplate.exams);
     }
@@ -528,7 +534,10 @@ const AddSyllabusScreen: React.FC = () => {
                   const selectedYear = academicYears.find(
                     (year) => year.id === value
                   );
-                  if (selectedYear?.timeStatus === "NOW" || selectedYear?.timeStatus === "PASS") {
+                  if (
+                    selectedYear?.timeStatus === "NOW" ||
+                    selectedYear?.timeStatus === "PASS"
+                  ) {
                     return Promise.reject(
                       "Chương trình không thể áp dụng cho năm học đang chọn"
                     );
@@ -882,6 +891,63 @@ const AddSyllabusScreen: React.FC = () => {
                                   message.error("Tải file lên thất bại");
                                 }}
                               />
+                              <List
+                                size="small"
+                                dataSource={
+                                  form.getFieldValue([
+                                    "sessions",
+                                    sessionIndex,
+                                    "slots",
+                                    slotIndex,
+                                    "materialLinks",
+                                  ]) || []
+                                }
+                                renderItem={(link: string, index: number) => (
+                                  <List.Item
+                                    actions={[
+                                      <Button
+                                        type="link"
+                                        danger
+                                        onClick={() => {
+                                          const currentLinks =
+                                            form.getFieldValue([
+                                              "sessions",
+                                              sessionIndex,
+                                              "slots",
+                                              slotIndex,
+                                              "materialLinks",
+                                            ]) || [];
+                                          const newLinks = currentLinks.filter(
+                                            (_: string, i: number) =>
+                                              i !== index
+                                          );
+                                          form.setFieldsValue({
+                                            sessions: {
+                                              [sessionIndex]: {
+                                                slots: {
+                                                  [slotIndex]: {
+                                                    materialLinks: newLinks,
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          });
+                                        }}
+                                      >
+                                        Xóa
+                                      </Button>,
+                                    ]}
+                                  >
+                                    <a
+                                      href={link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      Tài liệu {index + 1}
+                                    </a>
+                                  </List.Item>
+                                )}
+                              />
                             </Form.Item>
                           </>
                         ) : (
@@ -1017,8 +1083,8 @@ const AddSyllabusScreen: React.FC = () => {
         `https://sep490-backend-production.up.railway.app/api/syllabus/check?gradeId=${gradeId}&yearId=${yearId}`,
         {
           headers: {
-            Authorization: `Bearer ${token}` // Add this header
-          }
+            Authorization: `Bearer ${token}`, // Add this header
+          },
         }
       );
       return response.data;
