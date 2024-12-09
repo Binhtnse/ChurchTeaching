@@ -19,9 +19,9 @@ const MyFooter: React.FC = () => {
             <div className="w-full sm:w-1/4 px-4 mb-8 sm:mb-0">
               <Space direction="vertical">
                 <Title level={4}>Thông tin liên hệ</Title>
-                <Text>123 Đường Lê Văn Việt, Thủ Đức, TP Hồ Chí Minh</Text>
+                <Text>Phường Phước Bình, Thị xã Phước Long, tỉnh Bình Phước</Text>
                 <Text>Số điện thoại: (123) 456-7890</Text>
-                <Text>Email: info@churchteaching.com</Text>
+                <Text>Email: nhatho@gxphuocvinh.com</Text>
               </Space>
             </div>
             <div className="w-full sm:w-1/4 px-4">
