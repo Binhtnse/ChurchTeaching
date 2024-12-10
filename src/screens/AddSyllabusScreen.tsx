@@ -457,27 +457,27 @@ const AddSyllabusScreen: React.FC = () => {
   const removeSlot = (sessionIndex: number, slotIndex: number) => {
     // Get the slot key before removing the slot
     const slotKey = `${sessionIndex}-${slotIndex}`;
-  
+
     // Remove slot from sessions
     const newSessions = [...sessions];
     newSessions[sessionIndex].slots.splice(slotIndex, 1);
     setSessions(newSessions);
-  
+
     // Remove slot from form values
     const currentSessions = form.getFieldValue("sessions");
     currentSessions[sessionIndex].slots.splice(slotIndex, 1);
     form.setFieldsValue({ sessions: currentSessions });
-  
+
     // Remove the exam from selectedExams
-    setSelectedExams(prev => {
+    setSelectedExams((prev) => {
       const newSelectedExams = { ...prev };
       delete newSelectedExams[slotKey];
       return newSelectedExams;
     });
-  
+
     // Update total slot count
     setTotalSlotCount((prev) => prev - 1);
-  };  
+  };
 
   const handleTypeChange = (
     sessionIndex: number,
@@ -902,63 +902,74 @@ const AddSyllabusScreen: React.FC = () => {
                                   message.error("Tải file lên thất bại");
                                 }}
                               />
-                              <List
-                                size="small"
-                                dataSource={
-                                  form.getFieldValue([
-                                    "sessions",
-                                    sessionIndex,
-                                    "slots",
-                                    slotIndex,
-                                    "materialLinks",
-                                  ]) || []
-                                }
-                                renderItem={(link: string, index: number) => (
-                                  <List.Item
-                                    actions={[
-                                      <Button
-                                        type="link"
-                                        danger
-                                        onClick={() => {
-                                          const currentLinks =
-                                            form.getFieldValue([
-                                              "sessions",
-                                              sessionIndex,
-                                              "slots",
-                                              slotIndex,
-                                              "materialLinks",
-                                            ]) || [];
-                                          const newLinks = currentLinks.filter(
-                                            (_: string, i: number) =>
-                                              i !== index
-                                          );
-                                          form.setFieldsValue({
-                                            sessions: {
-                                              [sessionIndex]: {
-                                                slots: {
-                                                  [slotIndex]: {
-                                                    materialLinks: newLinks,
+                              {(
+                                form.getFieldValue([
+                                  "sessions",
+                                  sessionIndex,
+                                  "slots",
+                                  slotIndex,
+                                  "materialLinks",
+                                ]) || []
+                              ).length > 0 && (
+                                <List
+                                  size="small"
+                                  dataSource={
+                                    form.getFieldValue([
+                                      "sessions",
+                                      sessionIndex,
+                                      "slots",
+                                      slotIndex,
+                                      "materialLinks",
+                                    ]) || []
+                                  }
+                                  renderItem={(link: string, index: number) => (
+                                    <List.Item
+                                      actions={[
+                                        <Button
+                                          type="link"
+                                          danger
+                                          onClick={() => {
+                                            const currentLinks =
+                                              form.getFieldValue([
+                                                "sessions",
+                                                sessionIndex,
+                                                "slots",
+                                                slotIndex,
+                                                "materialLinks",
+                                              ]) || [];
+                                            const newLinks =
+                                              currentLinks.filter(
+                                                (_: string, i: number) =>
+                                                  i !== index
+                                              );
+                                            form.setFieldsValue({
+                                              sessions: {
+                                                [sessionIndex]: {
+                                                  slots: {
+                                                    [slotIndex]: {
+                                                      materialLinks: newLinks,
+                                                    },
                                                   },
                                                 },
                                               },
-                                            },
-                                          });
-                                        }}
-                                      >
-                                        Xóa
-                                      </Button>,
-                                    ]}
-                                  >
-                                    <a
-                                      href={link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                            });
+                                          }}
+                                        >
+                                          Xóa
+                                        </Button>,
+                                      ]}
                                     >
-                                      Tài liệu {index + 1}
-                                    </a>
-                                  </List.Item>
-                                )}
-                              />
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        Tài liệu {index + 1}
+                                      </a>
+                                    </List.Item>
+                                  )}
+                                />
+                              )}
                             </Form.Item>
                           </>
                         ) : (
@@ -1047,6 +1058,74 @@ const AddSyllabusScreen: React.FC = () => {
                                   message.error("Tải file lên thất bại");
                                 }}
                               />
+                              {(
+                                form.getFieldValue([
+                                  "sessions",
+                                  sessionIndex,
+                                  "slots",
+                                  slotIndex,
+                                  "materialLinks",
+                                ]) || []
+                              ).length > 0 && (
+                                <List
+                                  size="small"
+                                  dataSource={
+                                    form.getFieldValue([
+                                      "sessions",
+                                      sessionIndex,
+                                      "slots",
+                                      slotIndex,
+                                      "materialLinks",
+                                    ]) || []
+                                  }
+                                  renderItem={(link: string, index: number) => (
+                                    <List.Item
+                                      actions={[
+                                        <Button
+                                          type="link"
+                                          danger
+                                          onClick={() => {
+                                            const currentLinks =
+                                              form.getFieldValue([
+                                                "sessions",
+                                                sessionIndex,
+                                                "slots",
+                                                slotIndex,
+                                                "materialLinks",
+                                              ]) || [];
+                                            const newLinks =
+                                              currentLinks.filter(
+                                                (_: string, i: number) =>
+                                                  i !== index
+                                              );
+                                            form.setFieldsValue({
+                                              sessions: {
+                                                [sessionIndex]: {
+                                                  slots: {
+                                                    [slotIndex]: {
+                                                      materialLinks: newLinks,
+                                                    },
+                                                  },
+                                                },
+                                              },
+                                            });
+                                          }}
+                                        >
+                                          Xóa
+                                        </Button>,
+                                      ]}
+                                    >
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        Tài liệu {index + 1}
+                                      </a>
+                                    </List.Item>
+                                  )}
+                                />
+                              )}
                             </Form.Item>
                           </>
                         )}
