@@ -19,7 +19,9 @@ import {
   ReadOutlined,
   UserOutlined,
   FilePdfOutlined,
-  CheckSquareOutlined
+  CheckSquareOutlined,
+  SignatureOutlined,
+  ContainerOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Menu, Button } from "antd";
@@ -216,7 +218,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       {
         key: "grades-edit-list",
         label: "Đơn xin sửa điểm",
-        icon: <AccountBookOutlined />,
+        icon: <SignatureOutlined />,
       },
       {
         key: "leave-request-history",
@@ -244,7 +246,7 @@ const getMenuItems = (role: string): MenuItem[] => {
       {
         key: "certificate-list",
         label: "Danh sách chứng chỉ lên lớp",
-        icon: <FilePdfOutlined />,
+        icon: <ContainerOutlined />,
       },
     ],
     GUEST: [
