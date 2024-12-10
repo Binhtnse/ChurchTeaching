@@ -219,11 +219,11 @@ const AdminPostScreen: React.FC = () => {
             },
           }
         );
-        if (response.status === 200) {
+        if (response.status === 204) {
           message.success("Xóa bài viết thành công");
-          // setIsDeleteModalVisible(false);
-          // setPostToDelete(null);
-          window.location.reload();
+          setIsDeleteModalVisible(false);
+          setPostToDelete(null);
+          await fetchPosts();
         }
       } catch (error) {
         console.error("Error deleting post:", error);
@@ -564,11 +564,6 @@ const AdminPostScreen: React.FC = () => {
             className="relative"
             loading={loading}
           >
-            {submitLoading && (
-              <div className={loadingStyles.loadingOverlay}>
-                <LoadingOutlined className={loadingStyles.spinner} />
-              </div>
-            )}
             Xóa
           </Button>,
         ]}
