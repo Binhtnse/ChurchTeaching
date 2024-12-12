@@ -779,9 +779,9 @@ const ParentScheduleScreen: React.FC = () => {
                           </div>
                         )}
                         <div className="mt-2">
-                          {(slot.attendance.isAbsent === "ABSENT" ||
-                            slot.attendance.isAbsentWithPermission ===
-                              "FALSE") && (
+                          {
+                            slot.attendance.isAbsent !== "PRESENT" && 
+                            !(slot.attendance.isAbsent === "ABSENT" && slot.attendance.isAbsentWithPermission === "TRUE") && (
                             <Button
                               type="primary"
                               icon={<EllipsisOutlined />}
