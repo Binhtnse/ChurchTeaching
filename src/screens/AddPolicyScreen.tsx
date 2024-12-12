@@ -107,7 +107,7 @@ const AddPolicyScreen: React.FC = () => {
         </Form.Item>
         <Form.Item
           name="tuitionFee"
-          label={<span className="text-lg font-semibold">Học phí</span>}
+          label={<span className="text-lg font-semibold">Học phí (Học phí là không bắt buộc)</span>}
           rules={[{ required: true, message: "Vui lòng nhập học phí" }]}
         >
           <Input type="number" className="w-full h-10 text-lg" />
