@@ -21,6 +21,7 @@ const ChatboxAI: React.FC = () => {
       text: inputMessage,
       isUser: true,
     };
+    const token = localStorage.getItem("accessToken");
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -28,7 +29,12 @@ const ChatboxAI: React.FC = () => {
       const response = await fetch(
         `https://sep490-backend-production.up.railway.app/bot/chat?prompt=${encodeURIComponent(
           inputMessage
-        )}`
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const data = await response.text();
 
