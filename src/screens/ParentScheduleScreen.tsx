@@ -779,9 +779,7 @@ const ParentScheduleScreen: React.FC = () => {
                           </div>
                         )}
                         <div className="mt-2">
-                          {(!slot.attendance?.isAbsent ||
-                            slot.attendance.isAbsent === "ABSENT" ||
-                            slot.attendance.isAbsentWithPermission === "TRUE" ||
+                          {(slot.attendance.isAbsent === "ABSENT" ||
                             slot.attendance.isAbsentWithPermission ===
                               "FALSE") && (
                             <Button
