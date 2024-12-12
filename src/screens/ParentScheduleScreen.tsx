@@ -90,6 +90,11 @@ interface Class {
   slots: Slot[];
 }
 
+interface Grade {
+  id: number;
+  name: string;
+}
+
 interface WeekSchedule {
   weekNumber: number;
   startDate: string;
@@ -280,6 +285,7 @@ const ParentScheduleScreen: React.FC = () => {
   const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(
     null
   );
+  const [grades, setGrades] = useState<Grade[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [parentDetailsLoading, setParentDetailsLoading] = useState(false);
@@ -358,10 +364,17 @@ const ParentScheduleScreen: React.FC = () => {
       )?.id;
       if (!yearId) return;
 
+      // Get the current class's grade name from scheduleData
+      const currentClass = scheduleData?.schedule?.[0]?.classes?.[0];
+      const gradeName = currentClass?.grade;
+
+      // Find matching grade ID from grades array
+      const gradeId = grades.find(grade => grade.name === gradeName)?.id || 1;
+
       try {
         const token = localStorage.getItem("accessToken");
         const response = await axios.get(
-          `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${yearId}&studentId=${studentId}&gradeId=1`,
+          `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${yearId}&studentId=${studentId}&gradeId=${gradeId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -372,8 +385,33 @@ const ParentScheduleScreen: React.FC = () => {
         message.error("Không thể lấy thông tin điểm danh");
       }
     },
-    [selectedStudent, selectedYear, academicYears]
-  );
+    [selectedStudent, selectedYear, academicYears, scheduleData, grades]
+);
+
+  useEffect(() => {
+    const fetchGrades = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await axios.get(
+          "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=30",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.data.status === "success") {
+          setGrades(response.data.data);
+        } else {
+          message.error("Failed to fetch grades");
+        }
+      } catch (error) {
+        console.error("Error fetching grades:", error);
+      }
+    };
+
+    fetchGrades();
+  }, []);
 
   const getAttendanceStats = () => {
     if (!attendanceData?.attendanceDetails)
