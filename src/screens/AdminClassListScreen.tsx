@@ -217,10 +217,15 @@ const AdminClassListScreen: React.FC = () => {
     setDataSource(filteredData);
   };
   const handleExport = async () => {
+    if (!selectedAcademicYear) {
+      message.warning("Vui lòng chọn niên khóa trước khi xuất danh sách");
+      return;
+    }
+  
     try {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/class/export",
+        `https://sep490-backend-production.up.railway.app/api/v1/class/export?academicYearId=${selectedAcademicYear}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -228,21 +233,21 @@ const AdminClassListScreen: React.FC = () => {
           responseType: "blob",
         }
       );
-
+  
       const url = window.URL.createObjectURL(new Blob([response.data]));
-
+  
       const link = document.createElement("a");
       link.href = url;
-
+  
       const contentDisposition = response.headers["content-disposition"];
       const fileName = contentDisposition
         ? contentDisposition.split("filename=")[1].replace(/"/g, "")
         : "exported_file.xlsx";
-
+  
       link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
-
+  
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
