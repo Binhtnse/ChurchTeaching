@@ -76,6 +76,16 @@ interface Slot {
   noteOfSlot: string | null;
 }
 
+const dayOfWeekMapping: { [key: string]: string } = {
+  MONDAY: "Thứ Hai",
+  TUESDAY: "Thứ Ba",
+  WEDNESDAY: "Thứ Tư",
+  THURSDAY: "Thứ Năm",
+  FRIDAY: "Thứ Sáu",
+  SATURDAY: "Thứ Bảy",
+  SUNDAY: "Chủ nhật",
+};
+
 interface Attendance {
   isAbsent: string | null;
   isAbsentWithPermission: string | null;
@@ -306,15 +316,19 @@ const ParentScheduleScreen: React.FC = () => {
       const user = userString ? JSON.parse(userString) : null;
       const parentId = user?.id;
       const token = localStorage.getItem("accessToken");
-      const yearId = academicYears?.find((year) => year.year === selectedYear)?.id;
-  
+      const yearId = academicYears?.find(
+        (year) => year.year === selectedYear
+      )?.id;
+
       if (!parentId) {
         message.error("Không tìm thấy thông tin phụ huynh");
         return;
       }
-  
+
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students${yearId ? `?yearId=${yearId}` : ''}`,
+        `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students${
+          yearId ? `?yearId=${yearId}` : ""
+        }`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -369,7 +383,7 @@ const ParentScheduleScreen: React.FC = () => {
       const gradeName = currentClass?.grade;
 
       // Find matching grade ID from grades array
-      const gradeId = grades.find(grade => grade.name === gradeName)?.id || 1;
+      const gradeId = grades.find((grade) => grade.name === gradeName)?.id || 1;
 
       try {
         const token = localStorage.getItem("accessToken");
@@ -386,7 +400,7 @@ const ParentScheduleScreen: React.FC = () => {
       }
     },
     [selectedStudent, selectedYear, academicYears, scheduleData, grades]
-);
+  );
 
   useEffect(() => {
     const fetchGrades = async () => {
@@ -554,6 +568,10 @@ const ParentScheduleScreen: React.FC = () => {
   const createTimetable = (
     slots: Slot[]
   ): { [key: string]: { [key: string]: Slot | null } } => {
+    const mappedSlots = slots.map((slot) => ({
+      ...slot,
+      dayOfWeek: dayOfWeekMapping[slot.dayOfWeek] || slot.dayOfWeek,
+    }));
     const days = [
       "Thứ Hai",
       "Thứ Ba",
@@ -564,13 +582,15 @@ const ParentScheduleScreen: React.FC = () => {
       String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
     ];
 
-    if (!slots.length) {
+    if (!mappedSlots.length) {
       return days.reduce((acc, day) => {
         acc[day] = {};
         return acc;
       }, {} as { [key: string]: { [key: string]: Slot | null } });
     }
-    const times = [...new Set(slots.map((slot) => slot.time))].sort();
+    const times = [...new Set(mappedSlots.map((slot) => slot.time))].sort(
+      (a, b) => getStartTime(a) - getStartTime(b)
+    );
 
     const timetable = days.reduce((acc, day) => {
       acc[day] = times.reduce((timeAcc, time) => {
@@ -587,6 +607,12 @@ const ParentScheduleScreen: React.FC = () => {
     });
 
     return timetable;
+  };
+
+  const getStartTime = (timeString: string): number => {
+    const startTime = timeString.split(" - ")[0];
+    const [hours, minutes] = startTime.split(":").map(Number);
+    return hours * 60 + minutes; // Convert to minutes for easy comparison
   };
 
   const stats = getAttendanceStats();
@@ -779,23 +805,25 @@ const ParentScheduleScreen: React.FC = () => {
                           </div>
                         )}
                         <div className="mt-2">
-                          {
-                            slot.attendance.isAbsent !== "PRESENT" && 
-                            !(slot.attendance.isAbsent === "ABSENT" && slot.attendance.isAbsentWithPermission === "TRUE") && (
-                            <Button
-                              type="primary"
-                              icon={<EllipsisOutlined />}
-                              size="middle"
-                              disabled={isYearPassed}
-                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                showModal(slot, classItem);
-                              }}
-                            >
-                              Xin nghỉ
-                            </Button>
-                          )}
+                          {slot.attendance.isAbsent !== "PRESENT" &&
+                            !(
+                              slot.attendance.isAbsent === "ABSENT" &&
+                              slot.attendance.isAbsentWithPermission === "TRUE"
+                            ) && (
+                              <Button
+                                type="primary"
+                                icon={<EllipsisOutlined />}
+                                size="middle"
+                                disabled={isYearPassed}
+                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-md"
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                  showModal(slot, classItem);
+                                }}
+                              >
+                                Xin nghỉ
+                              </Button>
+                            )}
                         </div>
                       </div>
                     </div>

@@ -91,6 +91,16 @@ const DayCell = styled(CalendarCell)`
   color: white;
 `;
 
+const dayMapping: { [key: string]: string } = {
+  'MONDAY': 'Thứ Hai',
+  'TUESDAY': 'Thứ Ba', 
+  'WEDNESDAY': 'Thứ Tư',
+  'THURSDAY': 'Thứ Năm',
+  'FRIDAY': 'Thứ Sáu',
+  'SATURDAY': "Thứ Bảy",
+  'SUNDAY': "Chủ nhật"
+};
+
 const StudentScheduleScreen: React.FC = () => {
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -183,6 +193,20 @@ const StudentScheduleScreen: React.FC = () => {
     }
   }, [selectedYear, fetchSchedule]);
 
+  const sortTimes = (times: string[]): string[] => {
+    return times.sort((a, b) => {
+      const startTimeA = a.split(' - ')[0];
+      const startTimeB = b.split(' - ')[0];
+      const [hoursA, minutesA] = startTimeA.split(':').map(Number);
+      const [hoursB, minutesB] = startTimeB.split(':').map(Number);
+      
+      if (hoursA === hoursB) {
+        return minutesA - minutesB;
+      }
+      return hoursA - hoursB;
+    });
+  };
+
   const createTimetable = (
     slots: Slot[]
   ): { [key: string]: { [key: string]: Slot | null } } => {
@@ -192,24 +216,25 @@ const StudentScheduleScreen: React.FC = () => {
       "Thứ Tư",
       "Thứ Năm",
       "Thứ Sáu",
-      String.fromCharCode(84, 104, 432, 769, 32, 66, 97, 777, 121),
-      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
+      "Thứ Bảy",
+      "Chủ nhật",
     ];
-    const times = [...new Set(slots.map((slot) => slot.time))].sort();
+    const times = sortTimes([...new Set(slots.map((slot) => slot.time))]);
 
-    const timetable = days.reduce((acc, day) => {
-      acc[day] = times.reduce((timeAcc, time) => {
-        timeAcc[time] = null;
-        return timeAcc;
-      }, {} as { [key: string]: Slot | null });
-      return acc;
-    }, {} as { [key: string]: { [key: string]: Slot | null } });
+  const timetable = days.reduce((acc, day) => {
+    acc[day] = times.reduce((timeAcc, time) => {
+      timeAcc[time] = null;
+      return timeAcc;
+    }, {} as { [key: string]: Slot | null });
+    return acc;
+  }, {} as { [key: string]: { [key: string]: Slot | null } });
 
-    slots.forEach((slot) => {
-      if (timetable[slot.dayOfWeek] && times.includes(slot.time)) {
-        timetable[slot.dayOfWeek][slot.time] = slot;
-      }
-    });
+  slots.forEach((slot) => {
+    const vietnameseDay = dayMapping[slot.dayOfWeek];
+    if (timetable[vietnameseDay] && times.includes(slot.time)) {
+      timetable[vietnameseDay][slot.time] = slot;
+    }
+  });
 
     return timetable;
   };

@@ -232,21 +232,27 @@ const CatechistScheduleScreen: React.FC = () => {
   const createCombinedTimetable = (classes: Class[]): Timetable => {
     const timetable: Timetable = {};
     const processedTimeTableIds = new Set<string>();
-
+  
     const classesWithSlots = classes.filter(
       (classItem) => classItem.slots && classItem.slots.length > 0
     );
-
+  
+    // Helper function to get start time in minutes for sorting
+    const getStartTimeInMinutes = (timeString: string) => {
+      const startTime = timeString.split('-')[0].trim();
+      const [hours, minutes] = startTime.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+  
     classesWithSlots.forEach((classItem) => {
       classItem.slots.forEach((slot) => {
-        // Skip if we've already processed this timeTableId
         if (processedTimeTableIds.has(slot.timeTableId)) {
           return;
         }
-
+  
         processedTimeTableIds.add(slot.timeTableId);
-
         const normalizedDay = normalizeVietnameseDay(slot.dayOfWeek);
+        
         if (!timetable[normalizedDay]) {
           timetable[normalizedDay] = {};
         }
@@ -262,8 +268,22 @@ const CatechistScheduleScreen: React.FC = () => {
         });
       });
     });
+  
+    // Sort times for each day
+    Object.keys(timetable).forEach(day => {
+      const sortedTimes = Object.keys(timetable[day]).sort((a, b) => {
+        return getStartTimeInMinutes(a) - getStartTimeInMinutes(b);
+      });
+  
+      const sortedTimeSlots: TimetableSlot = {};
+      sortedTimes.forEach(time => {
+        sortedTimeSlots[time] = timetable[day][time];
+      });
+      timetable[day] = sortedTimeSlots;
+    });
+  
     return timetable;
-  };
+  };  
 
   const fetchClasses = async () => {
     console.log("Fetching classes with year:", selectedYear);
@@ -331,13 +351,13 @@ const CatechistScheduleScreen: React.FC = () => {
   const normalizeVietnameseDay = (day: string): string => {
     // Map API's unicode values to our unicode values
     const mappings: { [key: string]: string } = {
-      "Chủ nhật": "Chủ Nhật",
-      "Thứ Hai": "Thứ Hai",
-      "Thứ Ba": "Thứ Ba",
-      "Thứ Tư": "Thứ Tư",
-      "Thứ Năm": "Thứ Năm",
-      "Thứ Sáu": "Thứ Sáu",
-      "Thứ Bảy": "Thứ Bảy",
+      "SUNDAY": "Chủ Nhật",
+    "MONDAY": "Thứ Hai", 
+    "TUESDAY": "Thứ Ba",
+    "WEDNESDAY": "Thứ Tư",
+    "THURSDAY": "Thứ Năm",
+    "FRIDAY": "Thứ Sáu",
+    "SATURDAY": "Thứ Bảy"
     };
     return mappings[day] || day;
   };
@@ -347,6 +367,7 @@ const CatechistScheduleScreen: React.FC = () => {
     const selectedYearData = academicYears.find((year) => year.year === value);
     setIsPastYear(selectedYearData?.timeStatus === "PASS");
   };
+  
 
   const renderCalendar = (timetable: Timetable) => {
     const days = [
@@ -355,8 +376,8 @@ const CatechistScheduleScreen: React.FC = () => {
       "Thứ Tư",
       "Thứ Năm",
       "Thứ Sáu",
-      String.fromCharCode(84, 104, 432, 769, 32, 66, 97, 777, 121),
-      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
+      "Thứ Bảy",
+      "Chủ Nhật",
     ];
     const hasValidSlots = currentWeek?.classes.some(
       classItem => classItem.slots && classItem.slots.length > 0

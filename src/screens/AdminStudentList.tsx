@@ -258,7 +258,8 @@ const AdminStudentList: React.FC = () => {
   const handleGradeChange = (value: number) => {
     setSelectedGrade(value);
     setPagination((prev) => ({ ...prev, current: 1 }));
-  };
+    setTableError(null); // Add this line to clear the error
+  };  
 
   const handleTableChange = (newPagination: TablePaginationConfig) => {
     fetchStudents(newPagination.current || 1, newPagination.pageSize || 10);
