@@ -19,6 +19,12 @@ interface Child {
   fullName: string;
 }
 
+interface ClassInfo {
+  studentClassId: number;
+  className: string;
+  gradeName: string;
+}
+
 interface Policy {
   tuitionFee: number;
 }
@@ -40,7 +46,7 @@ const ParentTransactionScreen: React.FC = () => {
   const [form] = Form.useForm();
   const [children, setChildren] = useState<Child[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
-  console.log(policies)
+  console.log(policies);
   const [minAmount, setMinAmount] = useState<number>(0);
   const [churchDonation, setChurchDonation] = useState(false);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<
@@ -52,6 +58,7 @@ const ParentTransactionScreen: React.FC = () => {
   const [donationAmount, setDonationAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isLoadingPolicy, setIsLoadingPolicy] = useState(false);
+  const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
 
   const userString = localStorage.getItem("userLogin");
   const parentId = userString ? JSON.parse(userString).id : null;
@@ -125,6 +132,11 @@ const ParentTransactionScreen: React.FC = () => {
           },
         }
       );
+      const classData = classResponse.data.data;
+      setClassInfo(classData);
+      form.setFieldsValue({
+        studentClassId: classData.studentClassId,
+      });
       const studentClassId = classResponse.data.data;
 
       const policyResponse = await axios.get(
@@ -240,6 +252,16 @@ const ParentTransactionScreen: React.FC = () => {
                 ))}
               </Select>
             </Form.Item>
+            {classInfo && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <p className="text-base font-medium text-gray-700">
+                  Lớp: {classInfo.className}
+                </p>
+                <p className="text-base font-medium text-gray-700">
+                  Khối: {classInfo.gradeName}
+                </p>
+              </div>
+            )}
 
             {form.getFieldValue("childId") && (
               <Spin spinning={isLoadingPolicy}>

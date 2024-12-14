@@ -364,11 +364,11 @@ const CatechistScheduleScreen: React.FC = () => {
 
   const handleYearChange = (value: string) => {
     setSelectedYear(value);
+    localStorage.removeItem("selectedWeek"); // Clear saved week from localStorage
     const selectedYearData = academicYears.find((year) => year.year === value);
     setIsPastYear(selectedYearData?.timeStatus === "PASS");
   };
   
-
   const renderCalendar = (timetable: Timetable) => {
     const days = [
       "Thứ Hai",

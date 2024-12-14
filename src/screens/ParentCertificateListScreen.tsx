@@ -46,8 +46,6 @@ const ParentCertificateListScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<number | null>(null);
-  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
-  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -72,14 +70,14 @@ const ParentCertificateListScreen: React.FC = () => {
           },
         }
       );
-  
+
       // Handle empty data case
       if (!response.data.data || response.data.data.length === 0) {
         setChildren([]);
         message.info("Không tìm thấy danh sách thiếu nhi");
         return;
       }
-  
+
       setChildren(response.data.data);
     } catch (error) {
       console.error("Error fetching children:", error);
@@ -95,47 +93,28 @@ const ParentCertificateListScreen: React.FC = () => {
       );
       setAcademicYears(response.data);
     } catch (error) {
-        console.log(error)
+      console.log(error);
       message.error("Failed to fetch academic years");
     }
   };
 
-  const fetchGrades = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=30",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.data.status === "success") {
-        setGrades(response.data.data);
-      }
-    } catch (error) {
-        console.log(error)
-      message.error("An error occurred while fetching grades");
-    }
-  }, [token]);
-
   const fetchCertificates = useCallback(
     async (page: number = 1, pageSize: number = 10) => {
-      if (!selectedChild || !selectedYear || !selectedGrade) {
+      if (!selectedChild || !selectedYear) {
         setCertificates([]);
         return;
       }
       try {
         setLoading(true);
         const response = await axios.get<ApiResponse>(
-          `https://sep490-backend-production.up.railway.app/api/v1/certificate/user/${selectedChild}?page=${page}&size=${pageSize}&gradeId=${selectedGrade}&academicYearId=${selectedYear}`,
+          `https://sep490-backend-production.up.railway.app/api/v1/certificate/user/${selectedChild}?page=${page}&size=${pageSize}&academicYearId=${selectedYear}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-  
+
         if (response.data.status === "SUCCESS") {
           setCertificates(response.data.data);
           setPagination((prev) => ({
@@ -154,27 +133,26 @@ const ParentCertificateListScreen: React.FC = () => {
         setLoading(false);
       }
     },
-    [selectedChild, selectedYear, selectedGrade, token]
+    [selectedChild, selectedYear, token]
   );
 
   useEffect(() => {
     fetchAcademicYears();
-    fetchGrades();
-  }, [fetchGrades]);
+  }, []);
 
   useEffect(() => {
     fetchChildren();
   }, [fetchChildren]);
 
   useEffect(() => {
-    if (selectedChild && selectedYear && selectedGrade) {
+    if (selectedChild && selectedYear) {
       fetchCertificates();
     }
-  }, [fetchCertificates, selectedChild, selectedYear, selectedGrade]);
+  }, [fetchCertificates, selectedChild, selectedYear]);
 
   useEffect(() => {
     setCertificates([]);
-  }, [selectedYear, selectedGrade, selectedChild]);  
+  }, [selectedYear, selectedChild]);
 
   const handleChildChange = (value: number) => {
     setSelectedChild(value);
@@ -182,10 +160,6 @@ const ParentCertificateListScreen: React.FC = () => {
 
   const handleYearChange = (value: number) => {
     setSelectedYear(value);
-  };
-
-  const handleGradeChange = (value: number) => {
-    setSelectedGrade(value);
   };
 
   const handleTableChange = (newPagination: TablePaginationConfig) => {
@@ -230,14 +204,14 @@ const ParentCertificateListScreen: React.FC = () => {
     },
     {
       title: <span className="text-blue-600 font-semibold">Thao tác</span>,
-      key: 'actions',
+      key: "actions",
       render: (record: CertificateData) => (
         <Button
           type="primary"
           onClick={() => {
             window.open(
               `https://sep490-backend-production.up.railway.app/api/v1/certificate/${record.certificateId}/pdf`,
-              '_blank'
+              "_blank"
             );
           }}
           className="bg-blue-500 hover:bg-blue-600"
@@ -245,7 +219,7 @@ const ParentCertificateListScreen: React.FC = () => {
           Xem chứng chỉ
         </Button>
       ),
-    }
+    },
   ];
 
   return (
@@ -253,27 +227,9 @@ const ParentCertificateListScreen: React.FC = () => {
       <h1 className="text-2xl font-bold text-blue-600 pb-2 border-b-2 border-blue-600 mb-4">
         Danh sách chứng chỉ
       </h1>
-      
-      <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600">
-              Chọn thiếu nhi
-            </label>
-            <Select
-              className="w-full"
-              placeholder="Chọn thiếu nhi"
-              onChange={handleChildChange}
-              value={selectedChild}
-            >
-              {children.map((child) => (
-                <Select.Option key={child.id} value={child.id}>
-                  {child.fullName}
-                </Select.Option>
-              ))}
-            </Select>
-          </div>
 
+      <Card className="mb-6 shadow-lg rounded-xl border border-indigo-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-600">
               Niên khóa
@@ -298,16 +254,19 @@ const ParentCertificateListScreen: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600">Khối</label>
+            <label className="text-sm font-medium text-gray-600">
+              Chọn thiếu nhi
+            </label>
             <Select
               className="w-full"
-              placeholder="Chọn khối"
-              onChange={handleGradeChange}
-              value={selectedGrade}
+              placeholder="Chọn thiếu nhi"
+              onChange={handleChildChange}
+              value={selectedChild}
+              disabled={!selectedYear}
             >
-              {grades.map((grade) => (
-                <Select.Option key={grade.id} value={grade.id}>
-                  {grade.name}
+              {children.map((child) => (
+                <Select.Option key={child.id} value={child.id}>
+                  {child.fullName}
                 </Select.Option>
               ))}
             </Select>
@@ -315,7 +274,7 @@ const ParentCertificateListScreen: React.FC = () => {
         </div>
       </Card>
 
-      {selectedChild && selectedYear && selectedGrade ? (
+      {selectedChild && selectedYear ? (
         <Spin spinning={loading}>
           <Table
             columns={columns}
@@ -333,7 +292,7 @@ const ParentCertificateListScreen: React.FC = () => {
             Vui lòng chọn đầy đủ thông tin
           </p>
           <p className="text-sm">
-            Chọn thiếu nhi, niên khóa và khối để xem danh sách chứng chỉ
+            Chọn niên khóa và thiếu nhi để xem danh sách chứng chỉ
           </p>
         </div>
       )}
