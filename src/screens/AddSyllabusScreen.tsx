@@ -515,18 +515,18 @@ const AddSyllabusScreen: React.FC = () => {
           <Form.Item
             name="name"
             label="Tên Giáo Trình"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: 'Vui lòng nhập tên giáo trình' }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="duration"
             label="Thời Lượng"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: 'Vui lòng nhập thời lượng' }]}
           >
             <Input />
           </Form.Item>
-          <Form.Item name="grade" label="Khối" rules={[{ required: true }]}>
+          <Form.Item name="grade" label="Khối" rules={[{ required: true, message: 'Vui lòng chọn khối' }]}>
             <Select>
               {grades.map((grade) => (
                 <Option key={grade.id} value={grade.id}>
@@ -539,7 +539,7 @@ const AddSyllabusScreen: React.FC = () => {
             name="academicYearId"
             label="Niên khóa"
             rules={[
-              { required: true },
+              { required: true, message: 'Vui lòng chọn niên khóa' },
               {
                 validator: (_, value) => {
                   const selectedYear = academicYears.find(
@@ -589,7 +589,7 @@ const AddSyllabusScreen: React.FC = () => {
           <Form.Item
             name="policyId"
             label="Quy định"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: 'Vui lòng chọn quy định' }]}
           >
             <Select>
               {policies.map((policy) => (
@@ -630,7 +630,7 @@ const AddSyllabusScreen: React.FC = () => {
                   <Form.Item
                     name={["sessions", sessionIndex, "name"]}
                     label="Tên Chương"
-                    rules={[{ required: true }]}
+                    rules={[{ required: true, message: 'Vui lòng nhập tên chương' }]}
                   >
                     <Input />
                   </Form.Item>
@@ -643,7 +643,7 @@ const AddSyllabusScreen: React.FC = () => {
                   <Form.Item
                     name={["sessions", sessionIndex, "slotCount"]}
                     label="Số Bài Học"
-                    rules={[{ required: true }]}
+                    rules={[{ required: true, message: 'Vui lòng nhập số bài học' }]}
                   >
                     <InputNumber
                       min={1}
@@ -685,7 +685,7 @@ const AddSyllabusScreen: React.FC = () => {
                             "type",
                           ]}
                           label="Hoạt động chính"
-                          rules={[{ required: true }]}
+                          rules={[{ required: true, message: 'Vui lòng chọn loại hoạt động' }]}
                         >
                           <Select
                             onChange={(value) =>
@@ -706,7 +706,7 @@ const AddSyllabusScreen: React.FC = () => {
                             "sessionUnits",
                           ]}
                           label="Thời lượng bài học"
-                          rules={[{ required: true }]}
+                          rules={[{ required: true, message: 'Vui lòng chọn thời lượng bài học' }]}
                         >
                           <Select>
                             <Option value={0.5}>Nửa buổi</Option>
@@ -744,7 +744,7 @@ const AddSyllabusScreen: React.FC = () => {
                                 "examId",
                               ]}
                               label="Chọn bài kiểm tra"
-                              rules={[{ required: true }]}
+                              rules={[{ required: true, message: 'Vui lòng chọn bài kiểm tra' }]}
                             >
                               <Select
                                 labelInValue
@@ -790,7 +790,7 @@ const AddSyllabusScreen: React.FC = () => {
                                 "name",
                               ]}
                               label="Tên Bài Học"
-                              rules={[{ required: true }]}
+                              rules={[{ required: true, message: 'Vui lòng nhập tên bài học' }]}
                             >
                               <Input />
                             </Form.Item>
@@ -815,7 +815,7 @@ const AddSyllabusScreen: React.FC = () => {
                                 "examId",
                               ]}
                               label="Chọn bài kiểm tra"
-                              rules={[{ required: true }]}
+                              rules={[{ required: true, message: 'Vui lòng chọn bài kiểm tra' }]}
                             >
                               <Select
                                 labelInValue
@@ -983,7 +983,7 @@ const AddSyllabusScreen: React.FC = () => {
                                 "name",
                               ]}
                               label="Tên Bài Học"
-                              rules={[{ required: true }]}
+                              rules={[{ required: true, message: 'Vui lòng nhập tên bài học' }]}
                             >
                               <Input />
                             </Form.Item>

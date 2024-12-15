@@ -155,12 +155,17 @@ const ParentAttendanceProgressScreen: React.FC = () => {
   }, [selectedStudent, selectedAcademicYear, selectedGrade]);
 
   useEffect(() => {
-    fetchStudents();
     fetchAcademicYears();
     fetchGrades();
     fetchActivePolicy();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchStudents]);
+  }, []);
+
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      fetchStudents();
+    }
+  }, [selectedAcademicYear, fetchStudents]);
 
   useEffect(() => {
     if (selectedStudent && selectedAcademicYear && selectedGrade) {

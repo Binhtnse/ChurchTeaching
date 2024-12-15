@@ -141,8 +141,12 @@ const ParentCertificateListScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchChildren();
-  }, [fetchChildren]);
+    if (selectedYear) {
+      fetchChildren();
+    } else {
+      setChildren([]);
+    }
+  }, [selectedYear, fetchChildren]);
 
   useEffect(() => {
     if (selectedChild && selectedYear) {

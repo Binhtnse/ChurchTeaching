@@ -344,7 +344,10 @@ const ParentScheduleScreen: React.FC = () => {
   }, [selectedYear, academicYears]);
 
   useEffect(() => {
-    fetchStudents();
+    if (selectedYear) {
+      fetchStudents();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchStudents]);
 
   const fetchAcademicYears = async () => {
@@ -558,10 +561,14 @@ const ParentScheduleScreen: React.FC = () => {
   };
 
   const handleStudentChange = (studentId: number) => {
-    setSelectedStudent(studentId);
-    if (selectedYear && studentId) {
-      fetchSchedule(studentId);
-      fetchAttendanceData(studentId);
+    if (selectedYear) {
+      setSelectedStudent(studentId);
+      if (studentId) {
+        fetchSchedule(studentId);
+        fetchAttendanceData(studentId);
+      }
+    } else {
+      message.info("Vui lòng chọn niên khóa trước");
     }
   };
 
@@ -925,6 +932,7 @@ const ParentScheduleScreen: React.FC = () => {
           value={selectedStudent}
           className="shadow-sm"
           allowClear
+          disabled={!selectedYear}
         >
           {students?.map((student) => (
             <Option key={student.id} value={student.id}>

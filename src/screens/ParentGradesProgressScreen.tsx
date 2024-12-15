@@ -235,10 +235,15 @@ const ParentGradesProgressScreen: React.FC = () => {
   }, [selectedStudent, selectedClass, selectedAcademicYear, selectedGrade]);
 
   useEffect(() => {
-    fetchStudents();
     fetchAcademicYears();
     fetchGrades();
-  }, [fetchStudents]);
+  }, []);
+
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      fetchStudents();
+    }
+  }, [selectedAcademicYear, fetchStudents]);
 
   useEffect(() => {
     if (selectedAcademicYear && selectedGrade) {

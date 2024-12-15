@@ -70,13 +70,7 @@ const ParentTransactionScreen: React.FC = () => {
       const response = await axios.get(
         "https://sep490-backend-production.up.railway.app/api/academic-years?status=ACTIVE"
       );
-      setAcademicYears(response.data);
-      const currentYear = response.data.find(
-        (year: AcademicYear) => year.timeStatus === "NOW"
-      );
-      if (currentYear) {
-        setSelectedAcademicYear(currentYear.id);
-      }
+      setAcademicYears(response.data);    
     } catch (error) {
       console.log(error);
       message.error("Không thể lấy danh sách niên khóa");
@@ -84,6 +78,7 @@ const ParentTransactionScreen: React.FC = () => {
   };
 
   const fetchChildren = async () => {
+    if (!selectedAcademicYear) return;
     try {
       const childrenRes = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/user/${parentId}/students/tuition?yearId=${selectedAcademicYear}`,
