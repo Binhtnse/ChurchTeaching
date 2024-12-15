@@ -36,6 +36,16 @@ interface ClassData {
   status: string;
 }
 
+const dayMapping: { [key: string]: string } = {
+  'MONDAY': 'Thứ Hai',
+  'TUESDAY': 'Thứ Ba',
+  'WEDNESDAY': 'Thứ Tư',
+  'THURSDAY': 'Thứ Năm',
+  'FRIDAY': 'Thứ Sáu',
+  'SATURDAY': 'Thứ Bảy',
+  'SUNDAY': 'Chủ Nhật'
+};
+
 const CatechistExamScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
@@ -67,7 +77,7 @@ const CatechistExamScheduleScreen: React.FC = () => {
       key: "dayOfWeek",
       render: (text, record) => (
         <div className="flex flex-col">
-          <span className="font-semibold text-gray-800">{text}</span>
+          <span className="font-semibold text-gray-800">{dayMapping[text] || text}</span>
           <span className="text-gray-500 text-sm">{record.date}</span>
         </div>
       ),
@@ -201,7 +211,7 @@ const CatechistExamScheduleScreen: React.FC = () => {
                 examData.push({
                   className: classItem.className,
                   roomNo: classItem.roomNo,
-                  dayOfWeek: slot.dayOfWeek,
+                  dayOfWeek: dayMapping[slot.dayOfWeek] || slot.dayOfWeek,
                   date: date.toLocaleDateString("vi-VN"),
                   time: slot.time,
                   examName: slot.exams,

@@ -1218,11 +1218,6 @@ const AddSyllabusScreen: React.FC = () => {
         }
 
         // Rest of your existing next() logic
-        const currentValues = form.getFieldsValue(true);
-        setFormValues(currentValues);
-        setCurrentStep(currentStep + 1);
-
-        // Your existing validation logic for step 1
         if (currentStep === 1) {
           const selectedExamValues = Object.values(selectedExams);
           const totalRequiredExams = gradeTemplates.length;
@@ -1240,6 +1235,11 @@ const AddSyllabusScreen: React.FC = () => {
             return;
           }
         }
+        const currentValues = form.getFieldsValue(true);
+        setFormValues(currentValues);
+        setCurrentStep(currentStep + 1);
+
+        // Your existing validation logic for step 1
 
         const updatedValues = {
           ...values,

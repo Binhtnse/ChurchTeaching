@@ -33,6 +33,16 @@ interface WeekSchedule {
   }>;
 }
 
+const dayOfWeekMapping: { [key: string]: string } = {
+  'MONDAY': 'Thứ Hai',
+  'TUESDAY': 'Thứ Ba',
+  'WEDNESDAY': 'Thứ Tư',
+  'THURSDAY': 'Thứ Năm',
+  'FRIDAY': 'Thứ Sáu',
+  'SATURDAY': 'Thứ Bảy',
+  'SUNDAY': 'Chủ Nhật'
+};
+
 const ParentExamScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<Student[]>([]);
@@ -55,7 +65,7 @@ const ParentExamScheduleScreen: React.FC = () => {
       key: "dayOfWeek",
       render: (text, record) => (
         <div className="flex flex-col">
-          <span className="font-semibold text-gray-800">{text}</span>
+          <span className="font-semibold text-gray-800">{dayOfWeekMapping[text] || text}</span>
           <span className="text-gray-500 text-sm">{record.date}</span>
         </div>
       ),
@@ -192,7 +202,7 @@ const ParentExamScheduleScreen: React.FC = () => {
 
               examData.push({
                 roomNo: classItem.roomNo,
-                dayOfWeek: slot.dayOfWeek,
+                dayOfWeek: dayOfWeekMapping[slot.dayOfWeek] || slot.dayOfWeek,
                 date: date.toLocaleDateString("vi-VN"),
                 time: slot.time,
                 examName: slot.exams,
