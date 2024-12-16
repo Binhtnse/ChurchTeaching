@@ -227,14 +227,15 @@ const AdminGradeLeaderScreen: React.FC = () => {
       );
 
       if (response.data.status === "success") {
-        message.success("Thêm trưởng/phó khối thành công");
+        message.success(response.data.message || "Thêm trưởng/phó khối thành công");
         setIsModalVisible(false);
         addForm.resetFields();
         fetchGradeLeaders();
       }
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       console.log(error);
-      message.error("Không thể thêm trưởng/phó khối");
+      message.error(error.response?.data?.message || "Không thể thêm trưởng/phó khối");
     } finally {
       setAddLoading(false);
     }
@@ -289,13 +290,14 @@ const AdminGradeLeaderScreen: React.FC = () => {
       );
 
       if (response.data.status === "success") {
-        message.success("Cập nhật thành công");
+        message.success(response.data.message || "Cập nhật thành công");
         setEditModalVisible(false);
         fetchGradeLeaders();
       }
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       console.error(error);
-      message.error("Không thể cập nhật");
+      message.error(error.response?.data?.message || "Không thể cập nhật");
     } finally {
       setEditLoading(false);
     }
@@ -323,11 +325,12 @@ const AdminGradeLeaderScreen: React.FC = () => {
             setGradeLeaders((prevLeaders) =>
               prevLeaders.filter((leader) => leader.id !== id)
             );
-            message.success("Xóa thành công");
+            message.success(response.data.message || "Xóa thành công");
           }
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
           console.error(error);
-          message.error("Không thể xóa");
+          message.error(error.response?.data?.message || "Không thể xóa");
         }
       }
     });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Select, Table, Card, Spin, message, Tag } from "antd";
 import axios from "axios";
+import { useLocation } from 'react-router-dom';
 
 const { Option } = Select;
 
@@ -56,6 +57,14 @@ const ParentGradesProgressScreen: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [gradeData, setGradeData] = useState<Grade[]>([]);
+  const location = useLocation();
+  const { yearId, gradeId, classId, studentId } = location.state || {};
+  useEffect(() => {
+    if (yearId) setSelectedAcademicYear(Number(yearId));
+    if (gradeId) setSelectedGrade(Number(gradeId));
+    if (classId) setSelectedClass(Number(classId));
+    if (studentId) setSelectedStudent(Number(studentId));
+  }, [yearId, gradeId, classId, studentId]);
 
   const fetchStudents = useCallback(async () => {
     try {

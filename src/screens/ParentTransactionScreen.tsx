@@ -9,6 +9,7 @@ import {
   message,
   Checkbox,
   Spin,
+  Tag,
 } from "antd";
 import axios from "axios";
 
@@ -132,7 +133,7 @@ const ParentTransactionScreen: React.FC = () => {
       form.setFieldsValue({
         studentClassId: classData.studentClassId,
       });
-      const studentClassId = classResponse.data.data;
+      const studentClassId = classResponse.data.data.studentClassId;
 
       const policyResponse = await axios.get(
         `https://sep490-backend-production.up.railway.app/api/v1/policy/student/${childId}`,
@@ -216,6 +217,11 @@ const ParentTransactionScreen: React.FC = () => {
               {academicYears.map((year: AcademicYear) => (
                 <Option key={year.id} value={year.id}>
                   {year.year}
+                  {year.timeStatus === "NOW" && (
+                    <Tag color="blue" className="ml-2">
+                      Hiện tại
+                    </Tag>
+                  )}
                 </Option>
               ))}
             </Select>

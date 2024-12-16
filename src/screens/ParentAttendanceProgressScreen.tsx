@@ -80,7 +80,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
     }
   }, [selectedAcademicYear]);
 
-  const fetchActivePolicy = async () => {
+  const fetchActivePolicy = useCallback(async () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
@@ -99,7 +99,7 @@ const ParentAttendanceProgressScreen: React.FC = () => {
       console.error("Error fetching policy:", error);
       message.error("Không thể lấy thông tin quy định");
     }
-  };
+  }, [selectedStudent]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -136,15 +136,14 @@ const ParentAttendanceProgressScreen: React.FC = () => {
 
   useEffect(() => {
     fetchAcademicYears();
-    fetchActivePolicy();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (selectedAcademicYear) {
+      fetchActivePolicy();
       fetchStudents();
     }
-  }, [selectedAcademicYear, fetchStudents]);
+  }, [selectedAcademicYear, fetchStudents, fetchActivePolicy]);
 
   useEffect(() => {
     if (selectedStudent && selectedAcademicYear) {

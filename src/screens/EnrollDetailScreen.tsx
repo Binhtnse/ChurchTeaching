@@ -174,8 +174,9 @@ const EnrollDetailScreen: React.FC = () => {
               Câu trả lời
             </h2>
             {enrollmentData.answers.map((answer, index) => {
-              const answerContent =
-                answer.answerText || answer.selectedOptions?.join(", ");
+              const answerContent = answer.questionType === "choice" 
+              ? answer.selectedOptions?.join(", ")
+              : answer.answerText;
 
               if (
                 answerContent &&

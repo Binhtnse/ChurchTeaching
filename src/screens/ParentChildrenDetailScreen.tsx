@@ -93,6 +93,17 @@ const ParentChildrenDetailScreen: React.FC = () => {
     fetchData();
   }, [childId, isLoggedIn, role]);
 
+  const handleRowClick = (record: ChildHistory) => {
+    navigate('/study-grades-parent', {
+      state: {
+        yearId: record.yearId,
+        gradeId: record.gradeId,
+        classId: record.classId,
+        studentId: childId
+      }
+    });
+  };
+
   const columns = [
     {
       title: "Năm học",
@@ -238,6 +249,9 @@ const ParentChildrenDetailScreen: React.FC = () => {
               pagination={false}
               className="w-full mt-6"
               rowClassName="hover:bg-blue-50 transition-colors"
+              onRow={(record) => ({
+                onClick: () => handleRowClick(record),
+              })}            
             />
           </div>
         )}
