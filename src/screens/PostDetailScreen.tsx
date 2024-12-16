@@ -112,7 +112,7 @@ export const PostDetail: React.FC = () => {
       <div style={{ width: "70%" }}>
         {post ? (
           <Card style={{ width: "100%", textAlign: "center" }}>
-            <h1 className="my-5">{post.title}</h1>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '20px 0', color: '#333' }}>{post.title}</h1>
             <div style={{ display: "flex", justifyContent: "center" }}>
               <img
                 src={post.linkImage}
