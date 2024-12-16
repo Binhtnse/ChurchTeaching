@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Tag, message, Image, Button, Space } from "antd";
+import { Table, Tag, message, Button, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import axios from "axios";
 import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
@@ -107,14 +107,14 @@ const AdminEditGradesRequesetScreen: React.FC = () => {
       dataIndex: "link",
       key: "link",
       render: (link) => (
-        <Image
-          src={link}
-          alt="Evidence"
-          className="rounded-lg"
-          width={100}
-          height={100}
-          style={{ objectFit: "cover" }}
-        />
+        <a 
+          href={link} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-blue-600 hover:text-blue-800 underline"
+        >
+          Xem minh chứng
+        </a>
       ),
     },
     {

@@ -31,7 +31,7 @@ interface Grade {
 const slotTypeMap: Record<string, string> = {
   exam: "Kiểm tra",
   lesson_exam: "Học và kiểm tra",
-  lesson: "Bài học",
+  Lesson: "Bài học",
 };
 
 interface Schedule {
