@@ -76,16 +76,6 @@ interface Slot {
   noteOfSlot: string | null;
 }
 
-const dayOfWeekMapping: { [key: string]: string } = {
-  MONDAY: "Thứ Hai",
-  TUESDAY: "Thứ Ba",
-  WEDNESDAY: "Thứ Tư",
-  THURSDAY: "Thứ Năm",
-  FRIDAY: "Thứ Sáu",
-  SATURDAY: "Thứ Bảy",
-  SUNDAY: "Chủ nhật",
-};
-
 interface Attendance {
   isAbsent: string | null;
   isAbsentWithPermission: string | null;
@@ -572,12 +562,25 @@ const ParentScheduleScreen: React.FC = () => {
     }
   };
 
+  const normalizeVietnameseDay = (day: string): string => {
+    const mappings: { [key: string]: string } = {
+      "SUNDAY": "Chủ Nhật",
+      "MONDAY": "Thứ Hai", 
+      "TUESDAY": "Thứ Ba",
+      "WEDNESDAY": "Thứ Tư",
+      "THURSDAY": "Thứ Năm",
+      "FRIDAY": "Thứ Sáu",
+      "SATURDAY": "Thứ Bảy"
+    };
+    return mappings[day] || day;
+  };
+
   const createTimetable = (
     slots: Slot[]
   ): { [key: string]: { [key: string]: Slot | null } } => {
     const mappedSlots = slots.map((slot) => ({
       ...slot,
-      dayOfWeek: dayOfWeekMapping[slot.dayOfWeek] || slot.dayOfWeek,
+      dayOfWeek: slot.dayOfWeek,
     }));
     const days = [
       "Thứ Hai",
@@ -586,7 +589,7 @@ const ParentScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
+      "Chủ Nhật",
     ];
 
     if (!mappedSlots.length) {
@@ -608,8 +611,9 @@ const ParentScheduleScreen: React.FC = () => {
     }, {} as { [key: string]: { [key: string]: Slot | null } });
 
     slots.forEach((slot) => {
-      if (timetable[slot.dayOfWeek] && times.includes(slot.time)) {
-        timetable[slot.dayOfWeek][slot.time] = slot;
+      const vietnameseDay = normalizeVietnameseDay(slot.dayOfWeek);
+      if (timetable[vietnameseDay] && times.includes(slot.time)) {
+        timetable[vietnameseDay][slot.time] = slot;
       }
     });
 
@@ -633,7 +637,7 @@ const ParentScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      "Chủ nhật",
+      "Chủ Nhật",
     ].indexOf(slot.dayOfWeek);
     const slotDate = new Date(weekStart);
     slotDate.setDate(weekStart.getDate() + dayIndex);
@@ -675,8 +679,8 @@ const ParentScheduleScreen: React.FC = () => {
       "Thứ Tư",
       "Thứ Năm",
       "Thứ Sáu",
-      String.fromCharCode(84, 104, 432, 769, 32, 66, 97, 777, 121),
-      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
+      "Thứ Bảy",
+      "Chủ Nhật",
     ];
 
     const times =

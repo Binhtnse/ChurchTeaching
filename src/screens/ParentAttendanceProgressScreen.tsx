@@ -39,8 +39,6 @@ const ParentAttendanceProgressScreen: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
-  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -115,32 +113,14 @@ const ParentAttendanceProgressScreen: React.FC = () => {
     }
   };
 
-  const fetchGrades = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=30",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (response.data.status === "success") {
-        setGrades(response.data.data);
-      }
-    } catch (error) {
-      console.log(error);
-      message.error("Không thể lấy danh sách khối");
-    }
-  };
-
   const fetchAttendanceData = useCallback(async () => {
-    if (!selectedStudent || !selectedAcademicYear || !selectedGrade) return;
+    if (!selectedStudent || !selectedAcademicYear) return;
 
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}&studentId=${selectedStudent}`,
+        `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${selectedAcademicYear}&studentId=${selectedStudent}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -152,11 +132,10 @@ const ParentAttendanceProgressScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedStudent, selectedAcademicYear, selectedGrade]);
+  }, [selectedStudent, selectedAcademicYear]);
 
   useEffect(() => {
     fetchAcademicYears();
-    fetchGrades();
     fetchActivePolicy();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -168,13 +147,12 @@ const ParentAttendanceProgressScreen: React.FC = () => {
   }, [selectedAcademicYear, fetchStudents]);
 
   useEffect(() => {
-    if (selectedStudent && selectedAcademicYear && selectedGrade) {
+    if (selectedStudent && selectedAcademicYear) {
       fetchAttendanceData();
     }
   }, [
     selectedStudent,
     selectedAcademicYear,
-    selectedGrade,
     fetchAttendanceData,
   ]);
 
@@ -303,22 +281,6 @@ const ParentAttendanceProgressScreen: React.FC = () => {
                       Hiện tại
                     </Tag>
                   )}
-                </Option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600">Khối</label>
-            <Select
-              className="w-full"
-              placeholder="Chọn khối"
-              onChange={(value) => setSelectedGrade(value)}
-              value={selectedGrade}
-            >
-              {grades.map((grade) => (
-                <Option key={grade.id} value={grade.id}>
-                  {grade.name}
                 </Option>
               ))}
             </Select>

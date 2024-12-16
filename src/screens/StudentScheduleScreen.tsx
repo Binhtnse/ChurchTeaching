@@ -91,16 +91,6 @@ const DayCell = styled(CalendarCell)`
   color: white;
 `;
 
-const dayMapping: { [key: string]: string } = {
-  'MONDAY': 'Thứ Hai',
-  'TUESDAY': 'Thứ Ba', 
-  'WEDNESDAY': 'Thứ Tư',
-  'THURSDAY': 'Thứ Năm',
-  'FRIDAY': 'Thứ Sáu',
-  'SATURDAY': "Thứ Bảy",
-  'SUNDAY': "Chủ nhật"
-};
-
 const StudentScheduleScreen: React.FC = () => {
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,6 +197,19 @@ const StudentScheduleScreen: React.FC = () => {
     });
   };
 
+  const normalizeVietnameseDay = (day: string): string => {
+    const mappings: { [key: string]: string } = {
+      "SUNDAY": "Chủ Nhật",
+      "MONDAY": "Thứ Hai", 
+      "TUESDAY": "Thứ Ba",
+      "WEDNESDAY": "Thứ Tư",
+      "THURSDAY": "Thứ Năm",
+      "FRIDAY": "Thứ Sáu",
+      "SATURDAY": "Thứ Bảy"
+    };
+    return mappings[day] || day;
+  };
+
   const createTimetable = (
     slots: Slot[]
   ): { [key: string]: { [key: string]: Slot | null } } => {
@@ -217,7 +220,7 @@ const StudentScheduleScreen: React.FC = () => {
       "Thứ Năm",
       "Thứ Sáu",
       "Thứ Bảy",
-      "Chủ nhật",
+      "Chủ Nhật",
     ];
     const times = sortTimes([...new Set(slots.map((slot) => slot.time))]);
 
@@ -230,7 +233,7 @@ const StudentScheduleScreen: React.FC = () => {
   }, {} as { [key: string]: { [key: string]: Slot | null } });
 
   slots.forEach((slot) => {
-    const vietnameseDay = dayMapping[slot.dayOfWeek];
+    const vietnameseDay = normalizeVietnameseDay(slot.dayOfWeek);
     if (timetable[vietnameseDay] && times.includes(slot.time)) {
       timetable[vietnameseDay][slot.time] = slot;
     }
@@ -269,8 +272,8 @@ const StudentScheduleScreen: React.FC = () => {
       "Thứ Tư",
       "Thứ Năm",
       "Thứ Sáu",
-      String.fromCharCode(84, 104, 432, 769, 32, 66, 97, 777, 121),
-      String.fromCharCode(67, 104, 117, 777, 32, 110, 104, 226, 803, 116),
+      "Thứ Bảy",
+      "Chủ Nhật",
     ];
     const times = [...new Set(classItem.slots.map((slot) => slot.time))].sort();
 

@@ -30,8 +30,6 @@ interface Policy {
 
 const StudentAttendanceProgressScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
-  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<
     { id: number; year: string; timeStatus: string }[]
   >([]);
@@ -52,24 +50,6 @@ const StudentAttendanceProgressScreen: React.FC = () => {
     } catch (error) {
       console.log(error);
       message.error("Không thể lấy danh sách niên khóa");
-    }
-  };
-
-  const fetchGrades = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get(
-        "https://sep490-backend-production.up.railway.app/api/v1/grade?page=1&size=30",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (response.data.status === "success") {
-        setGrades(response.data.data);
-      }
-    } catch (error) {
-      console.log(error);
-      message.error("Không thể lấy danh sách khối");
     }
   };
 
@@ -100,7 +80,7 @@ const StudentAttendanceProgressScreen: React.FC = () => {
   };
 
   const fetchAttendanceData = useCallback(async () => {
-    if (!selectedAcademicYear || !selectedGrade) return;
+    if (!selectedAcademicYear ) return;
 
     setLoading(true);
     try {
@@ -110,7 +90,7 @@ const StudentAttendanceProgressScreen: React.FC = () => {
       const studentId = user?.id;
 
       const response = await axios.get(
-        `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${selectedAcademicYear}&gradeId=${selectedGrade}&studentId=${studentId}`,
+        `https://sep490-backend-production.up.railway.app/api/v1/attendance/info?academicYearId=${selectedAcademicYear}&studentId=${studentId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -122,19 +102,18 @@ const StudentAttendanceProgressScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedAcademicYear, selectedGrade]);
+  }, [selectedAcademicYear]);
 
   useEffect(() => {
     fetchAcademicYears();
-    fetchGrades();
     fetchActivePolicy();
   }, []);
 
   useEffect(() => {
-    if (selectedAcademicYear && selectedGrade) {
+    if (selectedAcademicYear) {
       fetchAttendanceData();
     }
-  }, [selectedAcademicYear, selectedGrade, fetchAttendanceData]);
+  }, [selectedAcademicYear, fetchAttendanceData]);
 
   const getAttendanceStatus = (detail: AttendanceDetail) => {
     if (detail.isAbsent === "FUTURE") {
@@ -269,22 +248,6 @@ const StudentAttendanceProgressScreen: React.FC = () => {
                       Hiện tại
                     </Tag>
                   )}
-                </Option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600">Khối</label>
-            <Select
-              className="w-full"
-              placeholder="Chọn khối"
-              onChange={(value) => setSelectedGrade(value)}
-              value={selectedGrade}
-            >
-              {grades.map((grade) => (
-                <Option key={grade.id} value={grade.id}>
-                  {grade.name}
                 </Option>
               ))}
             </Select>

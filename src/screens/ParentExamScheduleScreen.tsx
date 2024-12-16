@@ -34,13 +34,13 @@ interface WeekSchedule {
 }
 
 const dayOfWeekMapping: { [key: string]: string } = {
-  'MONDAY': 'Thứ Hai',
-  'TUESDAY': 'Thứ Ba',
-  'WEDNESDAY': 'Thứ Tư',
-  'THURSDAY': 'Thứ Năm',
-  'FRIDAY': 'Thứ Sáu',
-  'SATURDAY': 'Thứ Bảy',
-  'SUNDAY': 'Chủ Nhật'
+  "SUNDAY": "Chủ Nhật",
+  "MONDAY": "Thứ Hai", 
+  "TUESDAY": "Thứ Ba",
+  "WEDNESDAY": "Thứ Tư",
+  "THURSDAY": "Thứ Năm",
+  "FRIDAY": "Thứ Sáu",
+  "SATURDAY": "Thứ Bảy"
 };
 
 const ParentExamScheduleScreen: React.FC = () => {
@@ -58,6 +58,10 @@ const ParentExamScheduleScreen: React.FC = () => {
   console.log(academicYears);
   const [examSchedules, setExamSchedules] = useState<ExamSchedule[]>([]);
 
+  const normalizeVietnameseDay = (day: string): string => {
+    return dayOfWeekMapping[day] || day;
+  };
+
   const columns: ColumnsType<ExamSchedule> = [
     {
       title: "Ngày",
@@ -65,7 +69,7 @@ const ParentExamScheduleScreen: React.FC = () => {
       key: "dayOfWeek",
       render: (text, record) => (
         <div className="flex flex-col">
-          <span className="font-semibold text-gray-800">{dayOfWeekMapping[text] || text}</span>
+          <span className="font-semibold text-gray-800">{normalizeVietnameseDay(text)}</span>
           <span className="text-gray-500 text-sm">{record.date}</span>
         </div>
       ),
@@ -202,7 +206,7 @@ const ParentExamScheduleScreen: React.FC = () => {
 
               examData.push({
                 roomNo: classItem.roomNo,
-                dayOfWeek: dayOfWeekMapping[slot.dayOfWeek] || slot.dayOfWeek,
+                dayOfWeek: slot.dayOfWeek,
                 date: date.toLocaleDateString("vi-VN"),
                 time: slot.time,
                 examName: slot.exams,
